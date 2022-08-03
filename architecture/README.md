@@ -12,7 +12,7 @@
 
 * Deployment pipeline should be reliable, efficient and cost effective.
 
-## Architecturel Discussion
+## Architectural Discussion
 
 The main purpose of the system is to act as a deployment pipeline. Alternative methods offered by Harshicorp is documented in [Running Terraform in Automation](https://learn.hashicorp.com/tutorials/terraform/automate-terraform?in=terraform/automation). They are:
 
@@ -21,32 +21,32 @@ The main purpose of the system is to act as a deployment pipeline. Alternative m
 
 ## Design Proposal to create Pipeline in AWS
 
-In this project I'll be demonstrating another aproach which uses github as a user interface while AWS Native services for running CI/CD Pipeline
+In this project I'll be demonstrating another aproach which uses github as user interface, github actions as main pipeline coordinating events and tasks while AWS native services for running terraform jobs in fargate docker executor.
 
-### What is the motivation behind creating the pipeline in AWS
+### What is the motivation behind creating the core TF pipeline in AWS
 
 * Creating your own docker executer gives you more flexibility and control in your pipeline environment.
 * Github actions is not a traditional pipeline environment and may need other executors to run complex tasks
-* Using AWS native services will make your pipeline environment close to your AWS Production and ephemeral environments making it easy to share resources
-* Having pipeline and deployment environments all under same provide will make us able to use of IAM Role based access control, making it more secure than using external pipelines. 
-* We would like to try and see the result so that we compare solutions side by side.
+* Using AWS native services will make your pipeline environment close to your AWS Production and ephemeral environments making it easy to share resources.
+* Having pipeline and deployment environments all under same provider will make us able to use of IAM Role based access control, making it more secure than using external pipelines. 
+* We would like to try and see the result so that we can compare solutions side by side with other approaches. 
 
 ### Components to be used creating the pipeline
 
 * AWS Batch on Fargate as main Docker executer.
-* AWS Step functions as main queuee system for orchestrating jobs such as plan, apply, destroy, validate with error handling and retrial and restoring state back to last working commit on error.
-* AWS Cloudwatch and Xray inorder to log and trace pipeline events.
+* AWS Step functions as main queuee system for orchestrating jobs such as plan, apply, destroy, validate with error handling and retrial mechanisms.
+* AWS Cloudwatch and X-ray inorder to log and trace pipeline events.
 * AWS Secrets manager for storing and fetching secrets on demand.
-* AWS S3 for storing and reusing pipeline artifacts.
+* AWS S3 for storing and re-using pipeline artifacts.
 * AWS SQS for delivering status messages about pipeline events.
 * AWS Eventbridge for trigering jobs based on internal and external events.
 * AWS Codebuild to remotely build docker images.
-* AWS ECR as docker images repository.
+* AWS ECR as docker image repository.
 * AWS Lambda (Containerized) to store functions to be called from inside step functions and docker executers.
 
 ### How it works?
 
-One of the main objectives of the project is to create the pipeline using GITOPS approach thereby it is essential to define what GITOPS means and how it differantiates from convetional 
+One of the main objectives of the project is to create the pipeline using GITOPS approach thereby it is essential to define what GITOPS means and how it differantiates from convetional approaches.
 
 ### Principles of GITOPS
 
