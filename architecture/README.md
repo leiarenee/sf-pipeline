@@ -19,9 +19,7 @@ The main purpose of the system is to act as a deployment pipeline. Alternative m
 * [Deploy Terraform infrastructure with CircleCI](https://learn.hashicorp.com/tutorials/terraform/circle-ci?in=terraform/automation)
 * [Automate Terraform with GitHub Actions](https://learn.hashicorp.com/tutorials/terraform/github-actions?in=terraform/automation)
 
-## GITOPS CICD Pipeline Architecture
-
-### Design Proposal to create Pipeline in AWS
+## Design Proposal to create Pipeline in AWS
 
 In this project I'll be demonstrating another aproach which uses github as a user interface while AWS Native services for running CI/CD Pipeline
 
@@ -48,6 +46,30 @@ In this project I'll be demonstrating another aproach which uses github as a use
 
 ### How it works?
 
+One of the main objectives of the project is to create the pipeline using GITOPS approach thereby it is essential to define what GITOPS means and how it differantiates from convetional 
 
+### Principles of GITOPS
+
+Ref : [Weaveworks](https://www.weave.works/technologies/gitops/) 
+
+1. The entire system described declaratively.
+2. The canonical desired system state versioned in Git.
+3. Approved changes that can be automatically applied to the system. 
+4. Software agents to ensure correctness and alert on divergence. (_neglected in this project_)
+
+### Types of Gitops
+
+Ref: [gitops.tech](https://www.gitops.tech/)
+
+1. Pull based
+2. Push based
+
+While principles 1 to 3 are common for both versions, number 4 is only valid for pull based gitops. In this project we will use __Push based Gitops__ hence we can ignore final principle in our architecture.
+
+### Push Based Gitops Flow
+
+![Push Based Gitops Flow](../images/push-based-gitops.png)
+
+### Final Flow Diagram for the Project
 
 ![Gitops CICD Pipeline Architecture](../images/gitops-pipeline-diagram.png)

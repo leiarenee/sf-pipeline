@@ -20,4 +20,18 @@ To be decided solely by the candidate, as long as it meets the requirements of t
 * Ephemeral environments are created on each new pull request
 * Any dependent infrastructure changes are also applied as part of any pull request
 
+---
+
+### Project Links
+
+* [Architecture, System Design and Flow Diagrams](./architecture/README.md)
+* [Project Board](https://github.com/users/leiarenee/projects/1)
+
+### Repositories
+
+* [Pipeline Repository (this repo) ](https://github.com/leiarenee/chainlink)
+* [Infrastructure Repository (coming soon)](./)
+* [Application Repository (coming soon)](./)
+
+
 
