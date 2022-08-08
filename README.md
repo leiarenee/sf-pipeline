@@ -1,28 +1,10 @@
-# SF-PIPELINE
+# SF-Pipeline
 
-## Project Brief High Level Epic
+## Description
 
-Continuous Deployment of a Static Application via GitOps
+AWS Step-functions will be used to enqueue and orchestrate on-demand terraform jobs which will be executed using AWS Batch on Fargate for continuous Deployment of a Static Application via GitOps approach
 
-### Solution Design
-
-AWS Step-functions will be used to enqueue and orchestrate on-demand terraform jobs which will be executed using AWS Batch on Fargate.
-
-### Requirements
-
-* Application deployed needs to have some form of external state, a database or cache. 
-* On each commit to master, the application is built then deployed via any deployment approach.
-* If the application fails to build or errors, then a rollback is performed.
-* The audit history of build & deployments has to be visible in GIT, to allow for auditable history.
-* All the dependent deployment of infrastructure has to be managed in code.
-* Deployment of the application has to be publicly reachable.
-
-### Stretch Requirements
-
-* Ephemeral environments are created on each new pull request
-* Any dependent infrastructure changes are also applied as part of any pull request
-
----
+<br>
 
 ### Project Links
 
@@ -36,5 +18,64 @@ AWS Step-functions will be used to enqueue and orchestrate on-demand terraform j
 * [Infrastructure Repository](https://github.com/leiarenee/sf-infra)
 * [Application Repository](https://github.com/leiarenee/sf-app)
 
+## Requirements
+
+- [terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli)
+- [terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/)
+- [aws-cli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+- [jq](https://stedolan.github.io/jq/download/)
+- [python 3.9](https://www.python.org/downloads/)
+- [direnv](https://direnv.net/docs/installation.html)
+- [envsubst](https://www.gnu.org/software/gettext/manual/html_node/envsubst-Invocation.html)
+- [rdfind](https://rdfind.pauldreik.se/)
+- [uuidgen](https://man7.org/linux/man-pages/man1/uuidgen.1.html)
+
+---
+
+## Installation
+
+Homebrew:
+```sh
+brew install terraform terragrunt awscli jq python@3.9 direnv gettext rdfind
+```
+
+<details>
+<summary> Other</summary>
+
+
+### Linux (and WSL)
+```sh
+# jq, direnv and python are available in standard package libraries
+sudo apt-get install jq direnv python3 aws-cli gettext uuid-runtime
+
+# For terraform you can either add the hashicorp repo:
+curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+sudo apt-get update && sudo apt-get install terraform
+
+#..or manually download the binary and place it somewhere (similar to process below)
+
+
+# For terragrunt you need to manually download it to an appropriate folder and set as executable
+# https://terragrunt.gruntwork.io/docs/getting-started/install/#download-from-releases-page
+pushd /tmp/
+wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.36.3/terragrunt_linux_amd64
+mv terragrunt_linux_amd64 ~/.local/bin/terragrunt # move to a folder that's in our $PATH
+chmod +x ~/.local/bin/terragrunt # Make executable
+popd
+```
+
+### Debugging installation problems
+
+### `envsubst : command not found` 
+
+You'll need to install `envsubst`. For Debian-like systems it is part ofthe `gettext-base` package
+```sh
+apt-get install gettext-base
+```
+
+</details>
+
+</br>
 
 

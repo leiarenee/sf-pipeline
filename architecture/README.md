@@ -7,6 +7,9 @@
 * If the application fails to build or errors, then a rollback is performed.
 * The audit history of build & deployments has to be visible in GIT, to allow for auditable history.
 * All the dependent deployment of infrastructure has to be managed in code.
+* Deployment of the application has to be publicly reachable.
+* Ephemeral environments are created on each new pull request
+* Any dependent infrastructure changes are also applied as part of any pull request
 
 ## Non Functional Requirements
 
