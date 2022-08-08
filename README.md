@@ -2,7 +2,7 @@
 
 ## Description
 
-AWS Step-functions will be used to enqueue and orchestrate on-demand terraform jobs which will be executed using AWS Batch on Fargate for continuous Deployment of a Static Application via GitOps approach
+Continious deployment of a static application via GitOps approach using AWS Step-functions along with AWS Batch on Fargate to enqueue and orchestrate on-demand terraform/terragrunt jobs. 
 
 ### Project Links
 
