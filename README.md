@@ -2,7 +2,7 @@
 
 ## Description
 
-Continious deployment of a static application via GitOps approach using AWS Step-functions along with AWS Batch on Fargate to enqueue and orchestrate on-demand terraform/terragrunt jobs. 
+Continious deployment via GitOps approach using AWS Step-functions along with AWS Batch on Fargate to enqueue and orchestrate on-demand terraform/terragrunt jobs. 
 
 ### Project Links
 
