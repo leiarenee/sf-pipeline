@@ -26,6 +26,7 @@ To be decided solely by the candidate, as long as it meets the requirements of t
 
 * [Architecture, System Design and Flow Diagrams](./architecture/README.md)
 * [Project Board](https://github.com/users/leiarenee/projects/1)
+* [Road Map](https://github.com/leiarenee/chainlink/milestones?direction=asc&sort=due_date)
 
 ### Repositories
 

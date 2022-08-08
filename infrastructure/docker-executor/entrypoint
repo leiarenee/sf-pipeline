@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Stop on error
+set -e
+
+# Get secrets
+gitlab_user=$(echo $GITLAB_READ_ACCESS | jq -r .user)
+gitlab_token=$(echo $GITLAB_READ_ACCESS | jq -r .token)
+
+# Download repo from gitlab api, project version can be version tag (ex v0.1.1) or sha commit or branch name
+curl --header "PRIVATE-TOKEN: $gitlab_token" \
+  "https://gitlab.com/api/v4/projects/$GITLAB_PROJECT_ID/repository/archive.zip?sha=$GITLAB_PROJECT_VERSION" \
+  -o downloaded_repo.zip
+
+# Unzip the zipped file
+unzip -o downloaded_repo.zip
+rm downloaded_repo.zip
+
+# Rename extracted folder name to repo name
+[ -d temp ] && rm -rf temp
+[ ! -z $GITLAB_PROJECT_NAME ] && mv  $(ls -d $GITLAB_PROJECT_NAME*) temp
+
+# Change working directory
+cd temp
+
+# Run the script
+echo "Entrypoint arguments $@"
+./run $@
+
