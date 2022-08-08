@@ -4,11 +4,14 @@
 user=$(echo $REPO_ACCESS_TOKEN | jq -r .user)
 token=$(echo $REPO_ACCESS_TOKEN | jq -r .token)
 
+echo $user
+echo $token
+
 function fetch_from_gitlab(){
   echo Fetching repository from gitlab
 
   # Download repo from gitlab api, project version can be version tag (ex v0.1.1) or sha commit or branch name
-  curl --header "PRIVATE-TOKEN: $gitlab_token" \
+  curl --header "PRIVATE-TOKEN: $token" \
     "https://gitlab.com/api/v4/projects/$GITLAB_PROJECT_ID/repository/archive.zip?sha=$GITLAB_PROJECT_VERSION" \
     -o downloaded_repo.zip
 
@@ -25,21 +28,31 @@ function fetch_from_gitlab(){
 
 }
 
-function fetch_from_gitlab(){
+function fetch_from_github(){
   echo Fetching repository from Github
-
-  wget --header="Authorization: token $token" --header="Accept:application/vnd.github.v3.raw" /
-    -O - https://api.github.com/repos/${REPO_ACCOUNT}/${REPO_NAME}/tarball/${REPO_REFERENCE} | tar xz
+  case $REPO_TYPE in
+    private)
+      wget --header="Authorization: token $token" --header="Accept:application/vnd.github.v3.raw" \
+        -O - https://api.github.com/repos/${REPO_ACCOUNT}/${REPO_NAME}/tarball/${REPO_REFERENCE} | tar xz
+    ;;
+    public)
+      wget --header="Accept:application/vnd.github.v3.raw" \
+        -O - https://api.github.com/repos/${REPO_ACCOUNT}/${REPO_NAME}/tarball/${REPO_REFERENCE} | tar xz
+    ;;
+    *)
+    echo Please specify REPO_TYPE environment variable to one of gihub/gitlab
+    exit -1
+  esac
 }
 
 # Main Routine
-case $REPO_TYPE in
+case $VCS_PROVIDER in
 
-  GITLAB | gitlab | Gitlab )
+  gitlab )
     fetch_from_gitlab
   ;;
 
-  GITHUB | github | Github )
+  github )
     fetch_from_github
   ;;
 
