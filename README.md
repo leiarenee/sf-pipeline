@@ -4,8 +4,6 @@
 
 AWS Step-functions will be used to enqueue and orchestrate on-demand terraform jobs which will be executed using AWS Batch on Fargate for continuous Deployment of a Static Application via GitOps approach
 
-<br>
-
 ### Project Links
 
 * [Architecture, System Design and Flow Diagrams](./architecture/README.md)
@@ -30,8 +28,6 @@ AWS Step-functions will be used to enqueue and orchestrate on-demand terraform j
 - [rdfind](https://rdfind.pauldreik.se/)
 - [uuidgen](https://man7.org/linux/man-pages/man1/uuidgen.1.html)
 
----
-
 ## Installation
 
 Homebrew:
@@ -41,7 +37,6 @@ brew install terraform terragrunt awscli jq python@3.9 direnv gettext rdfind
 
 <details>
 <summary> Other</summary>
-
 
 ### Linux (and WSL)
 ```sh
@@ -76,6 +71,6 @@ apt-get install gettext-base
 
 </details>
 
-</br>
+<br>
 
 
