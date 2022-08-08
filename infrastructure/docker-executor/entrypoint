@@ -1,29 +1,56 @@
-#!/bin/bash
-
-# Stop on error
-set -e
+#!/bin/bash -e
 
 # Get secrets
-gitlab_user=$(echo $GITLAB_READ_ACCESS | jq -r .user)
-gitlab_token=$(echo $GITLAB_READ_ACCESS | jq -r .token)
+user=$(echo $REPO_ACCESS_TOKEN | jq -r .user)
+token=$(echo $REPO_ACCESS_TOKEN | jq -r .token)
 
-# Download repo from gitlab api, project version can be version tag (ex v0.1.1) or sha commit or branch name
-curl --header "PRIVATE-TOKEN: $gitlab_token" \
-  "https://gitlab.com/api/v4/projects/$GITLAB_PROJECT_ID/repository/archive.zip?sha=$GITLAB_PROJECT_VERSION" \
-  -o downloaded_repo.zip
+function fetch_from_gitlab(){
+  echo Fetching repository from gitlab
 
-# Unzip the zipped file
-unzip -o downloaded_repo.zip
-rm downloaded_repo.zip
+  # Download repo from gitlab api, project version can be version tag (ex v0.1.1) or sha commit or branch name
+  curl --header "PRIVATE-TOKEN: $gitlab_token" \
+    "https://gitlab.com/api/v4/projects/$GITLAB_PROJECT_ID/repository/archive.zip?sha=$GITLAB_PROJECT_VERSION" \
+    -o downloaded_repo.zip
 
-# Rename extracted folder name to repo name
-[ -d temp ] && rm -rf temp
-[ ! -z $GITLAB_PROJECT_NAME ] && mv  $(ls -d $GITLAB_PROJECT_NAME*) temp
+  # Unzip the zipped file
+  unzip -o downloaded_repo.zip
+  rm downloaded_repo.zip
 
-# Change working directory
-cd temp
+  # Rename extracted folder name to repo name
+  [ -d temp ] && rm -rf temp
+  [ ! -z $GITLAB_PROJECT_NAME ] && mv  $(ls -d $GITLAB_PROJECT_NAME*) temp
 
-# Run the script
-echo "Entrypoint arguments $@"
-./run $@
+  # Change working directory
+  cd temp
+
+}
+
+function fetch_from_gitlab(){
+  echo Fetching repository from Github
+
+  wget --header="Authorization: token $token" --header="Accept:application/vnd.github.v3.raw" /
+    -O - https://api.github.com/repos/${REPO_ACCOUNT}/${REPO_NAME}/tarball/${REPO_REFERENCE} | tar xz
+}
+
+# Main Routine
+case $REPO_TYPE in
+
+  GITLAB | gitlab | Gitlab )
+    fetch_from_gitlab
+  ;;
+
+  GITHUB | github | Github )
+    fetch_from_github
+  ;;
+
+  *)
+    echo "Unknown REPO_TYPE, Use One of GITHUB/GITLAB"
+    exit -1
+  ;;
+
+esac
+
+# Run the custom deploy script
+echo "Executing $@"
+exec $@
 
