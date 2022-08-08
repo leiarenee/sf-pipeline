@@ -1,4 +1,4 @@
-# SF-GITOPS
+# SF-PIPELINE
 
 ## Project Brief High Level Epic
 
