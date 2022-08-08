@@ -70,6 +70,65 @@ While principles 1 to 3 are common for both versions, number 4 is only valid for
 
 ![Push Based Gitops Flow](../images/push-based-gitops.png)
 
-### Final Flow Diagram for the Project
+---
+
+### Flow Diagram for the Project
 
 ![Gitops CICD Pipeline Architecture](../images/gitops-pipeline-diagram.png)
+
+---
+
+## Work Flows
+
+AWS Step-functions will be used to enqueue and orchestrate on-demand terraform jobs which will be executed using AWS Batch on Fargate.
+
+### PLAN
+
+  * Trigger : Pull Request
+  * Steps:
+    * Terraform plan
+  * Target Environment : Merge Environment 
+  * Output : Publish Plan on PR Page - Send Slack notification
+
+### PLAN - APPLY
+
+  * Trigger : Commit to Master
+  * Steps:
+    * Terreform plan
+    * Wait for approval
+    * Terraform apply
+  * On Error:
+    * Checkout to last working commit
+    * Terraform apply
+  * Target Environment : Merge Environment 
+  * Output: Send Slack Notification
+
+### APPLY EPHEMERAL
+
+  * Trigger : Manual
+  * Steps: 
+    * Terraform Apply
+    * Schedule Cron Job to destroy
+  * On Error:
+    * Terraform Destroy
+  * Target Environment : Ephemeral Testing/Dev Environments
+  * Output: Slack Notification
+
+### Other Workflows
+
+  * Modify Cron
+  * Pass terraform command
+
+---
+
+## INPUTS
+
+  * Infrastructure Repository
+  * Commit [hash|branch|tag|ref] 
+  * Target Environment (AWS account ID)
+  * Pipeline Command [plan|apply|ephemeral|cron|<custom>]
+  * Batch Job Definition ARN
+  * Batch Job Queue ARN
+  * User Email 
+  * Pull Request ID (Optional)
+  * Time to Live (Optional)
