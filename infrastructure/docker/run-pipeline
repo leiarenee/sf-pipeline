@@ -1,0 +1,250 @@
+#!/bin/bash
+set -e
+trap 'catch $? $LINENO' ERR
+
+function catch() {
+  echo "Bash Script Error $1 occurred on Line $2"
+  bash_error=true
+  if [[ $UPLOAD_WORKFOLDER == "always" ]] || [[ $UPLOAD_WORKFOLDER == "onerror" && $tg_err -ne 0 ]]
+  then
+    set +e
+    upload_temp_folder
+    set -e
+  fi
+}
+
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+tg_command=${1:-$TG_COMMAND}
+cron_job=$2
+
+export STACK_FOLDER=$JOB_FOLDER
+
+[ -z $AWS_BATCH_JOB_ID ] && export AWS_BATCH_JOB_ID=Dev-$(uuidgen) # For local dev environment
+[ -z $SQS_MESSAGE_GROUP_ID ] && export SQS_MESSAGE_GROUP_ID=$AWS_BATCH_JOB_ID
+
+# Upload Temp Folder
+function upload_temp_folder(){
+  # UPLOAD_WORKFOLDER never|always|onerror
+  # onerror will run on Terragrunt errors and bash errors
+  # never disables it - use for local dev env
+  # always runs it on every execution
+
+  if [[ $UPLOAD_WORKFOLDER == "always" ]] || [[ $UPLOAD_WORKFOLDER == "onerror" && $tg_err -ne 0 ]] || [[ ! -z $bash_error && $UPLOAD_WORKFOLDER != "never" ]]
+  then
+    echo Uploading temp folder
+    # Find Dublicates and replace with symlinks
+    # Thanks to https://github.com/pauldreik/rdfind
+    cd $script_dir
+    rdfind -makesymlinks true temp-job
+    # Compress Work folder
+    tar -czf temp-job.tar.gz temp-job
+    # Upload to S3
+    aws configure set default.s3.max_concurrent_requests 10
+    aws configure set default.s3.multipart_threshold 1000MB # Disable concurrency since it doesn't work in docker
+    aws configure set default.s3.multipart_chunksize 100MB
+    #aws s3 cp temp-job.tar.gz s3://lab-job-handler-jobs-submitted/$WORKSPACE_ID/temp-job.tar.gz
+    aws s3api put-object --bucket lab-job-handler-jobs-submitted --key $WORKSPACE_ID/$AWS_BATCH_JOB_ID.tar.gz --body temp-job.tar.gz
+    rm temp-job.tar.gz
+  fi
+}
+
+# Configure aws profile
+function configure_aws_profile(){
+  pipeline_aws_access_key_id=$(echo $PIPELINE_AWS_ACCESS | jq -r .aws_access_key_id)
+  pipeline_aws_secret_access_key=$(echo $PIPELINE_AWS_ACCESS | jq -r .aws_secret_access_key)
+  
+  # Default
+  if [ ! $(cat $HOME/.aws/credentials | grep default) ]
+  then
+    cat <<EOF >> $HOME/.aws/credentials
+[default]
+aws_access_key_id = $pipeline_aws_access_key_id
+aws_secret_access_key = $pipeline_aws_secret_access_key
+region = eu-west-1
+EOF
+  fi
+
+  # Infra Structure account
+  if [ ! $(cat $HOME/.aws/credentials | grep $PIPELINE_AWS_PROFILE) ]
+  then
+    cat <<EOF >> $HOME/.aws/credentials
+[$PIPELINE_AWS_PROFILE]
+aws_access_key_id = $pipeline_aws_access_key_id
+aws_secret_access_key = $pipeline_aws_secret_access_key
+region = eu-west-1
+EOF
+  fi
+
+
+  # Target account
+  aws_access_key_id=$(echo $TARGET_AWS_ACCESS | jq -r .aws_access_key_id)
+  aws_secret_access_key=$(echo $TARGET_AWS_ACCESS | jq -r .aws_secret_access_key)
+  if [ ! $(cat $HOME/.aws/credentials | grep $TARGET_AWS_PROFILE) ]
+  then
+    cat <<EOF >> $HOME/.aws/credentials
+[$TARGET_AWS_PROFILE]
+aws_access_key_id = $aws_access_key_id
+aws_secret_access_key = $aws_secret_access_key
+region = eu-west-1
+EOF
+  fi
+}
+
+
+function find_modules(){
+  echo Modules List
+  export TG_MODULES_LIST=$(python3 -m runtask json-modules)
+  #export TG_MODULES_LIST=$(cat src/json/modules_list.json | jq .modules)
+  echo $TG_MODULES_LIST | jq .
+  export TG_MODULES_COMPLETED=[]
+  export TG_MODULES_COUNT=$(echo $TG_MODULES_LIST | jq length)
+  echo Total number of modules to be processed: $TG_MODULES_COUNT
+  
+}
+
+function test_progress(){
+  export TG_PARRENT_DIR=temp-job
+  len=$(($TG_MODULES_COUNT - 1))
+  for i in $(seq 0 0)
+    do
+      source terragrunt/scripts/job_complete.sh $STACK_FOLDER/$(echo $TG_MODULES_LIST | jq -r --arg i $i '.[$i|tonumber]')
+    done
+}
+
+# Run Terragrunt
+function run_terragrunt(){
+
+  # Prepare command line arguments
+  if [[ ! $INTERACTIVE == "True" ]]
+  then 
+    tg_non_interactive=--terragrunt-non-interactive
+  fi
+
+  if [[ $RUN_ALL == "True" ]]
+  then
+    tg_run_all=run-all
+  fi
+
+  working_dir=temp-job/$WORKSPACE_ID/$RUN_MODULE
+
+  # Escape / Character
+  escaped_stack_path=$(echo "$(pwd)/temp-job/" | sed s/\\//\\\\\\//g)
+  
+  # Prepare command line arguments for interactive or non-interactive usage
+  if [[ $tg_non_interactive ]]
+  then
+    export TG_DISABLE_CONFIRM=true
+    stderr_output=/dev/null
+    log_level=debug
+    no_color=-no-color
+  else
+    stderr_output=1
+    log_level=info
+  fi
+  set +e
+  # Run terragrunt
+  terragrunt $tg_run_all $tg_command \
+    --terragrunt-debug --terragrunt-working-dir $working_dir  \
+    $tg_non_interactive --terragrunt-log-level $log_level $no_color \
+    > >(tee stdout.log) \
+    2> >(tee stderr.log >&$stderr_output)
+
+  # Get Exit Code
+  tg_err=$?
+
+  # Prepare a consise error log
+  cat stderr.log | grep -vE 'locals|msg=run_cmd|msg=Detected|msg=Included|msg=\[Partial\]|msg=Executing|msg=WARN|msg=Setting|^$|msg=Generated|msg=Downloading|msg=The|msg=Are|msg=Reading|msg=Copying|msg=Debug|must wait|msg=Variables|msg=Dependency|msg=[0-9] error occurred|Cannot process|=>|msg=Stack|msg=Unable|errors occurred|sensitive|BEGIN RSA|\[0m|You may now|any changes|should now|If you ever|If you forget|- Reusing previous| \* exit status|Include this file|Terraform can guarantee|^\t\* |^ prefix' \
+    | sed s/$escaped_stack_path//g > stderr_filtered.log
+  
+  # If error occurs write filtered error into terminal (stdout)
+  [ $tg_err -ne 0 ] && cat stderr_filtered.log | grep -E 'error|Error'
+
+  set -e
+
+}
+
+# Put outputs to S3
+function put_outputs_to_s3(){
+  cd $script_dir/temp-job/$WORKSPACE_ID/self/$LAB_FOLDER-main
+  terragrunt output job_resources > outputs.txt
+  echo "Outputs for Job $WORKSPACE_ID as text"
+  cat outputs.txt
+  aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.txt s3://lab-job-handler-jobs-submitted/$WORKSPACE_ID/outputs.txt
+  
+  echo "Outputs for Job $WORKSPACE_ID as json"
+  cat outputs.txt | jq -r '.|fromjson' > outputs.json
+  cat outputs.json
+  aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.json s3://lab-job-handler-jobs-submitted/$WORKSPACE_ID/outputs.json
+}
+
+function delete_temp_files(){
+  rm -f *.log
+}
+
+function createSqsQueue(){ 
+  
+  if [ -z $cron_job ]
+  then
+   sqs_queue_name=$WORKSPACE_ID
+   message_retention_period=600
+  else
+   sqs_queue_name=cron
+   message_retention_period=600000
+  fi
+
+  if [ -z $SQS_QUEUE_URL ] || [[ $SQS_QUEUE_URL == "_" ]]
+  then
+    export SQS_QUEUE_URL=$(aws --profile $SQS_AWS_PROFILE sqs create-queue --queue-name $sqs_queue_name.fifo --attributes "{\"FifoQueue\": \"true\", \"ContentBasedDeduplication\": \"true\",\"MessageRetentionPeriod\":\"$message_retention_period\"}" | jq -r .QueueUrl)
+  fi
+  
+  if [ -z "$SQS_QUEUE_URL" ]
+  then
+    echo "SQS_QUEUE_URL Should be specified"
+    exit 1
+  fi
+
+  echo "SQS Messaging endpoind for the Job is $SQS_QUEUE_URL"
+}
+
+function send_sqs_status(){
+ # send job start sqs message
+  aws --profile $SQS_AWS_PROFILE sqs send-message --queue-url "$SQS_QUEUE_URL" --message-group-id "$SQS_MESSAGE_GROUP_ID" \
+  --message-body "$1"
+}
+
+function remove_event_rule(){
+  set +e
+  if [[ $tg_command == 'destroy' ]]
+  then
+    python3 -m runtask delete-event --name $EVENTBRIDGE_RULE
+  fi
+  set -e
+}
+
+
+
+
+
+# Main Routine
+echo $AWS_BATCH_JOB_ID Job Started
+configure_aws_profile
+createSqsQueue
+send_sqs_status "{\"message\":{\"status\":\"Job Started\",\"progress\":$INITIAL_PROGRESS,\"jobId\":\"$AWS_BATCH_JOB_ID\"}}"
+remove_event_rule
+delete_temp_files
+find_modules
+
+#terragrunt/scripts/job_complete.sh $STACK_FOLDER/$(echo $TG_MODULES_LIST | jq -r --arg i 0 '.[$i|tonumber]')
+#test_progress
+#echo "Running command $tg_command"
+
+run_terragrunt
+
+if [[ $tg_command == "apply" ]] && [[ $RUN_ALL == "True" ]]
+then
+  put_outputs_to_s3
+fi
+send_sqs_status "{\"message\":{\"status\":\"Job Completed\",\"progress\":$FINAL_PROGRESS,\"jobId\":\"$AWS_BATCH_JOB_ID\"}}"
+upload_temp_folder
+echo "End of job routine for $AWS_BATCH_JOB_ID"
+
