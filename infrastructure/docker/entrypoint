@@ -19,12 +19,6 @@ function fetch_from_gitlab(){
   unzip -o downloaded_repo.zip
   rm downloaded_repo.zip
 
-  # Rename extracted folder name to repo name
-  [ -d temp ] && rm -rf temp
-  [ ! -z $GITLAB_PROJECT_NAME ] && mv  $(ls -d $GITLAB_PROJECT_NAME*) temp
-
-  # Change working directory
-  cd temp
 
 }
 
@@ -43,6 +37,8 @@ function fetch_from_github(){
     echo Please specify REPO_TYPE environment variable to one of gihub/gitlab
     exit -1
   esac
+
+
 }
 
 # Main Routine
@@ -63,7 +59,13 @@ case $VCS_PROVIDER in
 
 esac
 
-# Run the custom deploy script
-echo "Executing $@"
-exec $@
+  # Rename extracted folder name to repo name
+  [ -d temp-job ] && rm -rf temp-job
+  mkdir temp-job
+  mv  $(ls -d $REPO_ACCOUNT-$REPO_NAME*) temp-job/$WORKSPACE_ID
+
+
+# Run the script
+echo "Running pipeline with Entrypoint arguments $@"
+exec ./run-pipeline $@
 
