@@ -2,6 +2,29 @@
 set -e
 trap 'catch $? $LINENO' ERR
 
+function import_env_vars(){
+  env_files=(".env" "override.env")
+  IFS=$'\n'
+
+  # Declare environment varibles from env files
+  for env_file in ${env_files[@]}
+  do
+    if [ -f $env_file ]
+    then
+      for env_var in $(cat $env_file)
+      do
+        first_char=${env_var:0:1}
+        if [[ ! $first_char == "#" ]]
+        then
+          export $env_var
+        fi
+      done
+    fi
+  done
+
+  IFS=$' '
+}
+
 function catch() {
   echo "Bash Script Error $1 occurred on Line $2"
   bash_error=true
@@ -17,7 +40,12 @@ script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 tg_command=${1:-$TG_COMMAND}
 cron_job=$2
 
-[ -z $AWS_BATCH_JOB_ID ] && export AWS_BATCH_JOB_ID=Dev-$(uuidgen) # For local dev environment
+if [ -z $AWS_BATCH_JOB_ID ] # For local dev environment
+then
+  export AWS_BATCH_JOB_ID=Dev-$(whoami)-$(uuidgen) 
+  import_env_vars
+fi
+
 [ -z $SQS_MESSAGE_GROUP_ID ] && export SQS_MESSAGE_GROUP_ID=$AWS_BATCH_JOB_ID
 
 # Upload Temp Folder
@@ -40,8 +68,9 @@ function upload_temp_folder(){
     aws configure set default.s3.max_concurrent_requests 10
     aws configure set default.s3.multipart_threshold 1000MB # Disable concurrency since it doesn't work in docker
     aws configure set default.s3.multipart_chunksize 100MB
-    #aws s3 cp temp-job.tar.gz s3://lab-job-handler-jobs-submitted/$WORKSPACE_ID/temp-job.tar.gz
-    aws s3api put-object --bucket lab-job-handler-jobs-submitted --key $WORKSPACE_ID/$AWS_BATCH_JOB_ID.tar.gz --body temp-job.tar.gz
+    s3_file_name=$WORKSPACE_ID/$AWS_BATCH_JOB_ID/temp-job/$AWS_BATCH_JOB_ID.tar.gz
+    #aws --profile $PIPELINE_AWS_PROFILE s3 cp temp-job.tar.gz s3://$S3_JOBS_BUCKET/$s3_file_name
+    aws --profile $PIPELINE_AWS_PROFILE s3api put-object --bucket $S3_JOBS_BUCKET --key $s3_file_name --body temp-job.tar.gz
     rm temp-job.tar.gz
   fi
 }
@@ -113,12 +142,12 @@ function test_progress(){
 function run_terragrunt(){
 
   # Prepare command line arguments
-  if [[ ! $INTERACTIVE == "True" ]]
+  if [[ ! $INTERACTIVE == "true" ]]
   then 
     tg_non_interactive=--terragrunt-non-interactive
   fi
 
-  if [[ $RUN_ALL == "True" ]]
+  if [[ $RUN_ALL == "true" ]]
   then
     tg_run_all=run-all
   fi
@@ -149,7 +178,7 @@ function run_terragrunt(){
 
   # Get Exit Code
   tg_err=$?
-
+  echo $tg_err
   # Prepare a consise error log
   cat stderr.log | grep -vE 'locals|msg=run_cmd|msg=Detected|msg=Included|msg=\[Partial\]|msg=Executing|msg=WARN|msg=Setting|^$|msg=Generated|msg=Downloading|msg=The|msg=Are|msg=Reading|msg=Copying|msg=Debug|must wait|msg=Variables|msg=Dependency|msg=[0-9] error occurred|Cannot process|=>|msg=Stack|msg=Unable|errors occurred|sensitive|BEGIN RSA|\[0m|You may now|any changes|should now|If you ever|If you forget|- Reusing previous| \* exit status|Include this file|Terraform can guarantee|^\t\* |^ prefix' \
     | sed s/$escaped_stack_path//g > stderr_filtered.log
@@ -163,16 +192,19 @@ function run_terragrunt(){
 
 # Put outputs to S3
 function put_outputs_to_s3(){
-  cd $script_dir/temp-job/$WORKSPACE_ID/self/$LAB_FOLDER-main
-  terragrunt output job_resources > outputs.txt
-  echo "Outputs for Job $WORKSPACE_ID as text"
-  cat outputs.txt
-  aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.txt s3://lab-job-handler-jobs-submitted/$WORKSPACE_ID/outputs.txt
-  
-  echo "Outputs for Job $WORKSPACE_ID as json"
-  cat outputs.txt | jq -r '.|fromjson' > outputs.json
-  cat outputs.json
-  aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.json s3://lab-job-handler-jobs-submitted/$WORKSPACE_ID/outputs.json
+  if [[ $tg_command == "apply" ]] && [[ $RUN_ALL == "true" ]] && [[ $UPLOAD_JOB_RESOURCES == "true" ]]
+  then
+    cd $script_dir/temp-job/$WORKSPACE_ID/$STACK_FOLDER/job-resources
+    terragrunt output job_resources > outputs.txt
+    echo "Outputs for Job $WORKSPACE_ID as text"
+    cat outputs.txt
+    aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.txt s3://$S3_JOBS_BUCKET/$WORKSPACE_ID/$AWS_BATCH_JOB_ID/job-resources/outputs.txt
+    
+    echo "Outputs for Job $WORKSPACE_ID as json"
+    cat outputs.txt | jq -r '.|fromjson' > outputs.json
+    cat outputs.json
+    aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.json s3://$S3_JOBS_BUCKET/$WORKSPACE_ID/$AWS_BATCH_JOB_ID/job-resources/outputs.json
+  fi
 }
 
 function delete_temp_files(){
@@ -205,9 +237,11 @@ function createSqsQueue(){
 }
 
 function send_sqs_status(){
- # send job start sqs message
-  aws --profile $SQS_AWS_PROFILE sqs send-message --queue-url "$SQS_QUEUE_URL" --message-group-id "$SQS_MESSAGE_GROUP_ID" \
-  --message-body "$1"
+  # send job start sqs message
+  if [[ $SEND_SQS_MESSAGES == "true" ]]
+  then
+    aws --profile $SQS_AWS_PROFILE sqs send-message --queue-url "$SQS_QUEUE_URL" --message-group-id "$SQS_MESSAGE_GROUP_ID" --message-body "$1"
+  fi
 }
 
 function remove_event_rule(){
@@ -219,11 +253,8 @@ function remove_event_rule(){
   set -e
 }
 
-
-
-
-
 # Main Routine
+
 echo $AWS_BATCH_JOB_ID Job Started
 configure_aws_profile
 createSqsQueue
@@ -231,17 +262,8 @@ send_sqs_status "{\"message\":{\"status\":\"Job Started\",\"progress\":$INITIAL_
 remove_event_rule
 delete_temp_files
 find_modules
-
-#terragrunt/scripts/job_complete.sh $STACK_FOLDER/$(echo $TG_MODULES_LIST | jq -r --arg i 0 '.[$i|tonumber]')
-#test_progress
-#echo "Running command $tg_command"
-
 run_terragrunt
-
-if [[ $tg_command == "apply" ]] && [[ $RUN_ALL == "True" ]]
-then
-  put_outputs_to_s3
-fi
+put_outputs_to_s3
 send_sqs_status "{\"message\":{\"status\":\"Job Completed\",\"progress\":$FINAL_PROGRESS,\"jobId\":\"$AWS_BATCH_JOB_ID\"}}"
 upload_temp_folder
 echo "End of job routine for $AWS_BATCH_JOB_ID"

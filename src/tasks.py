@@ -26,7 +26,6 @@ from boto3.s3.transfer import TransferConfig
 # Custom Libraries
 #import cloud_functions
 import library
-import hcl_parser
 
 # For dev environment
 logging.basicConfig(format="[%(levelname)s] - %(asctime)s - %(name)s - : %(message)s")
@@ -40,8 +39,10 @@ logger.setLevel(logging.ERROR)
 
 def stack_folder_name():
   workspace_id = os.getenv('WORKSPACE_ID')
+  stack_folder= os.getenv('STACK_FOLDER')
   #workspace_id = subprocess.run('echo $WORKSPACE_ID | envsubst', capture_output=True, text=True, shell=True).stdout.strip()
-  return workspace_id
+  working_dir = f'{workspace_id}/{stack_folder}'
+  return working_dir
 
 def find_groups(*args, **kwargs):
   job_folder_name='temp-job'
@@ -163,4 +164,4 @@ def delete_event(*args, **kwargs):
 
 if __name__ == '__main__':
   json_modules()
-  # apply_infrastructure()
+  

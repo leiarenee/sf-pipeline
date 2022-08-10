@@ -208,3 +208,15 @@ resource "aws_ecr_repository" "tf_docker_executor" {
     scan_on_push = true
   }
 }
+
+# S3
+
+resource "aws_s3_bucket" "sf_pipeline_jobs" {
+  bucket = "sf-pipeline-jobs"
+
+}
+
+resource "aws_s3_bucket_acl" "sf_pipeline_jobs_acl" {
+  bucket = aws_s3_bucket.sf_pipeline_jobs.id
+  acl    = "private"
+}
