@@ -17,8 +17,6 @@ script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 tg_command=${1:-$TG_COMMAND}
 cron_job=$2
 
-export STACK_FOLDER=$JOB_FOLDER
-
 [ -z $AWS_BATCH_JOB_ID ] && export AWS_BATCH_JOB_ID=Dev-$(uuidgen) # For local dev environment
 [ -z $SQS_MESSAGE_GROUP_ID ] && export SQS_MESSAGE_GROUP_ID=$AWS_BATCH_JOB_ID
 
@@ -125,7 +123,7 @@ function run_terragrunt(){
     tg_run_all=run-all
   fi
 
-  working_dir=temp-job/$WORKSPACE_ID/$RUN_MODULE
+  working_dir=temp-job/$WORKSPACE_ID/$STACK_FOLDER/$RUN_MODULE
 
   # Escape / Character
   escaped_stack_path=$(echo "$(pwd)/temp-job/" | sed s/\\//\\\\\\//g)
