@@ -41,6 +41,8 @@ module "step_function" {
     level                  = "ALL"
   }
 
+  trusted_entities = ["events.amazonaws.com"]
+
   service_integrations = {
 
     xray = {
@@ -75,10 +77,14 @@ module "step_function" {
             "Resource": "*"
         },
         {
-            "Sid": "IAMPassRoleForCloudWatchEvents",
+            "Sid": "IAMPassRole",
             "Effect": "Allow",
             "Action": "iam:PassRole",
-            "Resource": "arn:aws:iam::*:role/AWS_Events_Invoke_Targets"
+            "Resource": [
+              "arn:aws:iam::377449198785:role/AWS_Events_Invoke_Targets",
+              "arn:aws:iam::377449198785:role/service-role/Amazon_EventBridge_Invoke_Batch_Job_Queue"
+              ]
+
         },
         {
             "Sid": "AmazonSQSCustomAccess",
@@ -135,17 +141,56 @@ resource "aws_iam_role_policy_attachment" "aws_batch_service_role" {
 }
 
 resource "aws_vpc" "batch" {
-  cidr_block = "10.1.0.0/16"
+  
+  cidr_block = "172.32.0.0/16"
+  enable_dns_support="true"
+  enable_dns_hostnames="true"
+  instance_tenancy = "default"
+  tags = {
+    Name = "batch"
+  }
 }
 
-resource "aws_subnet" "batch" {
+resource "aws_subnet" "pubsubnet" {
   vpc_id     = aws_vpc.batch.id
-  cidr_block = "10.1.1.0/24"
+  cidr_block = "172.32.0.0/20"
+  map_public_ip_on_launch = true
+  tags = {
+    Name = "batch"
+  }
+}
+
+resource "aws_internet_gateway" "gw" {
+  vpc_id =  aws_vpc.batch.id
+  tags = {
+    Name = "batch"
+  }
+
+}
+
+resource "aws_route_table" "route_table" {
+  vpc_id =  aws_vpc.batch.id
+  tags = {
+    Name = "batch"
+  }
+}
+
+resource "aws_route" "rt" {
+  route_table_id            =   aws_route_table.route_table.id
+  destination_cidr_block    = "0.0.0.0/0"
+  gateway_id =  aws_internet_gateway.gw.id
+  
+}
+
+resource "aws_route_table_association" "rta" {
+  subnet_id      = aws_subnet.pubsubnet.id
+  route_table_id = aws_route_table.route_table.id
 }
 
 resource "aws_security_group" "batch" {
   name = "aws_batch_compute_environment_security_group"
   vpc_id = aws_vpc.batch.id
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -167,12 +212,15 @@ resource "aws_batch_compute_environment" "batch" {
     ]
 
     subnets = [
-      aws_subnet.batch.id
+      aws_subnet.pubsubnet.id
     ]
 
     type = "FARGATE"
+    
+    
+    
   }
-
+  
   service_role = aws_iam_role.aws_batch_service_role.arn
   type         = "MANAGED"
   depends_on   = [aws_iam_role_policy_attachment.aws_batch_service_role]
@@ -184,22 +232,18 @@ resource "aws_batch_job_queue" "tf_deployment_queue" {
   name     = "tf-deployment-job-queue"
   state    = "ENABLED"
   priority = 1
+  
   compute_environments = [
     aws_batch_compute_environment.batch.arn
   ]
+  
 }
 
-# Job Definition
-
-resource "aws_iam_role" "ecs_task_execution_role" {
-  name               = "tf_test_batch_exec_role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
-}
+# Job Definition tf_test_batch_exec_role
 
 data "aws_iam_policy_document" "assume_role_policy" {
   statement {
     actions = ["sts:AssumeRole"]
-
     principals {
       type        = "Service"
       identifiers = ["ecs-tasks.amazonaws.com"]
@@ -207,18 +251,51 @@ data "aws_iam_policy_document" "assume_role_policy" {
   }
 }
 
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name               = "tf_test_batch_exec_role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
+}
+
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# Define extra policies here
+data "aws_iam_policy_document" "batch_execution_policy_document" {
+    statement {
+      sid = "SecretsManager"
+      actions = [
+        "secretsmanager:GetSecretValue",
+        "kms:Decrypt"
+      ]
+      resources = [
+        "arn:aws:secretsmanager:*:377449198785:secret:*",
+        "arn:aws:kms:*:377449198785:key/*"
+      ]
+  }
+}
+
+resource "aws_iam_policy" "batch_execution_policy" {
+  name = "batch-custom-execution-policy"
+  policy = data.aws_iam_policy_document.batch_execution_policy_document.json
+}
+
+resource "aws_iam_role_policy_attachment" "batch_execution_policy_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.batch_execution_policy.arn
+}
+
+# Job Definition
+
 resource "aws_batch_job_definition" "tf_deployment_job_definition" {
   name = "tf_pipeline_job_definition"
   type = "container"
+  
   platform_capabilities = [
     "FARGATE",
   ]
-
+  
   container_properties = <<CONTAINER_PROPERTIES
 {
   "command": ["echo", "test"],
@@ -226,11 +303,29 @@ resource "aws_batch_job_definition" "tf_deployment_job_definition" {
   "fargatePlatformConfiguration": {
     "platformVersion": "LATEST"
   },
+  "networkConfiguration":{
+    "assignPublicIp" : "ENABLED"
+  },
   "resourceRequirements": [
-    {"type": "VCPU", "value": "0.25"},
-    {"type": "MEMORY", "value": "512"}
+    {"type": "VCPU", "value": "1.0"},
+    {"type": "MEMORY", "value": "2048"}
   ],
-  "executionRoleArn": "${aws_iam_role.ecs_task_execution_role.arn}"
+  "executionRoleArn": "${aws_iam_role.ecs_task_execution_role.arn}",
+  "secrets": [
+    {
+      "name": "PIPELINE_AWS_ACCESS",
+      "valueFrom": "arn:aws:secretsmanager:eu-west-1:377449198785:secret:PIPELINE_AWS_ACCESS-Gs27T7"
+    },
+    {
+      "name": "TARGET_AWS_ACCESS",
+      "valueFrom": "arn:aws:secretsmanager:eu-west-1:377449198785:secret:TARGET_AWS_ACCESS-BnEnwa"
+    },
+    {
+      "name": "REPO_ACCESS_TOKEN",
+      "valueFrom": "arn:aws:secretsmanager:eu-west-1:377449198785:secret:REPO_ACCESS_TOKEN-aIMqzG"
+    }
+    ]
+    
 }
 CONTAINER_PROPERTIES
 }

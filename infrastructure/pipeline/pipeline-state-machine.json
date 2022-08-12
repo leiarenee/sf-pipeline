@@ -191,7 +191,7 @@
 					},
 					{
 						"Name": "BUCKET_SUFFIX",
-						"Value": "sf-cloud-pipeline"
+						"Value": "sf-cloud"
 					},
 					{
 						"Name": "DOMAIN",
@@ -279,12 +279,12 @@
 			"Choices": [
 				{
 					"Variable": "$.workflow",
-					"StringEquals": "createLab",
+					"StringEquals": "applyInfra",
 					"Next": "Apply SubmitJob"
 				},
 				{
 					"Variable": "$.workflow",
-					"StringEquals": "destroyLab",
+					"StringEquals": "destroyInfra",
 					"Next": "Destroy SubmitJob"
 				},
 				{
@@ -555,7 +555,7 @@
 						"RoleArn.$": "$.role.eventBridge",
 						"BatchParameters": {
 							"JobDefinition.$": "$.job.definition",
-							"JobName.$": "$.session.jobName"
+							"JobName.$": "$.session.cronName"
 						},
 						"Input": {
 							"ContainerOverrides": {
