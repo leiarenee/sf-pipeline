@@ -4,9 +4,6 @@
 user=$(echo $REPO_ACCESS_TOKEN | jq -r .user)
 token=$(echo $REPO_ACCESS_TOKEN | jq -r .token)
 
-echo $user
-echo $token
-
 function fetch_from_gitlab(){
   echo Fetching repository from gitlab
 
@@ -62,7 +59,12 @@ esac
   # Rename extracted folder name to repo name
   [ -d temp-job ] && rm -rf temp-job
   mkdir temp-job
-  mv  $(ls -d $REPO_ACCOUNT-$REPO_NAME*) temp-job/$WORKSPACE_ID
+  dir_name=$(ls -d $REPO_ACCOUNT-$REPO_NAME*)
+  echo downloaded directory name is $dir_name
+  commit=$(echo $dir_name | sed s/$REPO_ACCOUNT-$REPO_NAME-//g)
+  echo Commit Hash is $commit
+  export COMMIT_HASH=$commit
+  mv  $dir_name temp-job/$WORKSPACE_ID
 
 
 # Run the script

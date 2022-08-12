@@ -10,18 +10,31 @@ provider "aws" {
 }
 
 locals {
-  definition_template = file("pipeline-state-machine.json")
+  
+  step_functions_name = "Pipeline-State-Machine-${random_pet.this.id}"
+  lambda_source_path = "lambda-source"
+  lambda_short_hash = substr(data.archive_file.lambda_source.output_sha, 0, 5)
+  template_vars = {
+    LAMBDA_FUNCTION_ARN = module.lambda_function_from_container_image.lambda_function_arn
+  }
+  sf_definition_template = templatefile("pipeline-state-machine.json", local.template_vars)
 }
+
+resource "random_pet" "this" {
+  length = 2
+}
+
+# STEP Functions
 
 module "step_function" {
   source  = "terraform-aws-modules/step-functions/aws"
   version = "2.7.0"
 
-  name = "Pipeline-State-Machine-${random_pet.this.id}"
+  name = local.step_functions_name
 
   type = "standard"
 
-  definition = local.definition_template
+  definition = local.sf_definition_template
 
   logging_configuration = {
     include_execution_data = true
@@ -38,6 +51,11 @@ module "step_function" {
       stepfunction = ["arn:aws:states:eu-west-1:377449198785:stateMachine:Pipeline-State-Machine-${random_pet.this.id}"]
       events = true
 
+    }
+
+    lambda = {
+      lambda = [
+        module.lambda_function_from_container_image.lambda_function_arn]
     }
 
   }
@@ -61,15 +79,34 @@ module "step_function" {
             "Effect": "Allow",
             "Action": "iam:PassRole",
             "Resource": "arn:aws:iam::*:role/AWS_Events_Invoke_Targets"
+        },
+        {
+            "Sid": "AmazonSQSCustomAccess",
+            "Effect": "Allow",
+              "Action": [
+              "sqs:ReceiveMessage",
+              "sqs:SendMessage",
+              "sqs:DeleteMessage",
+              "sqs:CreateQueue",
+              "sqs:DeleteMessage",
+              "sqs:GetQueueAttributes",
+              "logs:CreateLogGroup",
+              "logs:CreateLogStream",
+              "logs:PutLogEvents"
+              ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AWSBatchServiceEventTargetRole",
+            "Effect": "Allow",
+            "Action": [
+                "batch:SubmitJob"
+            ],
+            "Resource": "*"
         }
     ]
 }
 EOF
-}
-
-
-resource "random_pet" "this" {
-  length = 2
 }
 
 # AWS Batch on Fargate
@@ -219,4 +256,75 @@ resource "aws_s3_bucket" "sf_pipeline_jobs" {
 resource "aws_s3_bucket_acl" "sf_pipeline_jobs_acl" {
   bucket = aws_s3_bucket.sf_pipeline_jobs.id
   acl    = "private"
+}
+
+# LAMBDA (Containerised)
+
+data "aws_region" "current" {}
+
+data "aws_caller_identity" "this" {}
+
+data "aws_ecr_authorization_token" "token" {}
+
+provider "docker" {
+  registry_auth {
+    address  = format("%v.dkr.ecr.%v.amazonaws.com", data.aws_caller_identity.this.account_id, data.aws_region.current.name)
+    username = data.aws_ecr_authorization_token.token.user_name
+    password = data.aws_ecr_authorization_token.token.password
+  }
+}
+
+module "docker_image" {
+  #source = "terraform-aws-modules/lambda/aws//modules/docker-build"
+  #version = "3.3.1"
+  source = "./docker-build"
+  platform = "linux/x86_64"
+  create_ecr_repo = true
+  ecr_repo        = "lambda-step-functions"
+  ecr_repo_lifecycle_policy = jsonencode({
+    "rules" : [
+      {
+        "rulePriority" : 1,
+        "description" : "Keep only the last 10 images",
+        "selection" : {
+          "tagStatus" : "any",
+          "countType" : "imageCountMoreThan",
+          "countNumber" : 10
+        },
+        "action" : {
+          "type" : "expire"
+        }
+      }
+    ]
+  })
+
+  image_tag   = local.lambda_short_hash
+  source_path = local.lambda_source_path
+  build_args = {
+    FOO = "bar"
+  }
+}
+
+module "lambda_function_from_container_image" {
+  source  = "terraform-aws-modules/lambda/aws"
+  version = "3.3.1"
+
+  function_name = "lambda-step-functions"
+  description   = "Containerised Lambda function for Step Functions"
+
+  create_package = false
+
+  ##################
+  # Container Image
+  ##################
+  image_uri    = module.docker_image.image_uri
+  package_type = "Image"
+}
+
+# For source hash calculation 
+data "archive_file" "lambda_source" {
+  type        = "zip"
+  source_dir = local.lambda_source_path
+  output_path = "lambda-source.zip"
+  excludes    = split("\n", file("${local.lambda_source_path}/.dockerignore"))
 }
