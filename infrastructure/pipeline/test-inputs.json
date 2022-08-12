@@ -1,5 +1,5 @@
 {
-	"workflow": "validate",
+	"workflow": "applyInfra",
   "workspace":{
     "workspaceId": "testing-environment",
     "workspaceName": "Testing Environment"
@@ -27,8 +27,7 @@
 		"runAll": "true",
 		"tgCommand": "validate",
 		"runModule": "",
-		"stackFolder": "test",
-		"bucketSuffix": "sf-pipeline"
+		"stackFolder": "test"
 	},
 	"replace": {
 		"parameters": {
@@ -49,11 +48,11 @@
 		"sendSqsMessages": "true"
 	},
 	"job": {
-		"definition": "arn:aws:batch:eu-west-1:377449198785:job-definition/tf_pipeline_job_definition:2",
+		"definition": "arn:aws:batch:eu-west-1:377449198785:job-definition/tf_pipeline_job_definition",
 		"queue": "arn:aws:batch:eu-west-1:377449198785:job-queue/tf-deployment-job-queue"
 	},
 	"role": {
-		"eventBridge": "arn:aws:iam::105931657846:role/service-role/Amazon_EventBridge_Invoke_Batch_Job_Queue"
+		"eventBridge": "arn:aws:iam::377449198785:role/service-role/Amazon_EventBridge_Invoke_Batch_Job_Queue"
 	},
 	"ttl": {
 		"duration": {
