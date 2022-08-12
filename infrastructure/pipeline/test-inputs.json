@@ -1,0 +1,63 @@
+{
+	"workflow": "validate",
+  "workspace":{
+    "workspaceId": "testing-environment",
+    "workspaceName": "Testing Environment"
+  },
+	"repository": {
+		"vcsProvider": "github",
+    "repoAccount": "leiarenee",
+		"repoName": "sf-infra",
+		"repoReference": "main",
+		"repoType": "public",
+		"userName": "Test User",
+		"userEmail": "test@user.com"
+	},
+	"aws": {
+		"region": "eu-west-1",
+		"targetAwsAccountName": "testing",
+		"targetAwsAccountId": "553688522943",
+		"targetAwsProfile": "leia-testing",
+		"pipelineAwsProfile": "leia-pipeline",
+		"pipelineAwsAccountId": "377449198785",
+		"ecrAwsAccountId": "377449198785",
+		"sqsAwsProfile": "leia-pipeline"
+	},
+	"terragrunt": {
+		"runAll": "true",
+		"tgCommand": "validate",
+		"runModule": "",
+		"stackFolder": "test",
+		"bucketSuffix": "sf-pipeline"
+	},
+	"replace": {
+		"parameters": {
+			"DOMAIN": "testing.dev.leiarenee.io",
+			"DNS_ZONE_ID": "Z0890541BQO7OVB8F6WL",
+			"CERTIFICATE": "arn:aws:acm:eu-west-1:377449198785:certificate/431ea958-254b-4f8c-995f-a311559fcce5",
+			"CLUSTER": "my-testing-k8s"
+		}
+	},
+	"pipeline": {
+		"initialProgress": "10",
+		"modulesFinalProgress": "90",
+		"finalProgress": "95",
+		"s3JobsBucket": "sf-pipeline-jobs",
+		"eventBridgeRule": "SF-Cron",
+		"uploadWorkFolder": "always",
+		"uploadJobResources": "true",
+		"sendSqsMessages": "true"
+	},
+	"job": {
+		"definition": "arn:aws:batch:eu-west-1:377449198785:job-definition/tf_pipeline_job_definition:2",
+		"queue": "arn:aws:batch:eu-west-1:377449198785:job-queue/tf-deployment-job-queue"
+	},
+	"role": {
+		"eventBridge": "arn:aws:iam::105931657846:role/service-role/Amazon_EventBridge_Invoke_Batch_Job_Queue"
+	},
+	"ttl": {
+		"duration": {
+			"minutes": 10
+		}
+	}
+}

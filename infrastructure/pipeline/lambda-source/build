@@ -1,0 +1,47 @@
+#!/bin/bash
+image_name=lambda-step-functions
+region=${AWS_REGION:-"eu-west-1"}
+set -e
+caller_identity=$(aws sts get-caller-identity)
+account_id=$(echo $caller_identity | jq -r .Account)
+echo 
+echo caller identity $caller_identity
+echo AWS Account is $account_id
+echo AWS Region is $region
+
+echo Logging into AWS public repository
+aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+
+echo Building $image_name
+docker buildx build . --platform linux/x86_64 -t $image_name
+# docker build . --platform linux/x86_64 -t $image_name
+
+if [[ $1 == "run" ]]
+then
+  # if override.env does not exist then copy .env as override.env
+  [ ! -f override.env ] && cp .env override.env
+
+  # Run Docker
+  docker run --platform linux/x86_64 --env-file .env --env-file override.env $image_name $2 #Command override
+  # docker run --env-file .env --env-file override.env $image_name
+fi
+
+if [[ $1 == "push" ]]
+then
+  repository=$account_id.dkr.ecr.$region.amazonaws.com
+  remote_tag=$repository/$image_name
+  
+  # Login
+  echo Logging into $repository
+  aws ecr get-login-password | docker login --username AWS --password-stdin $account_id.dkr.ecr.$region.amazonaws.com
+  
+  # Tag Image
+  docker tag $image_name $account_id.dkr.ecr.$region.amazonaws.com/$image_name
+  
+  # Push
+  echo Pushing $remote_tag
+  docker push $account_id.dkr.ecr.$region.amazonaws.com/$image_name
+fi
+
+# Enter shell
+# docker run -it --entrypoint=bash --platform linux/x86_64 $image_name
