@@ -83,6 +83,14 @@ function upload_temp_folder(){
   fi
 }
 
+# Fetch Secrets from secret manager
+function fetch_secret {
+  echo -e "${GREEN}- Feching Secret $1 from secret manager ${NC}";echo
+  secret_value=$(aws secretsmanager get-secret-value --secret-id $2)
+  echo "Successfully fetched $1";
+  export $1=$(echo $secret_value | jq .SecretString | sed s/[\\]//g  | sed s/^\"//g | sed s/\}\"/\}/g )
+}
+
 # Configure aws profile
 function configure_aws_profile(){
   pipeline_aws_access_key_id=$(echo $PIPELINE_AWS_ACCESS | jq -r .aws_access_key_id)

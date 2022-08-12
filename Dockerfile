@@ -30,9 +30,14 @@ USER app
 WORKDIR /home/app
 RUN mkdir .aws && touch .aws/credentials
 RUN mkdir .terraform.d && mkdir .terraform.d/plugin-cache
+
+# Environment variables
 ENV PYTHONPATH=src
 
 # Copy Files
+COPY src src
 COPY entrypoint .
+COPY run-pipeline .
 
 ENTRYPOINT [ "./entrypoint" ]
+CMD ["validate"]
