@@ -2,6 +2,19 @@
 set -e
 trap 'catch $? $LINENO' ERR
 
+
+
+function catch() {
+  echo "Bash Script Error $1 occurred on Line $2"
+  bash_error=true
+  if [[ $UPLOAD_WORKFOLDER == "always" ]] || [[ $UPLOAD_WORKFOLDER == "onerror" && $tg_err -ne 0 ]]
+  then
+    set +e
+    upload_temp_folder
+    set -e
+  fi
+}
+
 function import_env_vars(){
   env_files=(".env" "override.env")
   IFS=$'\n'
@@ -25,28 +38,23 @@ function import_env_vars(){
   IFS=$' '
 }
 
-function catch() {
-  echo "Bash Script Error $1 occurred on Line $2"
-  bash_error=true
-  if [[ $UPLOAD_WORKFOLDER == "always" ]] || [[ $UPLOAD_WORKFOLDER == "onerror" && $tg_err -ne 0 ]]
+function job_definitions(){
+  script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+  tg_command=${1:-$TG_COMMAND}
+  cron_job=$2
+
+  if [ -z $AWS_BATCH_JOB_ID ] # For local dev environment
   then
-    set +e
-    upload_temp_folder
-    set -e
+    uuid=$(uuidgen)
+    export SF_EXECUTION_NAME=Dev-$(whoami)-$uuid
+    export AWS_BATCH_JOB_ID=Process-$$
+    import_env_vars
   fi
+
+  [ -z $SQS_MESSAGE_GROUP_ID ] && export SQS_MESSAGE_GROUP_ID=$AWS_BATCH_JOB_ID
+
+  job_name=$WORKSPACE_ID/$SF_EXECUTION_NAME/$AWS_BATCH_JOB_ID
 }
-
-script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-tg_command=${1:-$TG_COMMAND}
-cron_job=$2
-
-if [ -z $AWS_BATCH_JOB_ID ] # For local dev environment
-then
-  export AWS_BATCH_JOB_ID=Dev-$(whoami)-$(uuidgen) 
-  import_env_vars
-fi
-
-[ -z $SQS_MESSAGE_GROUP_ID ] && export SQS_MESSAGE_GROUP_ID=$AWS_BATCH_JOB_ID
 
 # Upload Temp Folder
 function upload_temp_folder(){
@@ -68,11 +76,19 @@ function upload_temp_folder(){
     aws configure set default.s3.max_concurrent_requests 10
     aws configure set default.s3.multipart_threshold 1000MB # Disable concurrency since it doesn't work in docker
     aws configure set default.s3.multipart_chunksize 100MB
-    s3_file_name=$WORKSPACE_ID/$AWS_BATCH_JOB_ID/temp-job/$AWS_BATCH_JOB_ID.tar.gz
+    s3_file_name="$job_name/temp-job/$AWS_BATCH_JOB_ID.tar.gz"
     #aws --profile $PIPELINE_AWS_PROFILE s3 cp temp-job.tar.gz s3://$S3_JOBS_BUCKET/$s3_file_name
     aws --profile $PIPELINE_AWS_PROFILE s3api put-object --bucket $S3_JOBS_BUCKET --key $s3_file_name --body temp-job.tar.gz
     rm temp-job.tar.gz
   fi
+}
+
+# Fetch Secrets from secret manager
+function fetch_secret {
+  echo -e "${GREEN}- Feching Secret $1 from secret manager ${NC}";echo
+  secret_value=$(aws secretsmanager get-secret-value --secret-id $2)
+  echo "Successfully fetched $1";
+  export $1=$(echo $secret_value | jq .SecretString | sed s/[\\]//g  | sed s/^\"//g | sed s/\}\"/\}/g )
 }
 
 # Configure aws profile
@@ -194,16 +210,17 @@ function run_terragrunt(){
 function put_outputs_to_s3(){
   if [[ $tg_command == "apply" ]] && [[ $RUN_ALL == "true" ]] && [[ $UPLOAD_JOB_RESOURCES == "true" ]]
   then
+    s3_parent_key="$S3_JOBS_BUCKET/$job_name"
     cd $script_dir/temp-job/$WORKSPACE_ID/$STACK_FOLDER/job-resources
     terragrunt output job_resources > outputs.txt
-    echo "Outputs for Job $WORKSPACE_ID as text"
+    echo "Outputs for Job $job_name as text"
     cat outputs.txt
-    aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.txt s3://$S3_JOBS_BUCKET/$WORKSPACE_ID/$AWS_BATCH_JOB_ID/job-resources/outputs.txt
+    aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.txt s3://$s3_parent_key/job-resources/outputs.txt
     
-    echo "Outputs for Job $WORKSPACE_ID as json"
+    echo "Outputs for Job $job_name as json"
     cat outputs.txt | jq -r '.|fromjson' > outputs.json
     cat outputs.json
-    aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.json s3://$S3_JOBS_BUCKET/$WORKSPACE_ID/$AWS_BATCH_JOB_ID/job-resources/outputs.json
+    aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.json s3://$s3_parent_key/job-resources/outputs.json
   fi
 }
 
@@ -212,28 +229,31 @@ function delete_temp_files(){
 }
 
 function createSqsQueue(){ 
-  
-  if [ -z $cron_job ]
+  if [[ $SEND_SQS_MESSAGES == "true" ]]
   then
-   sqs_queue_name=$WORKSPACE_ID
-   message_retention_period=600
-  else
-   sqs_queue_name=cron
-   message_retention_period=600000
-  fi
 
-  if [ -z $SQS_QUEUE_URL ] || [[ $SQS_QUEUE_URL == "_" ]]
-  then
-    export SQS_QUEUE_URL=$(aws --profile $SQS_AWS_PROFILE sqs create-queue --queue-name $sqs_queue_name.fifo --attributes "{\"FifoQueue\": \"true\", \"ContentBasedDeduplication\": \"true\",\"MessageRetentionPeriod\":\"$message_retention_period\"}" | jq -r .QueueUrl)
-  fi
-  
-  if [ -z "$SQS_QUEUE_URL" ]
-  then
-    echo "SQS_QUEUE_URL Should be specified"
-    exit 1
-  fi
+    if [ -z $cron_job ]
+    then
+      sqs_queue_name=$SF_EXECUTION_NAME
+      message_retention_period=600
+    else
+      sqs_queue_name=cron-job
+      message_retention_period=600000
+    fi
 
-  echo "SQS Messaging endpoind for the Job is $SQS_QUEUE_URL"
+    if [ -z $SQS_QUEUE_URL ] || [[ $SQS_QUEUE_URL == "_" ]]
+    then
+      export SQS_QUEUE_URL=$(aws --profile $SQS_AWS_PROFILE sqs create-queue --queue-name $sqs_queue_name.fifo --attributes "{\"FifoQueue\": \"true\", \"ContentBasedDeduplication\": \"true\",\"MessageRetentionPeriod\":\"$message_retention_period\"}" | jq -r .QueueUrl)
+    fi
+    
+    if [ -z "$SQS_QUEUE_URL" ]
+    then
+      echo "SQS_QUEUE_URL could not be evaluted."
+      exit 1
+    fi
+
+    echo "SQS Messaging endpoind for the Job is $SQS_QUEUE_URL"
+  fi
 }
 
 function send_sqs_status(){
@@ -254,8 +274,8 @@ function remove_event_rule(){
 }
 
 # Main Routine
-
-echo $AWS_BATCH_JOB_ID Job Started
+job_definitions $@
+echo $job_name Job Started
 configure_aws_profile
 createSqsQueue
 send_sqs_status "{\"message\":{\"status\":\"Job Started\",\"progress\":$INITIAL_PROGRESS,\"jobId\":\"$AWS_BATCH_JOB_ID\"}}"

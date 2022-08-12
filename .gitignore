@@ -41,3 +41,5 @@ results.txt
 *.tar
 *.tar.gz
 temp
+*.zip
+
