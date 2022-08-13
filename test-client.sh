@@ -2,7 +2,7 @@
 set -e
 
 function import_env_vars(){
-  env_files=(".env" "override.env")
+  env_files=(".env")
   IFS=$'\n'
 
   # Declare environment varibles from env files
