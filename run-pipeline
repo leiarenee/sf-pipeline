@@ -373,7 +373,6 @@ function send_progress(){
 }
 
 # Main Routine
-clear
 echo "Running pipeline with Entrypoint arguments $@";echo 
 job_definitions $@
 echo $job_name Job Started
