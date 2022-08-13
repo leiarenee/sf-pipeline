@@ -1,0 +1,62 @@
+{
+	"workflow": "${TG_COMMAND}",
+  "workspace":{
+    "workspaceId": "${WORKSPACE_ID}",
+    "workspaceName": "${WORKSPACE_NAME}"
+  },
+	"repository": {
+		"vcsProvider": "${VCS_PROVIDER}",
+    "repoAccount": "${REPO_ACCOUNT}",
+		"repoName": "${REPO_NAME}",
+		"repoReference": "${REPO_REFERENCE}",
+		"repoType": "${REPO_TYPE}",
+		"userName": "${USER_NAME}",
+		"userEmail": "${USER_EMAIL}"
+	},
+	"aws": {
+		"region": "${AWS_REGION}",
+		"targetAwsAccountName": "{TARGET_AWS_ACCOUNT_NAME}",
+		"targetAwsAccountId": "${TARGET_AWS_ACCOUNT_ID}",
+		"targetAwsProfile": "${TARGET_AWS_PROFILE}",
+		"pipelineAwsProfile": "${PIPELINE_AWS_PROFILE}",
+		"pipelineAwsAccountId": "${PIPELINE_AWS_ACCOUNT_ID}",
+		"ecrAwsAccountId": "${ECR_AWS_ACCOUNT_ID}",
+		"sqsAwsProfile": "${SQS_AWS_PROFILE}"
+	},
+	"terragrunt": {
+		"runAll": "${RUN_ALL}",
+		"tgCommand": "${TG_COMMAND}",
+		"runModule": "${RUN_MODULE}",
+		"stackFolder": "${STACK_FOLDER}"
+	},
+	"replace": {
+		"parameters": {
+			"DOMAIN": "${DOMAIN}",
+			"DNS_ZONE_ID": "${DNS_ZONE_ID}",
+			"CERTIFICATE": "${CERTIFICATE}",
+			"CLUSTER": "${CLUSTER}"
+		}
+	},
+	"pipeline": {
+		"initialProgress": "${INITIAL_PROGRESS}",
+		"modulesFinalProgress": "${MODULES_FINAL_PROGRESS}",
+		"finalProgress": "${FINAL_PROGRESS}",
+		"s3JobsBucket": "${S3_JOBS_BUCKET}",
+		"eventBridgeRule": "${EVENTBRIDGE_RULE}",
+		"uploadWorkFolder": "${UPLOAD_WORKFOLDER}",
+		"uploadJobResources": "${UPLOAD_JOB_RESOURCES}",
+		"sendSqsMessages": "${SEND_SQS_MESSAGES}"
+	},
+	"job": {
+		"definition": "${JOB_DEFINITION}",
+		"queue": "${JOB_QUEUE}"
+	},
+	"role": {
+		"eventBridge": "${ROLE_EVENTBRIDGE}"
+	},
+	"ttl": {
+		"duration": {
+			"minutes": "${TTL_DURATION_MINUTES}"
+		}
+	}
+}

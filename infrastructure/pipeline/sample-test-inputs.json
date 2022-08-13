@@ -1,7 +1,7 @@
 {
 	"workflow": "applyInfra",
   "workspace":{
-    "workspaceId": "testing-environment",
+    "workspaceId": "testing",
     "workspaceName": "Testing Environment"
   },
 	"repository": {

@@ -2,8 +2,6 @@
 set -e
 trap 'catch $? $LINENO' ERR
 
-
-
 function catch() {
   echo "Bash Script Error $1 occurred on Line $2"
   bash_error=true
@@ -30,6 +28,7 @@ function import_env_vars(){
         if [[ ! $first_char == "#" ]]
         then
           export $env_var
+          
         fi
       done
     fi
@@ -54,6 +53,89 @@ function job_definitions(){
   [ -z $SQS_MESSAGE_GROUP_ID ] && export SQS_MESSAGE_GROUP_ID=$AWS_BATCH_JOB_ID
 
   job_name=$WORKSPACE_ID/$SF_EXECUTION_NAME/$AWS_BATCH_JOB_ID
+}
+
+function fetch_from_gitlab(){
+  echo
+  echo Fetching repository from gitlab
+  echo
+
+  # Download repo from gitlab api, project version can be version tag (ex v0.1.1) or sha commit or branch name
+  curl --header "PRIVATE-TOKEN: $token" \
+    "https://gitlab.com/api/v4/projects/$GITLAB_PROJECT_ID/repository/archive.zip?sha=$GITLAB_PROJECT_VERSION" \
+    -o downloaded_repo.zip
+
+  # Unzip the zipped file
+  unzip -o downloaded_repo.zip
+  rm downloaded_repo.zip
+
+}
+
+function fetch_from_github(){
+  echo
+  echo Fetching repository from Github, Ref:$REPO_REFERENCE
+  echo
+
+  #repo_download_link=https://api.github.com/repos/${REPO_ACCOUNT}/${REPO_NAME}/tarball/${REPO_REFERENCE}
+  # redirects here
+  repo_download_link=https://codeload.github.com/${REPO_ACCOUNT}/${REPO_NAME}/legacy.tar.gz/refs/heads/${REPO_REFERENCE}
+
+  [[ $REPO_TYPE == "private" ]] && token_header=--header\="Authorization:token $token" 
+
+  wget $token_header --header=Accept:application/vnd.github.v3.raw -O - $repo_download_link | tar xz
+
+}
+
+# Fetch Repo
+function fetch_repository(){
+
+  # Get secrets from envvars
+  user=$(echo $REPO_ACCESS_TOKEN | jq -r .user)
+  token=$(echo $REPO_ACCESS_TOKEN | jq -r .token)
+
+  case $VCS_PROVIDER in
+
+    gitlab )
+      fetch_from_gitlab
+    ;;
+
+    github )
+      fetch_from_github
+    ;;
+
+    *)
+      echo "Unknown REPO_TYPE, Use One of GITHUB/GITLAB"
+      exit -1
+    ;;
+
+  esac
+
+  # Rename extracted folder name to repo name
+  [ -d temp-job ] && rm -rf temp-job
+  mkdir temp-job
+  dir_name=$(ls -d $REPO_ACCOUNT-$REPO_NAME*)
+  echo Downloaded directory name : $dir_name
+  commit=$(echo $dir_name | sed s/$REPO_ACCOUNT-$REPO_NAME-//g)
+  echo Commit Hash : $commit
+  export COMMIT_HASH=$commit
+  mv  $dir_name temp-job/$WORKSPACE_ID
+  echo
+}
+
+function copy_local_app_repo(){
+  [ -d temp-job ] && rm -rf temp-job
+  mkdir temp-job
+  mkdir temp-job/$WORKSPACE_ID
+  cp -R $LOCAL_APP_REPO/* temp-job/$WORKSPACE_ID
+}
+
+function fetch_app_repo(){
+  if [[ $USE_LOCAL_REPO == "true" ]]
+  then 
+    copy_local_app_repo
+  else
+    fetch_repository
+  fi
 }
 
 # Upload Temp Folder
@@ -100,10 +182,10 @@ function configure_aws_profile(){
   if [ ! $(cat $HOME/.aws/credentials | grep default) ]
   then
     cat <<EOF >> $HOME/.aws/credentials
-[default]
-aws_access_key_id = $pipeline_aws_access_key_id
-aws_secret_access_key = $pipeline_aws_secret_access_key
-region = eu-west-1
+    [default]
+    aws_access_key_id = $pipeline_aws_access_key_id
+    aws_secret_access_key = $pipeline_aws_secret_access_key
+    region = $PIPELINE_AWS_REGION
 EOF
   fi
 
@@ -111,13 +193,12 @@ EOF
   if [ ! $(cat $HOME/.aws/credentials | grep $PIPELINE_AWS_PROFILE) ]
   then
     cat <<EOF >> $HOME/.aws/credentials
-[$PIPELINE_AWS_PROFILE]
-aws_access_key_id = $pipeline_aws_access_key_id
-aws_secret_access_key = $pipeline_aws_secret_access_key
-region = eu-west-1
+    [$PIPELINE_AWS_PROFILE]
+    aws_access_key_id = $pipeline_aws_access_key_id
+    aws_secret_access_key = $pipeline_aws_secret_access_key
+    region = $PIPELINE_AWS_REGION
 EOF
   fi
-
 
   # Target account
   aws_access_key_id=$(echo $TARGET_AWS_ACCESS | jq -r .aws_access_key_id)
@@ -125,23 +206,28 @@ EOF
   if [ ! $(cat $HOME/.aws/credentials | grep $TARGET_AWS_PROFILE) ]
   then
     cat <<EOF >> $HOME/.aws/credentials
-[$TARGET_AWS_PROFILE]
-aws_access_key_id = $aws_access_key_id
-aws_secret_access_key = $aws_secret_access_key
-region = eu-west-1
+    [$TARGET_AWS_PROFILE]
+    aws_access_key_id = $aws_access_key_id
+    aws_secret_access_key = $aws_secret_access_key
+    region = $TARGET_AWS_REGION
 EOF
   fi
 }
 
 
 function find_modules(){
-  echo Modules List
-  export TG_MODULES_LIST=$(python3 -m runtask json-modules)
-  #export TG_MODULES_LIST=$(cat src/json/modules_list.json | jq .modules)
-  echo $TG_MODULES_LIST | jq .
+  echo Getting Modules List...
+  #tg_modules=$(python3 -m runtask json-modules)
+  tg_groups=$(python3 -m runtask json-groups)
+  export TG_MODULES_LIST=$(echo $tg_groups | jq 'values[][]' | jq . --slurp -c)
+  echo "Terragrunt will run the modules in the following order."
+  echo $tg_groups | jq .
   export TG_MODULES_COMPLETED=[]
   export TG_MODULES_COUNT=$(echo $TG_MODULES_LIST | jq length)
+  echo
   echo Total number of modules to be processed: $TG_MODULES_COUNT
+  echo
+  sleep 1
   
 }
 
@@ -158,14 +244,11 @@ function test_progress(){
 function run_terragrunt(){
 
   # Prepare command line arguments
-  if [[ ! $INTERACTIVE == "true" ]]
-  then 
-    tg_non_interactive=--terragrunt-non-interactive
-  fi
 
   if [[ $RUN_ALL == "true" ]]
   then
     tg_run_all=run-all
+    tg_non_interactive=--terragrunt-non-interactive
   fi
 
   working_dir=temp-job/$WORKSPACE_ID/$STACK_FOLDER/$RUN_MODULE
@@ -174,7 +257,7 @@ function run_terragrunt(){
   escaped_stack_path=$(echo "$(pwd)/temp-job/" | sed s/\\//\\\\\\//g)
   
   # Prepare command line arguments for interactive or non-interactive usage
-  if [[ $tg_non_interactive ]]
+  if [[ ! $INTERACTIVE == "true" ]]
   then
     export TG_DISABLE_CONFIRM=true
     stderr_output=/dev/null
@@ -182,7 +265,7 @@ function run_terragrunt(){
     no_color=-no-color
   else
     stderr_output=1
-    log_level=info
+    log_level=warn
   fi
   set +e
   # Run terragrunt
@@ -190,11 +273,12 @@ function run_terragrunt(){
     --terragrunt-debug --terragrunt-working-dir $working_dir  \
     $tg_non_interactive --terragrunt-log-level $log_level $no_color \
     > >(tee stdout.log) \
-    2> >(tee stderr.log >&$stderr_output)
+    2> >(tee stderr.log >&$stderr_output) 
 
   # Get Exit Code
-  tg_err=$?
-  echo $tg_err
+  export tg_err=$?
+  [ $tg_err -ne 0 ] && echo Terragrunt Exitcode: $tg_err
+
   # Prepare a consise error log
   cat stderr.log | grep -vE 'locals|msg=run_cmd|msg=Detected|msg=Included|msg=\[Partial\]|msg=Executing|msg=WARN|msg=Setting|^$|msg=Generated|msg=Downloading|msg=The|msg=Are|msg=Reading|msg=Copying|msg=Debug|must wait|msg=Variables|msg=Dependency|msg=[0-9] error occurred|Cannot process|=>|msg=Stack|msg=Unable|errors occurred|sensitive|BEGIN RSA|\[0m|You may now|any changes|should now|If you ever|If you forget|- Reusing previous| \* exit status|Include this file|Terraform can guarantee|^\t\* |^ prefix' \
     | sed s/$escaped_stack_path//g > stderr_filtered.log
@@ -208,19 +292,30 @@ function run_terragrunt(){
 
 # Put outputs to S3
 function put_outputs_to_s3(){
-  if [[ $tg_command == "apply" ]] && [[ $RUN_ALL == "true" ]] && [[ $UPLOAD_JOB_RESOURCES == "true" ]]
+  if [[ $tg_command == "apply" ]] && [[ $RUN_ALL == "true" ]] && [ $tg_err -eq 0 ] 
   then
     s3_parent_key="$S3_JOBS_BUCKET/$job_name"
     cd $script_dir/temp-job/$WORKSPACE_ID/$STACK_FOLDER/job-resources
+    tg_disable_confirm=$TG_DISABLE_CONFIRM
+    export TG_DISABLE_CONFIRM=true
     terragrunt output job_resources > outputs.txt
-    echo "Outputs for Job $job_name as text"
-    cat outputs.txt
-    aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.txt s3://$s3_parent_key/job-resources/outputs.txt
-    
+    export TG_DISABLE_CONFIRM=$tg_disable_confirm
+
+    if [[ $UPLOAD_JOB_RESOURCES == "true" ]]
+    then
+      echo "Outputs for Job $job_name as text"
+      cat outputs.txt
+      aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.txt s3://$s3_parent_key/job-resources/outputs.txt
+    fi
+
     echo "Outputs for Job $job_name as json"
     cat outputs.txt | jq -r '.|fromjson' > outputs.json
-    cat outputs.json
-    aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.json s3://$s3_parent_key/job-resources/outputs.json
+    cat outputs.json | jq .
+
+    if [[ $UPLOAD_JOB_RESOURCES == "true" ]]
+    then
+      aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.json s3://$s3_parent_key/job-resources/outputs.json
+    fi
   fi
 }
 
@@ -273,18 +368,25 @@ function remove_event_rule(){
   set -e
 }
 
+function send_progress(){
+ send_sqs_status "{\"message\":{\"status\":\"Job Started\",\"progress\":$@,\"jobId\":\"$AWS_BATCH_JOB_ID\"}}"
+}
+
 # Main Routine
+clear
+echo "Running pipeline with Entrypoint arguments $@";echo 
 job_definitions $@
 echo $job_name Job Started
+fetch_app_repo
 configure_aws_profile
 createSqsQueue
-send_sqs_status "{\"message\":{\"status\":\"Job Started\",\"progress\":$INITIAL_PROGRESS,\"jobId\":\"$AWS_BATCH_JOB_ID\"}}"
+send_progress $INITIAL_PROGRESS
 remove_event_rule
 delete_temp_files
 find_modules
 run_terragrunt
 put_outputs_to_s3
-send_sqs_status "{\"message\":{\"status\":\"Job Completed\",\"progress\":$FINAL_PROGRESS,\"jobId\":\"$AWS_BATCH_JOB_ID\"}}"
+send_progress $FINAL_PROGRESS
 upload_temp_folder
-echo "End of job routine for $AWS_BATCH_JOB_ID"
+echo "End of job routine for $job_name";echo
 

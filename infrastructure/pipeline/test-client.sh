@@ -5,9 +5,10 @@ clear
 echo Client Test Application Starting with following inputs
 
 # Command Line Arguments
+
+export COMMAND=${1:-"plan"}
+export LAB_FOLDER=${2:-"test"}
 export ACTLID=${1:-1}
-export LAB_FOLDER=${2:-"init-test-lab"}
-export COMMAND=${3:-"createLab"}
 poll=$4
 simulate=$5
 export LAB_DURATION=15
