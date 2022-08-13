@@ -111,31 +111,39 @@ function fetch_repository(){
   esac
 
   # Rename extracted folder name to repo name
-  [ -d temp-job ] && rm -rf temp-job
-  mkdir temp-job
+
   dir_name=$(ls -d $REPO_ACCOUNT-$REPO_NAME*)
   echo Downloaded directory name : $dir_name
   commit=$(echo $dir_name | sed s/$REPO_ACCOUNT-$REPO_NAME-//g)
   echo Commit Hash : $commit
   export COMMIT_HASH=$commit
-  mv  $dir_name temp-job/$WORKSPACE_ID
+  cp -R $dir_name $WORKSPACE_ID
   echo
 }
 
 function copy_local_app_repo(){
-  [ -d temp-job ] && rm -rf temp-job
-  mkdir temp-job
+
+  mkdir temp-job/$LOCAL_APP_REPO
   mkdir temp-job/$WORKSPACE_ID
-  cp -R $LOCAL_APP_REPO/* temp-job/$WORKSPACE_ID
+  rsync -a --exclude-from=../$LOCAL_APP_REPO/.gitignore ../$LOCAL_APP_REPO/ temp-job/$LOCAL_APP_REPO
+  rsync -a temp-job/$LOCAL_APP_REPO/ temp-job/$WORKSPACE_ID
+
+  
 }
 
 function fetch_app_repo(){
+  [ -d temp-job ] && rm -rf temp-job
+  mkdir temp-job
+  
   if [[ $USE_LOCAL_REPO == "true" ]]
   then 
     copy_local_app_repo
   else
+    cd temp-job
     fetch_repository
+    cd ..
   fi
+  
 }
 
 # Upload Temp Folder
