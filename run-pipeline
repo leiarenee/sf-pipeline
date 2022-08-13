@@ -182,10 +182,10 @@ function configure_aws_profile(){
   if [ ! $(cat $HOME/.aws/credentials | grep default) ]
   then
     cat <<EOF >> $HOME/.aws/credentials
-    [default]
-    aws_access_key_id = $pipeline_aws_access_key_id
-    aws_secret_access_key = $pipeline_aws_secret_access_key
-    region = $PIPELINE_AWS_REGION
+[default]
+aws_access_key_id = $pipeline_aws_access_key_id
+aws_secret_access_key = $pipeline_aws_secret_access_key
+region = $PIPELINE_AWS_REGION
 EOF
   fi
 
@@ -193,10 +193,10 @@ EOF
   if [ ! $(cat $HOME/.aws/credentials | grep $PIPELINE_AWS_PROFILE) ]
   then
     cat <<EOF >> $HOME/.aws/credentials
-    [$PIPELINE_AWS_PROFILE]
-    aws_access_key_id = $pipeline_aws_access_key_id
-    aws_secret_access_key = $pipeline_aws_secret_access_key
-    region = $PIPELINE_AWS_REGION
+[$PIPELINE_AWS_PROFILE]
+aws_access_key_id = $pipeline_aws_access_key_id
+aws_secret_access_key = $pipeline_aws_secret_access_key
+region = $PIPELINE_AWS_REGION
 EOF
   fi
 
@@ -206,10 +206,10 @@ EOF
   if [ ! $(cat $HOME/.aws/credentials | grep $TARGET_AWS_PROFILE) ]
   then
     cat <<EOF >> $HOME/.aws/credentials
-    [$TARGET_AWS_PROFILE]
-    aws_access_key_id = $aws_access_key_id
-    aws_secret_access_key = $aws_secret_access_key
-    region = $TARGET_AWS_REGION
+[$TARGET_AWS_PROFILE]
+aws_access_key_id = $aws_access_key_id
+aws_secret_access_key = $aws_secret_access_key
+region = $TARGET_AWS_REGION
 EOF
   fi
 }
