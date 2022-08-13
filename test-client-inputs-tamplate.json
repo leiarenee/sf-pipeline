@@ -14,8 +14,8 @@
 		"userEmail": "${USER_EMAIL}"
 	},
 	"aws": {
-		"region": "${AWS_REGION}",
-		"targetAwsAccountName": "{TARGET_AWS_ACCOUNT_NAME}",
+		"region": "${TARGET_AWS_REGION}",
+		"targetAwsAccountName": "${TARGET_AWS_ACCOUNT_NAME}",
 		"targetAwsAccountId": "${TARGET_AWS_ACCOUNT_ID}",
 		"targetAwsProfile": "${TARGET_AWS_PROFILE}",
 		"pipelineAwsProfile": "${PIPELINE_AWS_PROFILE}",

@@ -34,6 +34,7 @@ user/custom
 venv
 temp-job
 __pycache__
+.pytest_cache
 archive
 override.env
 *.log
@@ -43,3 +44,5 @@ results.txt
 temp
 *.zip
 custom-test-inputs.json
+test-client-inputs.json
+
