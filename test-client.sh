@@ -2,7 +2,7 @@
 set -e
 
 function import_env_vars(){
-  env_files=(".env")
+  env_files=(".env" "override.env")
   IFS=$'\n'
 
   # Declare environment varibles from env files
@@ -53,6 +53,8 @@ simulate=$5
 state_machine_arn=arn:aws:states:$PIPELINE_AWS_REGION:$PIPELINE_AWS_ACCOUNT_ID:stateMachine:$PIPELINE_STATE_MACHINE_NAME
 log_file=log.txt
 [ -f $log_file ] && rm $log_file
+[ -f job-resources.json ] && rm job-resources.json
+
 # Calculate Cron Expression
 # export CRON_EXPRESSION=$(python3 -m cron $duration)
 
@@ -120,13 +122,12 @@ do
     progress=$(echo $message | jq .progress)
     module=$(echo $message | jq .module)
     batch_id=$(echo $message | jq -r .jobId)
-
+    
     if [[ $batch_id != null ]] && [[ $status == "Batch_Job_Started" ]]
     then
       log_stream_name=$(aws batch describe-jobs --jobs $batch_id | jq -r '.jobs[0].container.logStreamName')
       echo Log Stream : $log_stream_name
-          
-      
+      AWS_BATCH_JOB_ID=$batch_id
       # Get Job Id
       job_id=$!
       echo Job: $job_id
@@ -137,7 +138,9 @@ do
     else
       unset batch_id
     fi
-
+    set +e
+    aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION sqs delete-message --queue-url $sqs_queue_url --receipt-handle $receipt_handle
+    set -e
     # Write status
     bar_end=$(($progress*3/10))
     #echo $bar_end
@@ -146,20 +149,8 @@ do
     for ((i=$bar_end; i<=30; i++)); do echo -n " "; done
     echo -n "] "
     echo "  Progress : $progress%    Status : $status $batch_id"
-    
-    [ ! -z $log_stream_name ] && print_log
     #echo -ne "    Progress : $progress%        Status : $status\033[0K\r"
-    sleep 1
-
-    if [ -z "$simulate" ]
-    then
-    # Delete Processed Message
-    set +e
-    aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION sqs delete-message --queue-url $sqs_queue_url --receipt-handle $receipt_handle > /dev/null 2>&1
-    set -e
-    fi
-
-
+    
     end=$(echo $message | jq .end)
     
     if [[ $end == "null" ]]
@@ -176,11 +167,13 @@ do
   done
 
   sleep $POLL_INTERVAL
+  [ ! -z $log_stream_name ] && print_log
 done
 
 echo
 echo Job Resources
 echo
-aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION s3 cp --quiet s3://$S3_JOBS_BUCKET/$EXECUTION_NAME/outputs.txt /dev/stdout
+aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION s3 cp s3://$S3_JOBS_BUCKET/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID/job-resources/outputs.json job-resources.json
+cat job-resources.json | jq .
 echo
 
