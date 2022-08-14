@@ -102,7 +102,9 @@ do
     status=$(echo $message | jq -r .status)
     progress=$(echo $message | jq .progress)
     module=$(echo $message | jq .module)
-    
+    batch_id=$(echo $message | jq .jobId)
+    [[ $batch_id == null ]] && unset batch_id
+
     # Write status
     bar_end=$(($progress*3/10))
     #echo $bar_end
@@ -110,14 +112,16 @@ do
     for ((i=1; i<=$bar_end; i++)); do echo -n "="; done
     for ((i=$bar_end; i<=30; i++)); do echo -n " "; done
     echo -n "] "
-    echo "  Progress : $progress%    Status : $status"
+    echo "  Progress : $progress%    Status : $status  $batch_id"
     #echo -ne "    Progress : $progress%        Status : $status\033[0K\r"
     sleep 1
 
     if [ -z "$simulate" ]
     then
     # Delete Processed Message
+    set +e
     aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION sqs delete-message --queue-url $sqs_queue_url --receipt-handle $receipt_handle
+    set -e
     fi
 
 

@@ -277,11 +277,27 @@ function run_terragrunt(){
   fi
   set +e
   # Run terragrunt
-  terragrunt $tg_run_all $tg_command \
-    --terragrunt-debug --terragrunt-working-dir $working_dir  \
-    $tg_non_interactive --terragrunt-log-level $log_level $no_color \
-    > >(tee stdout.log) \
-    2> >(tee stderr.log >&$stderr_output) 
+  COUNTER=1
+  for i in {1..2}
+  do   
+    if [ $COUNTER -eq 1 ]
+    then 
+      echo Initialization of modules
+      tg_command_temp=$tg_command
+      tg_command=init
+    else
+      echo running $tg_command
+      tg_command=$tg_command_temp
+    fi
+
+    terragrunt $tg_run_all $tg_command \
+      --terragrunt-debug --terragrunt-working-dir $working_dir  \
+      $tg_non_interactive --terragrunt-log-level $log_level $no_color \
+      > >(tee stdout.log) \
+      2> >(tee stderr.log >&$stderr_output) 
+    ((COUNTER++)) 
+  done 
+ 
 
   # Get Exit Code
   export tg_err=$?
@@ -363,6 +379,7 @@ function send_sqs_status(){
   # send job start sqs message
   if [[ $SEND_SQS_MESSAGES == "true" ]]
   then
+    echo "sending SQS message : $sqs_message"
     aws --profile $SQS_AWS_PROFILE sqs send-message --queue-url "$SQS_QUEUE_URL" --message-group-id "$SQS_MESSAGE_GROUP_ID" --message-body "$1"
   fi
 }
@@ -377,7 +394,8 @@ function remove_event_rule(){
 }
 
 function send_progress(){
- send_sqs_status "{\"message\":{\"status\":\"Job Started\",\"progress\":$@,\"jobId\":\"$AWS_BATCH_JOB_ID\"}}"
+  sqs_message="{\"message\":{\"status\":\"$1\",\"progress\":$2,\"jobId\":\"$AWS_BATCH_JOB_ID\"}}"
+  send_sqs_status $sqs_message
 }
 
 # Main Routine
@@ -387,13 +405,13 @@ echo $job_name Job Started
 fetch_app_repo
 configure_aws_profile
 createSqsQueue
-send_progress $INITIAL_PROGRESS
+send_progress "Batch_Job_Started" $INITIAL_PROGRESS
 remove_event_rule
 delete_temp_files
 find_modules
 run_terragrunt
 put_outputs_to_s3
-send_progress $FINAL_PROGRESS
+send_progress "Batch_Job_Finished" $FINAL_PROGRESS
 upload_temp_folder
 echo "End of job routine for $job_name";echo
 
