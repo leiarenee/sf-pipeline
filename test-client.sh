@@ -25,6 +25,21 @@ function import_env_vars(){
   IFS=$' '
 }
 
+function print_log(){
+  aws logs tail /aws/batch/job --log-stream-names $log_stream_name --since 1d --format short > $log_file
+  linesold=$lines
+  lines=$(wc -l $log_file | awk '{ print $1 }')
+
+  if [[ $linesold != $lines ]]
+  then 
+    echo 
+    awk -v linesold=$linesold 'NR > linesold' $log_file | sed '/^$/d'
+    logupdated=true
+  fi
+
+
+}
+
 # Main Routine
 import_env_vars
 
@@ -36,7 +51,8 @@ export STACK_FOLDER=${3:-"test"}
 poll=$4
 simulate=$5
 state_machine_arn=arn:aws:states:$PIPELINE_AWS_REGION:$PIPELINE_AWS_ACCOUNT_ID:stateMachine:$PIPELINE_STATE_MACHINE_NAME
-
+log_file=log.txt
+[ -f $log_file ] && rm $log_file
 # Calculate Cron Expression
 # export CRON_EXPRESSION=$(python3 -m cron $duration)
 
@@ -59,6 +75,7 @@ if [[ $answer != "y" ]]
 then
  exit
 fi
+
 
 # Execute State Machine
 if [ -z "$simulate" ] && [[ "$poll" != "poll" ]]
@@ -102,8 +119,24 @@ do
     status=$(echo $message | jq -r .status)
     progress=$(echo $message | jq .progress)
     module=$(echo $message | jq .module)
-    batch_id=$(echo $message | jq .jobId)
-    [[ $batch_id == null ]] && unset batch_id
+    batch_id=$(echo $message | jq -r .jobId)
+
+    if [[ $batch_id != null ]] && [[ $status == "Batch_Job_Started" ]]
+    then
+      log_stream_name=$(aws batch describe-jobs --jobs $batch_id | jq -r '.jobs[0].container.logStreamName')
+      echo Log Stream : $log_stream_name
+          
+      
+      # Get Job Id
+      job_id=$!
+      echo Job: $job_id
+      declare -i lines=0
+      declare -i linesold=0
+      declare -i elapsedtime=0
+      logupdated=false
+    else
+      unset batch_id
+    fi
 
     # Write status
     bar_end=$(($progress*3/10))
@@ -112,7 +145,9 @@ do
     for ((i=1; i<=$bar_end; i++)); do echo -n "="; done
     for ((i=$bar_end; i<=30; i++)); do echo -n " "; done
     echo -n "] "
-    echo "  Progress : $progress%    Status : $status  $batch_id"
+    echo "  Progress : $progress%    Status : $status $batch_id"
+    
+    [ ! -z $log_stream_name ] && print_log
     #echo -ne "    Progress : $progress%        Status : $status\033[0K\r"
     sleep 1
 
@@ -120,7 +155,7 @@ do
     then
     # Delete Processed Message
     set +e
-    aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION sqs delete-message --queue-url $sqs_queue_url --receipt-handle $receipt_handle
+    aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION sqs delete-message --queue-url $sqs_queue_url --receipt-handle $receipt_handle > /dev/null 2>&1
     set -e
     fi
 

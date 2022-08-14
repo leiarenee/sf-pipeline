@@ -45,4 +45,5 @@ temp
 *.zip
 custom-test-inputs.json
 test-client-inputs.json
+log.txt
 
