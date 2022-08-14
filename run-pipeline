@@ -289,8 +289,8 @@ function run_terragrunt(){
       echo running $tg_command
       tg_command=$tg_command_temp
     fi
-
-    terragrunt $tg_run_all $tg_command \
+    export TG_COMMAND_ACTIVE=$tg_command
+    terragrunt $tg_run_all $TG_COMMAND_ACTIVE \
       --terragrunt-debug --terragrunt-working-dir $working_dir  \
       $tg_non_interactive --terragrunt-log-level $log_level $no_color \
       > >(tee stdout.log) \
