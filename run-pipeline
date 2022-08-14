@@ -268,36 +268,21 @@ function run_terragrunt(){
   if [[ ! $INTERACTIVE == "true" ]]
   then
     export TG_DISABLE_CONFIRM=true
-    stderr_output=/dev/null
-    log_level=debug
+    #stderr_output=/dev/null
+    stderr_output=1
+    log_level=info
     no_color=-no-color
   else
     stderr_output=1
-    log_level=warn
+    log_level=info
   fi
   set +e
   # Run terragrunt
-  COUNTER=1
-  for i in {1..2}
-  do   
-    if [ $COUNTER -eq 1 ]
-    then 
-      echo Initialization of modules
-      tg_command_temp=$tg_command
-      tg_command=init
-    else
-      echo running $tg_command
-      tg_command=$tg_command_temp
-    fi
-    export TG_COMMAND_ACTIVE=$tg_command
-    terragrunt $tg_run_all $TG_COMMAND_ACTIVE \
+    terragrunt $tg_run_all $tg_command \
       --terragrunt-debug --terragrunt-working-dir $working_dir  \
       $tg_non_interactive --terragrunt-log-level $log_level $no_color \
       > >(tee stdout.log) \
       2> >(tee stderr.log >&$stderr_output) 
-    ((COUNTER++)) 
-  done 
- 
 
   # Get Exit Code
   export tg_err=$?
@@ -308,7 +293,11 @@ function run_terragrunt(){
     | sed s/$escaped_stack_path//g > stderr_filtered.log
   
   # If error occurs write filtered error into terminal (stdout)
-  [ $tg_err -ne 0 ] && cat stderr_filtered.log | grep -E 'error|Error'
+  if [ $tg_err -ne 0 ]
+  then
+  cat stderr_filtered.log | grep -E 'error|Error'
+  exit $tg_err
+  fi
 
   set -e
 
