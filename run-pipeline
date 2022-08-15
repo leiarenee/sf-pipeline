@@ -277,10 +277,13 @@ function run_terragrunt(){
     log_level=info
   fi
   set +e
+  TG_ARGUMENTS=$(echo $TG_ARGUMENTS | sed s/~/=/g)
+  echo TG_ARGUMENTS is $TG_ARGUMENTS
   # Run terragrunt
     terragrunt $tg_run_all $tg_command \
       --terragrunt-debug --terragrunt-working-dir $working_dir  \
       $tg_non_interactive --terragrunt-log-level $log_level $no_color \
+      $TG_ARGUMENTS
       > >(tee stdout.log) \
       2> >(tee stderr.log >&$stderr_output) 
 
