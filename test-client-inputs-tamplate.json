@@ -26,6 +26,7 @@
 	"terragrunt": {
 		"runAll": "${RUN_ALL}",
 		"tgCommand": "${TG_COMMAND}",
+		"tgArguments": "${TG_ARGUMENTS}",
 		"runModule": "${RUN_MODULE}",
 		"stackFolder": "${STACK_FOLDER}"
 	},

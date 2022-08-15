@@ -1,0 +1,62 @@
+{
+	"terragrunt-plan": [
+		{
+			"terragrunt-plan-to-file": {
+        "type":"terragrunt",
+				"workingDir": "temp-job/${WORKSPACE_ID}/${STACK_FOLDER}",
+				"command": "terragrunt",
+				"arguments": [
+          "run-all",
+					"plan",
+					"-out=plan-file.state"
+				],
+        "afterHook": [
+          "run_cmd([\"aws --profile ${PIPELINE_AWS_PROFILE} s3 cp plan-file.state s3://${S3_JOBS_BUCKET}/${WORKSPACE_ID}/${SF_EXECUTION_NAME}/${AWS_BATCH_JOB_ID}/plan-resources/plan-file.state\"])"
+        ]
+			}
+		},
+    {
+			"terragrunt-show-plan": {
+				"workingDir": "temp-job/testing/test",
+				"executable": "terragrunt",
+				"commands": [
+					"run-all",
+					"show"
+				],
+				"arguments": [
+					"plan-file.state"
+				],
+        "output": "plan-file.txt"
+			}
+		},
+    {
+			"terragrunt-show-json": {
+				"workingDir": "temp-job/testing/test",
+				"executable": "terragrunt",
+				"commands": [
+					"run-all",
+					"show"
+				],
+				"arguments": [
+					"-json"
+				],
+        "output": "plan-file.json"
+			}
+		},
+    {
+			"terragrunt-show-plan": {
+				"workingDir": "temp-job/testing/test",
+				"executable": "terragrunt",
+				"commands": [
+					"run-all",
+					"show"
+				],
+				"arguments": [
+					"-json"
+				],
+        "output": "plan-file.json"
+			}
+		}
+
+	]
+}

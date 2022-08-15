@@ -182,6 +182,10 @@
 						"Value.$": "$.terragrunt.tgCommand"
 					},
 					{
+						"Name": "TG_ARGUMENTS",
+						"Value.$": "$.terragrunt.tgArguments"
+					},
+					{
 						"Name": "RUN_MODULE",
 						"Value.$": "$.terragrunt.runModule"
 					},
