@@ -20,7 +20,9 @@ jobs:
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
       - name: Validate Terraform
         shell: bash
-        run: ./sf-run/sf-execute.sh
+        run: |
+          ./sf-run/sf-execute.sh
+          ./sf-run/sqs-poll.sh
         env: 
           # PYTHON
           PYTHONPATH: src
