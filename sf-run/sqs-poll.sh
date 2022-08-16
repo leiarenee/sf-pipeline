@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # ------------ Poll Sqs Status Messages and Log Updates ---------------------------------------------
 
 # SQS
