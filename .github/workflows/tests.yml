@@ -21,4 +21,4 @@ jobs:
       - name: Validate Terraform
         shell: bash
         run: |
-          ./test.sh
+          ./sf-test/test
