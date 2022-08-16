@@ -20,5 +20,4 @@ jobs:
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
       - name: Validate Terraform
         run: |
-          source scripts/import-env-vars.sh
           env
