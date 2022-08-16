@@ -1,0 +1,46 @@
+#FROM python:3.9-slim
+ARG BASE_IMAGE_TAG
+FROM public.ecr.aws/sam/build-python3.9:latest-arm64
+
+# Install Python Libraries
+COPY requirements.txt  .
+RUN  pip install -r requirements.txt 
+
+# Install Git
+RUN yum -y install bash git curl wget unzip jq rsync gettext-base rdfind uuid-runtime \
+ && yum -y clean all  && rm -rf /var/cache
+
+# Install Terraform
+ARG TERRAFORM_VERSION
+RUN wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_arm64.zip -O terraform.zip && \
+  unzip terraform.zip && mv terraform /usr/local/bin/ && rm terraform.zip
+
+# Install Terragrunt
+ARG TERRAGRUNT_VERSION
+RUN wget https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_arm64 -O terragrunt && \
+  chmod +x terragrunt && mv terragrunt /usr/local/bin/terragrunt
+
+SHELL ["/bin/bash", "-c"]
+RUN export PATH="$PATH:/usr/sbin/" && groupadd -r app && useradd -ms /bin/bash --no-log-init -r -g app app
+
+USER app
+WORKDIR /home/app
+RUN echo "export PATH=$PATH:/usr/sbin/" >> .bashrc
+
+RUN mkdir .aws && touch .aws/credentials
+RUN mkdir .terraform.d && mkdir .terraform.d/plugin-cache
+
+# Environment variables
+ENV PYTHONPATH=src
+
+# Copy Files
+COPY src src
+COPY terragrunt terragrunt
+COPY scripts scripts
+
+# Copy Folder
+COPY docker/entrypoint .
+COPY runner .
+
+ENTRYPOINT [ "./entrypoint" ]
+CMD ["validate"]

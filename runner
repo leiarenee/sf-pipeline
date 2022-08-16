@@ -401,6 +401,7 @@ echo $job_name Job Started
 fetch_app_repo
 overwrite_terragrunt
 configure_aws_profile
+if [[ $1 == "bash" ]];then /bin/bash;exit $?;fi 
 createSqsQueue
 send_progress "Batch_Job_Started" $INITIAL_PROGRESS
 remove_event_rule
