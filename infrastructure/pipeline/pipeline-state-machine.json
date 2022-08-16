@@ -215,7 +215,7 @@
 					},
 					{
 						"Name": "RUNNER_MACHINE",
-						"Value.$": "$.pipeline.runnerMachine"
+						"Value": "step-functions"
 					},
 					{
 						"Name": "WORK_FOLDER_NAME",
