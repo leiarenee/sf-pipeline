@@ -21,4 +21,4 @@ jobs:
       - name: Validate Terraform
         run: |
           source scripts/import-env-vars.sh
-          sf-test/test validate
+          env
