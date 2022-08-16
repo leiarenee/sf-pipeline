@@ -2,8 +2,10 @@
 
 # Shell Script for State Machine Execution
 export STATE_MACHINE_ARN=arn:aws:states:$PIPELINE_AWS_REGION:$PIPELINE_AWS_ACCOUNT_ID:stateMachine:$PIPELINE_STATE_MACHINE_NAME
+echo 
 echo State Machine ARN      : $STATE_MACHINE_ARN
 echo Input Template File    : $PIPELINE_SF_TEMPLATE_FILE
+echo "STATE_MACHINE_ARN=$STATE_MACHINE_ARN" >> $GITHUB_ENV
 
 # Variable Substitution
 echo "Variable Substitution"
@@ -19,4 +21,5 @@ echo $result | jq .
 execution_arn=$(echo $result | jq -r .executionArn)
 IFS=":"; arr=($execution_arn); unset IFS
 export EXECUTION_NAME=${arr[7]}
+echo "EXECUTION_NAME=$EXECUTION_NAME" >> $GITHUB_ENV
 
