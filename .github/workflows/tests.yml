@@ -20,5 +20,82 @@ jobs:
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
       - name: Validate Terraform
         shell: bash
-        run: |
-          ./sf-execute.sh
+        run: ./sf-execute.sh
+        env: 
+          # PYTHON
+          PYTHONPATH: src
+          PYTHONTRACEMALLOC: 25
+
+          # WORKSPACE
+          WORKSPACE_ID: testing
+          WORKSPACE_NAME : Testing Environment
+
+          # APP REPOSITORY
+          VCS_PROVIDER: github
+          REPO_ACCOUNT: leiarenee
+          REPO_NAME: sf-infra
+          REPO_REFERENCE: main
+          REPO_TYPE: public
+          USER_NAME: Test User
+          USER_EMAIL: test@me.com
+
+          # VERSIONS
+          TERRAFORM_VERSION: 1.2.7
+          TERRAGRUNT_VERSION: 0.38.7
+
+          # TERRAGRUNT
+          RUN_ALL: true
+          TG_COMMAND: validate
+          TG_ARGUMENTS:
+          RUN_MODULE:
+          STACK_FOLDER: test
+          BUCKET_SUFFIX: github-actions
+          INTERACTIVE: false
+
+          # AWS
+          TARGET_AWS_REGION: eu-west-1
+          TARGET_AWS_ACCOUNT_NAME: testing
+          TARGET_AWS_ACCOUNT_ID: 553688522943
+          TARGET_AWS_PROFILE: leia-testing
+          PIPELINE_AWS_REGION: eu-west-1
+          PIPELINE_AWS_PROFILE: leia-pipeline
+          PIPELINE_AWS_ACCOUNT_ID: 377449198785
+          ECR_AWS_ACCOUNT_ID: 377449198785
+          SQS_AWS_PROFILE: leia-pipeline
+
+          # REPLACE Parameters
+          DOMAIN: testing.dev.leiarenee.io
+          DNS_ZONE_ID: Z0890541BQO7OVB8F6WL
+          CERTIFICATE: arn:aws:acm:eu-west-1:377449198785:certificate/431ea958-254b-4f8c-995f-a311559fcce5
+          CLUSTER: my-testing-k8s
+
+          # PIPELINE
+          RUNNER_MACHINE: github-actions
+          WORK_FOLDER_NAME: temp-volume
+          INITIAL_PROGRESS: 10
+          MODULES_FINAL_PROGRESS: 90
+          FINAL_PROGRESS: 95
+          S3_JOBS_BUCKET: sf-pipeline-jobs-github
+          EVENTBRIDGE_RULE: SF-Cron-Pipeline
+          UPLOAD_WORKFOLDER: always
+          UPLOAD_JOB_RESOURCES: true
+          SEND_SQS_MESSAGES: true
+
+          # JOB
+          JOB_DEFINITION: arn:aws:batch:eu-west-1:377449198785:job-definition/tf_pipeline_job_definition
+          JOB_QUEUE: arn:aws:batch:eu-west-1:377449198785:job-queue/tf-deployment-job-queue
+
+          # ROLE
+          ROLE_EVENTBRIDGE: arn:aws:iam::377449198785:role/service-role/Amazon_EventBridge_Invoke_Batch_Job_Queue
+
+          # TTL
+          TTL_DURATION_MINUTES: 10
+
+          # STEP FUNCTIONS
+          PIPELINE_STATE_MACHINE_NAME: Pipeline-State-Machine-enabling-drake
+          PIPELINE_SF_TEMPLATE_FILE: ./sf-run/sf-template.json
+
+          # SQS POLLING
+          POLL_INTERVAL: 5
+          MAX_SQS_MESSAGES: 10
+                  
