@@ -9,7 +9,6 @@ export POLL_INTERVAL=${5:-"5"}
 export MAX_SQS_MESSAGES=${6:-10}
 export STATE_MACHINE_ARN=${7:-"arn:aws:states:eu-west-1:377449198785:stateMachine:Pipeline-State-Machine-enabling-drake"}
 
-
 echo TG Command        : $TG_COMMAND
 echo Workspace ID      : $WORKSPACE_ID
 echo Stack Folder      : $STACK_FOLDER
@@ -20,3 +19,5 @@ echo Polling Interval  : $POLL_INTERVAL
 echo Max SQS Messages  : $MAX_SQS_MESSAGES
 echo
 echo "Starting..."
+test_inputs=$(cat $TEST_CLIENT_INPUT_FILE)
+aws stepfunctions start-execution --state-machine-arn $STATE_MACHINE_ARN --input "$test_inputs"
