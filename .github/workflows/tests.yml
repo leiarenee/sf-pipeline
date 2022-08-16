@@ -19,5 +19,7 @@ jobs:
           aws-region: eu-west-1
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
       - name: Validate Terraform
+        shell: bash
         run: |
-          sf-test/test validate
+          ./scripts/import-env-vars.sh
+          env
