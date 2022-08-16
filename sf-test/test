@@ -16,7 +16,7 @@ function print_log(){
 
 }
 
-[ ! -z $TERM ] && clear
+#[ ! -z $TERM ] && clear
 
 # Main Routine
 
