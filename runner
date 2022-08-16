@@ -160,7 +160,7 @@ function upload_temp_folder(){
     echo Uploading temp folder
     # Find Dublicates and replace with symlinks
     # Thanks to https://github.com/pauldreik/rdfind
-    cd $script_dir
+    cd $WORK_FOLDER
     rdfind -makesymlinks true temp-job
     # Compress Work folder
     tar -czf temp-job.tar.gz temp-job
@@ -255,19 +255,18 @@ function run_terragrunt(){
 
   # Prepare command line arguments
 
+  if [[ $INTERACTIVE != true ]]
+  then
+    tg_non_interactive="--terragrunt-non-interactive"
+    [[ $RUN_ALL != "true" ]] && tg_non_interactive="$tg_non_interactive -auto-approve"
+  fi
+
   if [[ $RUN_ALL == "true" ]] 
   then
     tg_run_all=run-all
-    working_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER
-  else
-    working_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER/$RUN_MODULE
   fi
 
-  if [[ $INTERACTIVE != true ]]
-  then
-    tg_non_interactive=--terragrunt-non-interactive
-  fi
-
+  working_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER/$RUN_MODULE
 
   # Escape / Character
   escaped_stack_path=$(echo "$WORK_FOLDER/temp-job" | sed s/\\//\\\\\\//g)
