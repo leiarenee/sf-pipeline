@@ -1,773 +1,793 @@
 {
-	"Comment": "State machine to run Terraform and Terragrunt Jobs.cxt",
-	"StartAt": "Session Variables",
-	"States": {
-		"Session Variables": {
-			"Type": "Pass",
-			"Next": "CreateQueue",
-			"Parameters": {
-				"sqsQueueName.$": "States.Format('{}.fifo',$$.Execution.Name)",
-				"messageGroupId.$": "$$.Execution.Name",
-				"jobName.$": "$$.Execution.Name",
-				"cronName.$": "States.Format('{}-{}',$.pipeline.eventBridgeRule,$$.Execution.Name)"
-			},
-			"ResultPath": "$.session"
-		},
-		"CreateQueue": {
-			"Type": "Task",
-			"Next": "Check Concurrency",
-			"Parameters": {
-				"QueueName.$": "$.session.sqsQueueName",
-				"Attributes": {
-					"FifoQueue": "true",
-					"ContentBasedDeduplication": "true",
-					"MessageRetentionPeriod": "600",
-					"VisibilityTimeout": "10",
-					"ReceiveMessageWaitTimeSeconds": "0"
-				}
-			},
-			"Resource": "arn:aws:states:::aws-sdk:sqs:createQueue",
-			"ResultPath": "$.createQueue"
-		},
-		"Check Concurrency": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::lambda:invoke",
-			"Parameters": {
-				"FunctionName": "${LAMBDA_FUNCTION_ARN}",
-				"Payload": {
-					"function": "check_concurrency",
-					"kwargs": {
-						"workspaceId.$": "$.workspace.workspaceId",
-						"stateMachineArn.$": "$$.StateMachine.Id",
-						"jobQueue.$": "$.job.queue",
-						"executionId.$": "$$.Execution.Id"
-					}
-				}
-			},
-			"Retry": [
-				{
-					"ErrorEquals": [
-						"Lambda.ServiceException",
-						"Lambda.AWSLambdaException",
-						"Lambda.SdkClientException"
-					],
-					"IntervalSeconds": 2,
-					"MaxAttempts": 6,
-					"BackoffRate": 2
-				}
-			],
-			"Next": "IsAlreadyRunning",
-			"ResultPath": "$.checkConcurrency"
-		},
-		"IsAlreadyRunning": {
-			"Type": "Choice",
-			"Choices": [
-				{
-					"Variable": "$.checkConcurrency.Payload",
-					"BooleanEquals": true,
-					"Next": "Already Running"
-				},
-				{
-					"Variable": "$.checkConcurrency.Payload",
-					"BooleanEquals": false,
-					"Next": "Container Parameters"
-				}
-			]
-		},
-		"Already Running": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "Another Job with same active lab is already running",
-						"error": true
-					},
-					"trace.$": "$"
-				}
-			},
-			"ResultPath": "$.submitJobFailed",
-			"Next": "Concurrency Failure"
-		},
-		"Concurrency Failure": {
-			"Type": "Fail",
-			"Cause": "Job with same active lab is already running",
-			"Error": "ConcurrencyError"
-		},
-		"Container Parameters": {
-			"Type": "Pass",
-			"Next": "State Machine Started",
-			"Parameters": {
-				"Environment": [
+  "Comment": "State machine to run Terraform and Terragrunt Jobs",
+  "StartAt": "Session Variables",
+  "States": {
+    "Session Variables": {
+      "Type": "Pass",
+      "Next": "Command Needs Lock",
+      "Parameters": {
+        "sqsQueueName.$": "States.Format('{}.fifo',$$.Execution.Name)",
+        "messageGroupId.$": "$$.Execution.Name",
+        "jobName.$": "$$.Execution.Name",
+        "cronName.$": "States.Format('{}-{}',$.pipeline.eventBridgeRule,$$.Execution.Name)"
+      },
+      "ResultPath": "$.session"
+    },
+    "Command Needs Lock": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Or": [
+            {
+              "Variable": "$.workflow",
+              "StringMatches": "*apply*"
+            },
+            {
+              "Variable": "$.workflow",
+              "StringMatches": "*destroy*"
+            }
+          ],
+          "Next": "Check Concurrency",
+          "Comment": "Commands that need state file locking"
+        }
+      ],
+      "Default": "CreateQueue"
+    },
+    "CreateQueue": {
+      "Type": "Task",
+      "Next": "Container Parameters",
+      "Parameters": {
+        "QueueName.$": "$.session.sqsQueueName",
+        "Attributes": {
+          "FifoQueue": "true",
+          "ContentBasedDeduplication": "true",
+          "MessageRetentionPeriod": "600",
+          "VisibilityTimeout": "10",
+          "ReceiveMessageWaitTimeSeconds": "0"
+        }
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:createQueue",
+      "ResultPath": "$.createQueue"
+    },
+    "Check Concurrency": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:eu-west-1:377449198785:function:lambda-step-functions",
+        "Payload": {
+          "function": "check_concurrency",
+          "kwargs": {
+            "workspaceId.$": "$.workspace.workspaceId",
+            "stateMachineArn.$": "$$.StateMachine.Id",
+            "jobQueue.$": "$.job.queue",
+            "executionId.$": "$$.Execution.Id"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "IsAlreadyRunning",
+      "ResultPath": "$.checkConcurrency"
+    },
+    "IsAlreadyRunning": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.checkConcurrency.Payload",
+          "BooleanEquals": true,
+          "Next": "Already Running"
+        },
+        {
+          "Variable": "$.checkConcurrency.Payload",
+          "BooleanEquals": false,
+          "Next": "CreateQueue"
+        }
+      ]
+    },
+    "Already Running": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "Another Job with same active lab is already running",
+            "error": true
+          },
+          "trace.$": "$"
+        }
+      },
+      "ResultPath": "$.submitJobFailed",
+      "Next": "Concurrency Failure"
+    },
+    "Concurrency Failure": {
+      "Type": "Fail",
+      "Cause": "Job with same active lab is already running",
+      "Error": "ConcurrencyError"
+    },
+    "Container Parameters": {
+      "Type": "Pass",
+      "Next": "State Machine Started",
+      "Parameters": {
+        "Environment": [
           {
-						"Name": "SF_EXECUTION_NAME",
-						"Value.$": "$.session.jobName"
-					},
-					{
-						"Name": "WORKSPACE_ID",
-						"Value.$": "$.workspace.workspaceId"
-					},
-					{
-						"Name": "WORKSPACE_NAME",
-						"Value.$": "$.workspace.workspaceName"
-					},
-					{
-						"Name": "USER_NAME",
-						"Value.$": "$.repository.userEmail"
-					},
-					{
-						"Name": "USER_EMAIL",
-						"Value.$": "$.repository.userEmail"
-					},
-					{
-						"Name": "VCS_PROVIDER",
-						"Value.$": "$.repository.vcsProvider"
-					},
-					{
-						"Name": "REPO_ACCOUNT",
-						"Value.$": "$.repository.repoAccount"
-					},
-					{
-						"Name": "REPO_NAME",
-						"Value.$": "$.repository.repoName"
-					},
-					{
-						"Name": "REPO_REFERENCE",
-						"Value.$": "$.repository.repoReference"
-					},
-					{
-						"Name": "REPO_TYPE",
-						"Value.$": "$.repository.repoType"
-					},
-					{
-						"Name": "AWS_REGION",
-						"Value.$": "$.aws.region"
-					},
-					{
-						"Name": "TARGET_AWS_ACCOUNT_NAME",
-						"Value.$": "$.aws.targetAwsAccountName"
-					},
-					{
-						"Name": "TARGET_AWS_ACCOUNT_ID",
-						"Value.$": "$.aws.targetAwsAccountId"
-					},
-					{
-						"Name": "TARGET_AWS_PROFILE",
-						"Value.$": "$.aws.targetAwsProfile"
-					},
-					{
-						"Name": "PIPELINE_AWS_PROFILE",
-						"Value.$": "$.aws.pipelineAwsProfile"
-					},
-					{
-						"Name": "PIPELINE_AWS_ACCOUNT_ID",
-						"Value.$": "$.aws.pipelineAwsAccountId"
-					},
-					{
-						"Name": "ECR_AWS_ACCOUNT_ID",
-						"Value.$": "$.aws.ecrAwsAccountId"
-					},
-					{
-						"Name": "SQS_AWS_PROFILE",
-						"Value.$": "$.aws.sqsAwsProfile"
-					},
-					{
-						"Name": "RUN_ALL",
-						"Value.$": "$.terragrunt.runAll"
-					},
-					{
-						"Name": "TG_COMMAND",
-						"Value.$": "$.terragrunt.tgCommand"
-					},
-					{
-						"Name": "TG_ARGUMENTS",
-						"Value.$": "$.terragrunt.tgArguments"
-					},
-					{
-						"Name": "RUN_MODULE",
-						"Value.$": "$.terragrunt.runModule"
-					},
-					{
-						"Name": "STACK_FOLDER",
-						"Value.$": "$.terragrunt.stackFolder"
-					},
-					{
-						"Name": "BUCKET_SUFFIX",
-						"Value": "sf-cloud"
-					},
-					{
-						"Name": "DOMAIN",
-						"Value.$": "$.replace.parameters.DOMAIN"
-					},
-					{
-						"Name": "DNS_ZONE_ID",
-						"Value.$": "$.replace.parameters.DNS_ZONE_ID"
-					},
-					{
-						"Name": "CERTIFICATE",
-						"Value.$": "$.replace.parameters.CERTIFICATE"
-					},
-					{
-						"Name": "CLUSTER",
-						"Value.$": "$.replace.parameters.CLUSTER"
-					},
-					{
-						"Name": "RUNNER_MACHINE",
-						"Value": "step-functions"
-					},
-					{
-						"Name": "WORK_FOLDER_NAME",
-						"Value.$": "$.pipeline.workFolderName"
-					},
-					{
-						"Name": "INITIAL_PROGRESS",
-						"Value.$": "$.pipeline.initialProgress"
-					},
-					{
-						"Name": "MODULES_FINAL_PROGRESS",
-						"Value.$": "$.pipeline.modulesFinalProgress"
-					},
-					{
-						"Name": "FINAL_PROGRESS",
-						"Value.$": "$.pipeline.finalProgress"
-					},					
+            "Name": "SF_EXECUTION_NAME",
+            "Value.$": "$.session.jobName"
+          },
           {
-						"Name": "SQS_QUEUE_URL",
-						"Value.$": "$.createQueue.QueueUrl"
-					},					
+            "Name": "WORKSPACE_ID",
+            "Value.$": "$.workspace.workspaceId"
+          },
           {
-						"Name": "SQS_MESSAGE_GROUP_ID",
-						"Value.$": "$.session.messageGroupId"
-					},				
+            "Name": "WORKSPACE_NAME",
+            "Value.$": "$.workspace.workspaceName"
+          },
           {
-						"Name": "S3_JOBS_BUCKET",
-						"Value.$": "$.pipeline.s3JobsBucket"
-					},					
+            "Name": "USER_NAME",
+            "Value.$": "$.repository.userEmail"
+          },
           {
-						"Name": "EVENTBRIDGE_RULE",
-						"Value.$": "$.session.cronName"
-					},					
+            "Name": "USER_EMAIL",
+            "Value.$": "$.repository.userEmail"
+          },
           {
-						"Name": "UPLOAD_WORKFOLDER",
-						"Value.$": "$.pipeline.uploadWorkFolder"
-					},					
+            "Name": "VCS_PROVIDER",
+            "Value.$": "$.repository.vcsProvider"
+          },
           {
-						"Name": "UPLOAD_JOB_RESOURCES",
-						"Value.$": "$.pipeline.uploadJobResources"
-					},					
+            "Name": "REPO_ACCOUNT",
+            "Value.$": "$.repository.repoAccount"
+          },
           {
-						"Name": "SEND_SQS_MESSAGES",
-						"Value.$": "$.pipeline.sendSqsMessages"
-					},					
-					{
-						"Name": "INTERACTIVE",
-						"Value": "false"
-					}
-				]
-			},
-			"ResultPath": "$.container"
-		},
-		"State Machine Started": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "State Machine Started",
-						"progress": 5
-					},
-					"trace.$": "$"
-				}
-			},
-			"Next": "Command Selector",
-			"ResultPath": "$.sqsApplySucceded"
-		},
-		"Command Selector": {
-			"Type": "Choice",
-			"Choices": [
-				{
-					"Variable": "$.workflow",
-					"StringEquals": "applyInfra",
-					"Next": "Apply SubmitJob"
-				},
-				{
-					"Variable": "$.workflow",
-					"StringEquals": "destroyInfra",
-					"Next": "Destroy SubmitJob"
-				},
-				{
-					"Variable": "$.workflow",
-					"StringEquals": "updateCron",
-					"Next": "Prepare Cron"
-				},
-				{
-					"Variable": "$.workflow",
-					"StringEquals": "deleteCron",
-					"Next": "Delete Cron"
-				}
-			],
-			"Default": "Custom SubmitJob"
-		},
-		"Delete Cron": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::lambda:invoke",
-			"Parameters": {
-				"FunctionName": "${LAMBDA_FUNCTION_ARN}",
-				"Payload": {
-					"function": "remove_cron",
-					"kwargs": {
-						"workspaceId.$": "$.workspace.workspaceId"
-					}
-				}
-			},
-			"Retry": [
-				{
-					"ErrorEquals": [
-						"Lambda.ServiceException",
-						"Lambda.AWSLambdaException",
-						"Lambda.SdkClientException"
-					],
-					"IntervalSeconds": 2,
-					"MaxAttempts": 6,
-					"BackoffRate": 2
-				}
-			],
-			"Next": "Delete Cron Succeded",
-			"Catch": [
-				{
-					"ErrorEquals": [
-						"States.ALL"
-					],
-					"Next": "Delete Cron Failed"
-				}
-			],
-			"ResultPath": "$.deleteCron"
-		},
-		"Custom SubmitJob": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::batch:submitJob.sync",
-			"Parameters": {
-				"ContainerOverrides": {
-					"Environment.$": "$.container.Environment",
-					"Command.$": "States.Array($.workflow)"
-				},
-				"JobName.$": "$.session.jobName",
-				"JobDefinition.$": "$.job.definition",
-				"JobQueue.$": "$.job.queue"
-			},
-			"Next": "Job Succeeded",
-			"Retry": [
-				{
-					"ErrorEquals": [
-						"States.ALL"
-					],
-					"BackoffRate": 2.0,
-					"IntervalSeconds": 20,
-					"MaxAttempts": 2
-				}
-			],
-			"Catch": [
-				{
-					"ErrorEquals": [
-						"States.ALL"
-					],
-					"Next": "Job Failed",
-					"ResultPath": "$.submitJobOutput"
-				}
-			],
-			"ResultPath": "$.submitJobOutput"
-		},
-		"Job Succeeded": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "Job Succeeded",
-						"progress": 98
-					},
-					"trace.$": "$"
-				}
-			},
-			"Next": "State Machine Completed",
-			"ResultPath": "$.submitJobSucceeded"
-		},
-		"Job Failed": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "Job Failed",
-						"error": true
-					},
-					"trace.$": "$"
-				}
-			},
-			"ResultPath": "$.submitJobFailed",
-			"Next": "Batch Failure"
-		},
-		"Batch Failure": {
-			"Type": "Fail",
-			"Cause": "Batch Job Failure",
-			"Error": "BatchError"
-		},
-		"Apply SubmitJob": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::batch:submitJob.sync",
-			"Parameters": {
-				"ContainerOverrides": {
-					"Environment.$": "$.container.Environment",
-					"Command": [
-						"apply"
-					]
-				},
-				"JobName.$": "$.session.jobName",
-				"JobQueue.$": "$.job.queue",
-				"JobDefinition.$": "$.job.definition"
-			},
-			"Next": "Apply Succeeded",
-			"Retry": [
-				{
-					"ErrorEquals": [
-						"States.ALL"
-					],
-					"BackoffRate": 2.0,
-					"IntervalSeconds": 20,
-					"MaxAttempts": 0
-				}
-			],
-			"Catch": [
-				{
-					"ErrorEquals": [
-						"States.ALL"
-					],
-					"Next": "Apply Failed",
-					"ResultPath": "$.applyJobOutput"
-				}
-			],
-			"ResultPath": "$.applyJobOutput"
-		},
-		"Apply Succeeded": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "Apply Succeeded",
-						"progress": 97
-					},
-					"trace.$": "$"
-				}
-			},
-			"Next": "Prepare Cron",
-			"ResultPath": "$.sqsApplySucceded"
-		},
-		"Prepare Cron": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::lambda:invoke",
-			"Parameters": {
-				"FunctionName": "${LAMBDA_FUNCTION_ARN}",
-				"Payload": {
-					"function": "prepare_cron",
-					"kwargs": {
-						"minutes.$": "$.ttl.duration.minutes"
-					}
-				}
-			},
-			"Retry": [
-				{
-					"ErrorEquals": [
-						"Lambda.ServiceException",
-						"Lambda.AWSLambdaException",
-						"Lambda.SdkClientException"
-					],
-					"IntervalSeconds": 2,
-					"MaxAttempts": 2,
-					"BackoffRate": 2
-				}
-			],
-			"Next": "PutRule CRON",
-			"ResultPath": "$.prepareCron",
-			"Catch": [
-				{
-					"ErrorEquals": [
-						"States.ALL"
-					],
-					"Next": "Cron Failed",
-					"ResultPath": "$.prepareCron"
-				}
-			]
-		},
-		"PutRule CRON": {
-			"Type": "Task",
-			"Parameters": {
-				"Name.$": "$.session.cronName",
-				"ScheduleExpression.$": "$.prepareCron.Payload",
-				"EventBusName": "default"
-			},
-			"Resource": "arn:aws:states:::aws-sdk:eventbridge:putRule",
-			"Next": "PutTargets CRON",
-			"Retry": [
-				{
-					"ErrorEquals": [
-						"States.ALL"
-					],
-					"BackoffRate": 1,
-					"IntervalSeconds": 5,
-					"MaxAttempts": 2
-				}
-			],
-			"Catch": [
-				{
-					"ErrorEquals": [
-						"States.ALL"
-					],
-					"Next": "Cron Failed",
-					"ResultPath": "$.cronPutRule"
-				}
-			],
-			"ResultPath": "$.cronPutRule"
-		},
-		"Cron Failed": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "Cron Failed",
-						"error": true
-					},
-					"trace.$": "$"
-				}
-			},
-			"ResultPath": "$.sqsCronUpdateFailed",
-			"Next": "State Machine Completed"
-		},
-		"PutTargets CRON": {
-			"Type": "Task",
-			"Parameters": {
-				"Rule.$": "$.session.cronName",
-				"Targets": [
-					{
-						"Id": "1",
-						"Arn.$": "$.job.queue",
-						"RoleArn.$": "$.role.eventBridge",
-						"BatchParameters": {
-							"JobDefinition.$": "$.job.definition",
-							"JobName.$": "$.session.cronName"
-						},
-						"Input": {
-							"ContainerOverrides": {
-								"Environment.$": "$.container.Environment",
-								"Command": [
-									"destroy",
-									"cron"
-								]
-							}
-						}
-					}
-				]
-			},
-			"Resource": "arn:aws:states:::aws-sdk:eventbridge:putTargets",
-			"Next": "Cron Succeded",
-			"Retry": [
-				{
-					"ErrorEquals": [
-						"States.ALL"
-					],
-					"BackoffRate": 1,
-					"IntervalSeconds": 5,
-					"MaxAttempts": 2
-				}
-			],
-			"Catch": [
-				{
-					"ErrorEquals": [
-						"States.ALL"
-					],
-					"Next": "Cron Failed",
-					"ResultPath": "$.cronPutTargets"
-				}
-			],
-			"ResultPath": "$.cronPutTargets"
-		},
-		"Cron Succeded": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "Cron Succeeded",
-						"progress": 99
-					},
-					"trace.$": "$"
-				}
-			},
-			"Next": "State Machine Completed",
-			"ResultPath": "$.sqsCronUpdateSucceeded"
-		},
-		"Apply Failed": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "Apply Failed",
-						"error": true
-					},
-					"trace.$": "$"
-				}
-			},
-			"ResultPath": "$.notifyFailure",
-			"Next": "Destroy SubmitJob"
-		},
-		"Destroy SubmitJob": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::batch:submitJob.sync",
-			"Parameters": {
-				"ContainerOverrides": {
-					"Environment.$": "$.container.Environment",
-					"Command": [
-						"destroy"
-					]
-				},
-				"JobName.$": "$.session.jobName",
-				"JobDefinition.$": "$.job.definition",
-				"JobQueue.$": "$.job.queue"
-			},
-			"Retry": [
-				{
-					"ErrorEquals": [
-						"States.ALL"
-					],
-					"BackoffRate": 2.0,
-					"IntervalSeconds": 20,
-					"MaxAttempts": 0
-				}
-			],
-			"Catch": [
-				{
-					"ErrorEquals": [
-						"States.ALL"
-					],
-					"Next": "Destroy Failed",
-					"ResultPath": "$.destroyJobOutput"
-				}
-			],
-			"Next": "Destroy Succeded",
-			"ResultPath": "$.destroyJobOutput"
-		},
-		"Destroy Failed": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "Destroy Failed",
-						"error": true
-					},
-					"trace.$": "$"
-				}
-			},
-			"ResultPath": "$.sqsDestroyFailed",
-			"Next": "Destroy Failure"
-		},
-		"Destroy Failure": {
-			"Type": "Fail",
-			"Error": "DestroyError"
-		},
-		"Destroy Succeded": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "Destroy Succeded",
-						"progress": 97
-					},
-					"trace.$": "$"
-				}
-			},
-			"ResultPath": "$.sqsDestroySucceeded",
-			"Next": "State Machine Completed"
-		},
-		"State Machine Completed": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "State Machine Completed",
-						"progress": 100,
-						"end": true
-					},
-					"trace.$": "$"
-				}
-			},
-			"End": true,
-			"ResultPath": "$.stateMachineCompleted"
-		},
-		"Delete Cron Failed": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "Delete Cron Failed",
-						"error": true
-					},
-					"trace.$": "$"
-				}
-			},
-			"ResultPath": "$.sqsDestroyFailed",
-			"Next": "Delete Cron Failure"
-		},
-		"Delete Cron Failure": {
-			"Type": "Fail",
-			"Error": "CronDeleteError",
-			"Cause": "Removing event bridge entry failed"
-		},
-		"Delete Cron Succeded": {
-			"Type": "Task",
-			"Resource": "arn:aws:states:::sqs:sendMessage",
-			"Parameters": {
-				"QueueUrl.$": "$.createQueue.QueueUrl",
-				"MessageGroupId.$": "$.session.messageGroupId",
-				"MessageBody": {
-					"message": {
-						"status": "Delete Cron Succeded",
-						"progress": 97
-					},
-					"trace.$": "$"
-				}
-			},
-			"ResultPath": "$.sqsDestroySucceeded",
-			"End": true
-		}
-	}
+            "Name": "REPO_NAME",
+            "Value.$": "$.repository.repoName"
+          },
+          {
+            "Name": "REPO_REFERENCE",
+            "Value.$": "$.repository.repoReference"
+          },
+          {
+            "Name": "REPO_TYPE",
+            "Value.$": "$.repository.repoType"
+          },
+          {
+            "Name": "AWS_REGION",
+            "Value.$": "$.aws.region"
+          },
+          {
+            "Name": "TARGET_AWS_ACCOUNT_NAME",
+            "Value.$": "$.aws.targetAwsAccountName"
+          },
+          {
+            "Name": "TARGET_AWS_ACCOUNT_ID",
+            "Value.$": "$.aws.targetAwsAccountId"
+          },
+          {
+            "Name": "TARGET_AWS_PROFILE",
+            "Value.$": "$.aws.targetAwsProfile"
+          },
+          {
+            "Name": "PIPELINE_AWS_PROFILE",
+            "Value.$": "$.aws.pipelineAwsProfile"
+          },
+          {
+            "Name": "PIPELINE_AWS_ACCOUNT_ID",
+            "Value.$": "$.aws.pipelineAwsAccountId"
+          },
+          {
+            "Name": "ECR_AWS_ACCOUNT_ID",
+            "Value.$": "$.aws.ecrAwsAccountId"
+          },
+          {
+            "Name": "SQS_AWS_PROFILE",
+            "Value.$": "$.aws.sqsAwsProfile"
+          },
+          {
+            "Name": "RUN_ALL",
+            "Value.$": "$.terragrunt.runAll"
+          },
+          {
+            "Name": "TG_COMMAND",
+            "Value.$": "$.terragrunt.tgCommand"
+          },
+          {
+            "Name": "TG_ARGUMENTS",
+            "Value.$": "$.terragrunt.tgArguments"
+          },
+          {
+            "Name": "RUN_MODULE",
+            "Value.$": "$.terragrunt.runModule"
+          },
+          {
+            "Name": "STACK_FOLDER",
+            "Value.$": "$.terragrunt.stackFolder"
+          },
+          {
+            "Name": "BUCKET_SUFFIX",
+            "Value": "sf-cloud"
+          },
+          {
+            "Name": "DOMAIN",
+            "Value.$": "$.replace.parameters.DOMAIN"
+          },
+          {
+            "Name": "DNS_ZONE_ID",
+            "Value.$": "$.replace.parameters.DNS_ZONE_ID"
+          },
+          {
+            "Name": "CERTIFICATE",
+            "Value.$": "$.replace.parameters.CERTIFICATE"
+          },
+          {
+            "Name": "CLUSTER",
+            "Value.$": "$.replace.parameters.CLUSTER"
+          },
+          {
+            "Name": "RUNNER_MACHINE",
+            "Value": "step-functions"
+          },
+          {
+            "Name": "WORK_FOLDER_NAME",
+            "Value.$": "$.pipeline.workFolderName"
+          },
+          {
+            "Name": "INITIAL_PROGRESS",
+            "Value.$": "$.pipeline.initialProgress"
+          },
+          {
+            "Name": "MODULES_FINAL_PROGRESS",
+            "Value.$": "$.pipeline.modulesFinalProgress"
+          },
+          {
+            "Name": "FINAL_PROGRESS",
+            "Value.$": "$.pipeline.finalProgress"
+          },
+          {
+            "Name": "SQS_QUEUE_URL",
+            "Value.$": "$.createQueue.QueueUrl"
+          },
+          {
+            "Name": "SQS_MESSAGE_GROUP_ID",
+            "Value.$": "$.session.messageGroupId"
+          },
+          {
+            "Name": "S3_JOBS_BUCKET",
+            "Value.$": "$.pipeline.s3JobsBucket"
+          },
+          {
+            "Name": "EVENTBRIDGE_RULE",
+            "Value.$": "$.session.cronName"
+          },
+          {
+            "Name": "UPLOAD_WORKFOLDER",
+            "Value.$": "$.pipeline.uploadWorkFolder"
+          },
+          {
+            "Name": "UPLOAD_JOB_RESOURCES",
+            "Value.$": "$.pipeline.uploadJobResources"
+          },
+          {
+            "Name": "SEND_SQS_MESSAGES",
+            "Value.$": "$.pipeline.sendSqsMessages"
+          },
+          {
+            "Name": "INTERACTIVE",
+            "Value": "false"
+          }
+        ]
+      },
+      "ResultPath": "$.container"
+    },
+    "State Machine Started": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "State Machine Started",
+            "progress": 5
+          },
+          "trace.$": "$"
+        }
+      },
+      "Next": "Command Selector",
+      "ResultPath": "$.sqsApplySucceded"
+    },
+    "Command Selector": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.workflow",
+          "StringEquals": "applyInfra",
+          "Next": "Apply SubmitJob"
+        },
+        {
+          "Variable": "$.workflow",
+          "StringEquals": "destroyInfra",
+          "Next": "Destroy SubmitJob"
+        },
+        {
+          "Variable": "$.workflow",
+          "StringEquals": "updateCron",
+          "Next": "Prepare Cron"
+        },
+        {
+          "Variable": "$.workflow",
+          "StringEquals": "deleteCron",
+          "Next": "Delete Cron"
+        }
+      ],
+      "Default": "Custom SubmitJob"
+    },
+    "Delete Cron": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:eu-west-1:377449198785:function:lambda-step-functions",
+        "Payload": {
+          "function": "remove_cron",
+          "kwargs": {
+            "workspaceId.$": "$.workspace.workspaceId"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "Delete Cron Succeded",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Delete Cron Failed"
+        }
+      ],
+      "ResultPath": "$.deleteCron"
+    },
+    "Custom SubmitJob": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::batch:submitJob.sync",
+      "Parameters": {
+        "ContainerOverrides": {
+          "Environment.$": "$.container.Environment",
+          "Command.$": "States.Array($.workflow)"
+        },
+        "JobName.$": "$.session.jobName",
+        "JobDefinition.$": "$.job.definition",
+        "JobQueue.$": "$.job.queue"
+      },
+      "Next": "Job Succeeded",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "BackoffRate": 2,
+          "IntervalSeconds": 20,
+          "MaxAttempts": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Job Failed",
+          "ResultPath": "$.submitJobOutput"
+        }
+      ],
+      "ResultPath": "$.submitJobOutput"
+    },
+    "Job Succeeded": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "Job Succeeded",
+            "progress": 98
+          },
+          "trace.$": "$"
+        }
+      },
+      "Next": "State Machine Completed",
+      "ResultPath": "$.submitJobSucceeded"
+    },
+    "Job Failed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "Job Failed",
+            "error": true
+          },
+          "trace.$": "$"
+        }
+      },
+      "ResultPath": "$.submitJobFailed",
+      "Next": "Batch Failure"
+    },
+    "Batch Failure": {
+      "Type": "Fail",
+      "Cause": "Batch Job Failure",
+      "Error": "BatchError"
+    },
+    "Apply SubmitJob": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::batch:submitJob.sync",
+      "Parameters": {
+        "ContainerOverrides": {
+          "Environment.$": "$.container.Environment",
+          "Command": [
+            "apply"
+          ]
+        },
+        "JobName.$": "$.session.jobName",
+        "JobQueue.$": "$.job.queue",
+        "JobDefinition.$": "$.job.definition"
+      },
+      "Next": "Apply Succeeded",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "BackoffRate": 2,
+          "IntervalSeconds": 20,
+          "MaxAttempts": 0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Apply Failed",
+          "ResultPath": "$.applyJobOutput"
+        }
+      ],
+      "ResultPath": "$.applyJobOutput"
+    },
+    "Apply Succeeded": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "Apply Succeeded",
+            "progress": 97
+          },
+          "trace.$": "$"
+        }
+      },
+      "Next": "Prepare Cron",
+      "ResultPath": "$.sqsApplySucceded"
+    },
+    "Prepare Cron": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:eu-west-1:377449198785:function:lambda-step-functions",
+        "Payload": {
+          "function": "prepare_cron",
+          "kwargs": {
+            "minutes.$": "$.ttl.duration.minutes"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 2,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "PutRule CRON",
+      "ResultPath": "$.prepareCron",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Cron Failed",
+          "ResultPath": "$.prepareCron"
+        }
+      ]
+    },
+    "PutRule CRON": {
+      "Type": "Task",
+      "Parameters": {
+        "Name.$": "$.session.cronName",
+        "ScheduleExpression.$": "$.prepareCron.Payload",
+        "EventBusName": "default"
+      },
+      "Resource": "arn:aws:states:::aws-sdk:eventbridge:putRule",
+      "Next": "PutTargets CRON",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "BackoffRate": 1,
+          "IntervalSeconds": 5,
+          "MaxAttempts": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Cron Failed",
+          "ResultPath": "$.cronPutRule"
+        }
+      ],
+      "ResultPath": "$.cronPutRule"
+    },
+    "Cron Failed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "Cron Failed",
+            "error": true
+          },
+          "trace.$": "$"
+        }
+      },
+      "ResultPath": "$.sqsCronUpdateFailed",
+      "Next": "State Machine Completed"
+    },
+    "PutTargets CRON": {
+      "Type": "Task",
+      "Parameters": {
+        "Rule.$": "$.session.cronName",
+        "Targets": [
+          {
+            "Id": "1",
+            "Arn.$": "$.job.queue",
+            "RoleArn.$": "$.role.eventBridge",
+            "BatchParameters": {
+              "JobDefinition.$": "$.job.definition",
+              "JobName.$": "$.session.cronName"
+            },
+            "Input": {
+              "ContainerOverrides": {
+                "Environment.$": "$.container.Environment",
+                "Command": [
+                  "destroy",
+                  "cron"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "Resource": "arn:aws:states:::aws-sdk:eventbridge:putTargets",
+      "Next": "Cron Succeded",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "BackoffRate": 1,
+          "IntervalSeconds": 5,
+          "MaxAttempts": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Cron Failed",
+          "ResultPath": "$.cronPutTargets"
+        }
+      ],
+      "ResultPath": "$.cronPutTargets"
+    },
+    "Cron Succeded": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "Cron Succeeded",
+            "progress": 99
+          },
+          "trace.$": "$"
+        }
+      },
+      "Next": "State Machine Completed",
+      "ResultPath": "$.sqsCronUpdateSucceeded"
+    },
+    "Apply Failed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "Apply Failed",
+            "error": true
+          },
+          "trace.$": "$"
+        }
+      },
+      "ResultPath": "$.notifyFailure",
+      "Next": "Destroy SubmitJob"
+    },
+    "Destroy SubmitJob": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::batch:submitJob.sync",
+      "Parameters": {
+        "ContainerOverrides": {
+          "Environment.$": "$.container.Environment",
+          "Command": [
+            "destroy"
+          ]
+        },
+        "JobName.$": "$.session.jobName",
+        "JobDefinition.$": "$.job.definition",
+        "JobQueue.$": "$.job.queue"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "BackoffRate": 2,
+          "IntervalSeconds": 20,
+          "MaxAttempts": 0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Destroy Failed",
+          "ResultPath": "$.destroyJobOutput"
+        }
+      ],
+      "Next": "Destroy Succeded",
+      "ResultPath": "$.destroyJobOutput"
+    },
+    "Destroy Failed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "Destroy Failed",
+            "error": true
+          },
+          "trace.$": "$"
+        }
+      },
+      "ResultPath": "$.sqsDestroyFailed",
+      "Next": "Destroy Failure"
+    },
+    "Destroy Failure": {
+      "Type": "Fail",
+      "Error": "DestroyError"
+    },
+    "Destroy Succeded": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "Destroy Succeded",
+            "progress": 97
+          },
+          "trace.$": "$"
+        }
+      },
+      "ResultPath": "$.sqsDestroySucceeded",
+      "Next": "State Machine Completed"
+    },
+    "State Machine Completed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "State Machine Completed",
+            "progress": 100,
+            "end": true
+          },
+          "trace.$": "$"
+        }
+      },
+      "End": true,
+      "ResultPath": "$.stateMachineCompleted"
+    },
+    "Delete Cron Failed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "Delete Cron Failed",
+            "error": true
+          },
+          "trace.$": "$"
+        }
+      },
+      "ResultPath": "$.sqsDestroyFailed",
+      "Next": "Delete Cron Failure"
+    },
+    "Delete Cron Failure": {
+      "Type": "Fail",
+      "Error": "CronDeleteError",
+      "Cause": "Removing event bridge entry failed"
+    },
+    "Delete Cron Succeded": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage",
+      "Parameters": {
+        "QueueUrl.$": "$.createQueue.QueueUrl",
+        "MessageGroupId.$": "$.session.messageGroupId",
+        "MessageBody": {
+          "message": {
+            "status": "Delete Cron Succeded",
+            "progress": 97
+          },
+          "trace.$": "$"
+        }
+      },
+      "ResultPath": "$.sqsDestroySucceeded",
+      "End": true
+    }
+  }
 }
