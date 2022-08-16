@@ -20,9 +20,10 @@ then
 fi
 
 echo "Progress: $progress %"
-
-echo "Sending SQS Message to $SQS_QUEUE_URL with $SQS_AWS_PROFILE profile."
+echo
+message_body="{\"message\":{\"status\":\"Module completed '$completed_module'\",\"progress\":$progress,\"module\":\"$completed_module\"}}"
+echo "Sending SQS Message $message_body"
+echo
 
 # send sqs message
-aws --profile $SQS_AWS_PROFILE sqs send-message --queue-url "$SQS_QUEUE_URL" --message-group-id "$SQS_MESSAGE_GROUP_ID" \
-  --message-body "{\"message\":{\"status\":\"Module completed '$completed_module'\",\"progress\":$progress,\"module\":\"$completed_module\"}}"
+result=(aws --profile $SQS_AWS_PROFILE sqs send-message --queue-url "$SQS_QUEUE_URL" --message-group-id "$SQS_MESSAGE_GROUP_ID" --message-body $message_body)

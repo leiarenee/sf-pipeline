@@ -13,42 +13,34 @@ function catch() {
   fi
 }
 
-function import_env_vars(){
-  env_files=(".env" "override.env")
-  IFS=$'\n'
-
-  # Declare environment varibles from env files
-  for env_file in ${env_files[@]}
-  do
-    if [ -f $env_file ]
-    then
-      for env_var in $(cat $env_file)
-      do
-        first_char=${env_var:0:1}
-        if [[ ! $first_char == "#" ]]
-        then
-          export $env_var
-          
-        fi
-      done
-    fi
-  done
-
-  IFS=$' '
-}
-
 function job_definitions(){
+  echo "Pipeline Runner started with arguments \"$@\""
   script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-  tg_command=${1:-$TG_COMMAND}
-  cron_job=$2
-
-  if [ -z $AWS_BATCH_JOB_ID ] # For local dev environment
+  export REPO_ROOT=$script_dir
+  if [[ "$RUNNER_MACHINE" != "local-dev" ]] # For local dev environment
   then
+    echo $RUNNER_MACHINE ENVIRONMENT VARIABLES
+    env
+  else
     uuid=$(uuidgen)
     export SF_EXECUTION_NAME=Dev-$(whoami)-$uuid
     export AWS_BATCH_JOB_ID=Process-$$
-    import_env_vars
+    set +e;a=$([ ! -z $TERM ] && clear);set -
+    echo 
+    echo $RUNNER_MACHINE Environment Variables Loaded
+    echo
+    source $REPO_ROOT/scripts/import-env-vars.sh
+    echo
   fi
+  export WORK_FOLDER=$REPO_ROOT/$WORK_FOLDER_NAME
+  echo Repository folder : \"$REPO_ROOT\"
+  echo Work folder : \"$WORK_FOLDER\"
+  [ ! -d $WORK_FOLDER ] && mkdir $WORK_FOLDER_NAME
+  [ -d $WORK_FOLDER/temp-job ] && rm -rf $WORK_FOLDER/temp-job
+  [ ! -d $WORK_FOLDER/temp-job ] && mkdir $WORK_FOLDER_NAME/temp-job
+  
+  tg_command=${1:-$TG_COMMAND}
+  cron_job=$2
 
   [ -z $SQS_MESSAGE_GROUP_ID ] && export SQS_MESSAGE_GROUP_ID=$AWS_BATCH_JOB_ID
 
@@ -81,8 +73,20 @@ function fetch_from_github(){
   repo_download_link=https://codeload.github.com/${REPO_ACCOUNT}/${REPO_NAME}/legacy.tar.gz/refs/heads/${REPO_REFERENCE}
 
   [[ $REPO_TYPE == "private" ]] && token_header=--header\="Authorization:token $token" 
-
+  
+  cd $WORK_FOLDER/temp-job
   wget $token_header --header=Accept:application/vnd.github.v3.raw -O - $repo_download_link | tar xz
+  
+  # Rename extracted folder name to repo name
+  dir_name=$(ls -d $REPO_ACCOUNT-$REPO_NAME*)
+  echo Downloaded directory name : $dir_name
+  commit=$(echo $dir_name | sed s/$REPO_ACCOUNT-$REPO_NAME-//g)
+  echo Commit Hash : $commit
+  export COMMIT_HASH=$commit
+  # create a clone
+  rsync -a $dir_name/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
+  cd $REPO_ROOT
+   
 
 }
 
@@ -110,40 +114,38 @@ function fetch_repository(){
 
   esac
 
-  # Rename extracted folder name to repo name
-
-  dir_name=$(ls -d $REPO_ACCOUNT-$REPO_NAME*)
-  echo Downloaded directory name : $dir_name
-  commit=$(echo $dir_name | sed s/$REPO_ACCOUNT-$REPO_NAME-//g)
-  echo Commit Hash : $commit
-  export COMMIT_HASH=$commit
-  cp -R $dir_name $WORKSPACE_ID
   echo
 }
 
 function copy_local_app_repo(){
-
-  mkdir temp-job/$LOCAL_APP_REPO
-  mkdir temp-job/$WORKSPACE_ID
-  rsync -a --exclude-from=../$LOCAL_APP_REPO/.gitignore ../$LOCAL_APP_REPO/ temp-job/$LOCAL_APP_REPO
-  rsync -a temp-job/$LOCAL_APP_REPO/ temp-job/$WORKSPACE_ID
-
+  infra_repo=$( cd $REPO_ROOT/../$LOCAL_APP_REPO "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+  echo Copying source files from Local $infra_repo folder 
+  rsync -a --exclude-from=$infra_repo/.gitignore $infra_repo/* $WORK_FOLDER/temp-job/$LOCAL_APP_REPO
+  # create a clone
+  rsync -a $WORK_FOLDER/temp-job/$LOCAL_APP_REPO/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
+  # get commit hash
+  export COMMIT_HASH=$(git -C $infra_repo log main..$REPO_REFERENCE --format="%h" -n 1)
+  echo Commit Hash : $COMMIT_HASH
+  echo Repo Head : $(git -C $infra_repo describe --all)
+  echo Changed Files : $(git -C $infra_repo status -s | sed s/??//g | tr -d '\n')
   
 }
 
 function fetch_app_repo(){
-  [ -d temp-job ] && rm -rf temp-job
-  mkdir temp-job
   
   if [[ $USE_LOCAL_REPO == "true" ]]
   then 
     copy_local_app_repo
   else
-    cd temp-job
     fetch_repository
-    cd ..
   fi
   
+}
+
+function overwrite_terragrunt(){
+  # Copy common folders
+  rsync -a $REPO_ROOT/terragrunt/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/
+  rsync -a $REPO_ROOT/scripts/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/scripts/
 }
 
 # Upload Temp Folder
@@ -253,52 +255,57 @@ function run_terragrunt(){
 
   # Prepare command line arguments
 
-  if [[ $RUN_ALL == "true" ]]
+  if [[ $RUN_ALL == "true" ]] 
   then
     tg_run_all=run-all
+    working_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER
+  else
+    working_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER/$RUN_MODULE
+  fi
+
+  if [[ $INTERACTIVE != true ]]
+  then
     tg_non_interactive=--terragrunt-non-interactive
   fi
 
-  working_dir=temp-job/$WORKSPACE_ID/$STACK_FOLDER/$RUN_MODULE
 
   # Escape / Character
-  escaped_stack_path=$(echo "$(pwd)/temp-job/" | sed s/\\//\\\\\\//g)
+  escaped_stack_path=$(echo "$WORK_FOLDER/temp-job" | sed s/\\//\\\\\\//g)
   
   # Prepare command line arguments for interactive or non-interactive usage
-  if [[ ! $INTERACTIVE == "true" ]]
+  if [[ $INTERACTIVE == "true" ]]
   then
-    export TG_DISABLE_CONFIRM=true
-    #stderr_output=/dev/null
     stderr_output=1
     log_level=info
-    no_color=-no-color
   else
-    stderr_output=1
-    log_level=info
+    export TG_DISABLE_CONFIRM=true
+    stderr_output=/dev/null
+    log_level=debug
+    no_color=-no-color
   fi
+  
   set +e
-  TG_ARGUMENTS=$(echo $TG_ARGUMENTS | sed s/~/=/g)
-  echo TG_ARGUMENTS is $TG_ARGUMENTS
+
   # Run terragrunt
     terragrunt $tg_run_all $tg_command \
       --terragrunt-debug --terragrunt-working-dir $working_dir  \
       $tg_non_interactive --terragrunt-log-level $log_level $no_color \
-      $TG_ARGUMENTS
-      > >(tee stdout.log) \
-      2> >(tee stderr.log >&$stderr_output) 
+      $TG_ARGUMENTS \
+      > >(tee $WORK_FOLDER/temp-job/stdout.log) \
+      2> >(tee $WORK_FOLDER/temp-job/stderr.log >&$stderr_output) 
 
   # Get Exit Code
   export tg_err=$?
   [ $tg_err -ne 0 ] && echo Terragrunt Exitcode: $tg_err
 
   # Prepare a consise error log
-  cat stderr.log | grep -vE 'locals|msg=run_cmd|msg=Detected|msg=Included|msg=\[Partial\]|msg=Executing|msg=WARN|msg=Setting|^$|msg=Generated|msg=Downloading|msg=The|msg=Are|msg=Reading|msg=Copying|msg=Debug|must wait|msg=Variables|msg=Dependency|msg=[0-9] error occurred|Cannot process|=>|msg=Stack|msg=Unable|errors occurred|sensitive|BEGIN RSA|\[0m|You may now|any changes|should now|If you ever|If you forget|- Reusing previous| \* exit status|Include this file|Terraform can guarantee|^\t\* |^ prefix' \
-    | sed s/$escaped_stack_path//g > stderr_filtered.log
+  cat $WORK_FOLDER/temp-job/stderr.log | grep -vE 'level=debug|locals|msg=run_cmd|msg=Detected|msg=Included|msg=\[Partial\]|msg=Executing|msg=WARN|msg=Setting|^$|msg=Generated|msg=Downloading|msg=The|msg=Are|msg=Reading|msg=Copying|msg=Debug|must wait|msg=Variables|msg=Dependency|msg=[0-9] error occurred|Cannot process|=>|msg=Stack|msg=Unable|errors occurred|sensitive|BEGIN RSA|\[0m|You may now|any changes|should now|If you ever|If you forget|- Reusing previous| \* exit status|Include this file|Terraform can guarantee|^\t\* |^ prefix' \
+    | sed s/$escaped_stack_path//g > $WORK_FOLDER/temp-job/stderr_filtered.log
   
   # If error occurs write filtered error into terminal (stdout)
   if [ $tg_err -ne 0 ]
   then
-  cat stderr_filtered.log | grep -E 'error|Error'
+  cat $WORK_FOLDER/temp-job/stderr_filtered.log | grep -E 'error|Error'
   exit $tg_err
   fi
 
@@ -311,11 +318,8 @@ function put_outputs_to_s3(){
   if [[ $tg_command == "apply" ]] && [[ $RUN_ALL == "true" ]] && [ $tg_err -eq 0 ] 
   then
     s3_parent_key="$S3_JOBS_BUCKET/$job_name"
-    cd $script_dir/temp-job/$WORKSPACE_ID/$STACK_FOLDER/job-resources
-    tg_disable_confirm=$TG_DISABLE_CONFIRM
-    export TG_DISABLE_CONFIRM=true
-    terragrunt output job_resources > outputs.txt
-    export TG_DISABLE_CONFIRM=$tg_disable_confirm
+    cd $WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER/job-resources
+    TG_DISABLE_CONFIRM=true terragrunt output job_resources > outputs.txt 
 
     if [[ $UPLOAD_JOB_RESOURCES == "true" ]]
     then
@@ -330,7 +334,7 @@ function put_outputs_to_s3(){
 
     if [[ $UPLOAD_JOB_RESOURCES == "true" ]]
     then
-      aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.json s3://$s3_parent_key/job-resources/outputs.json
+      result=$(aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.json s3://$s3_parent_key/job-resources/outputs.json)
     fi
   fi
 }
@@ -372,7 +376,7 @@ function send_sqs_status(){
   if [[ $SEND_SQS_MESSAGES == "true" ]]
   then
     echo "sending SQS message : $sqs_message"
-    aws --profile $SQS_AWS_PROFILE sqs send-message --queue-url "$SQS_QUEUE_URL" --message-group-id "$SQS_MESSAGE_GROUP_ID" --message-body "$1"
+    result=(aws --profile $SQS_AWS_PROFILE sqs send-message --queue-url "$SQS_QUEUE_URL" --message-group-id "$SQS_MESSAGE_GROUP_ID" --message-body "$1")
   fi
 }
 
@@ -390,11 +394,12 @@ function send_progress(){
   send_sqs_status $sqs_message
 }
 
+
 # Main Routine
-echo "Running pipeline with Entrypoint arguments $@";echo 
 job_definitions $@
 echo $job_name Job Started
 fetch_app_repo
+overwrite_terragrunt
 configure_aws_profile
 createSqsQueue
 send_progress "Batch_Job_Started" $INITIAL_PROGRESS
