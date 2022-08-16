@@ -54,14 +54,14 @@ echo Polling Interval : $POLL_INTERVAL
 echo Max SQS Messages : $MAX_SQS_MESSAGES
 echo
 echo "Starting \"$state_machine_arn\""
-# echo "Do you confirm? (y)"
+echo "Do you confirm? (y)"
 
-# read answer
+read answer
 
-# if [[ $answer != "y" ]]
-# then
-#  exit
-# fi
+if [[ $answer != "y" ]]
+then
+ exit
+fi
 
 
 # Execute State Machine
