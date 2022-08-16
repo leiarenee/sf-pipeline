@@ -1,6 +1,0 @@
-#!/bin/bash -e
-echo "Running pipeline with Entrypoint arguments $@"
-
-# Run the script
-exec ./run-pipeline $@
-

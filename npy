@@ -19,29 +19,14 @@ function show_usage(){
     Run Only once
     - Install Virtual environment     $0 install
     
-    Run everytime when you update the code
-    - Run tests & Deploy to Lambda    $0 deploy
-    - Make test request with curl     $0 lambda-test
-
-    Other commands:
-    - Start XRay and DynamoDB         $0 daemons 
-    - Same as above with an empty DB  $0 daemons fresh
-    (Ctrl + C to exit daemons)
     
     - Run All Tests:                  $0 test
-    - Run Server:                     $0 start
-    - Run Applicaiton                 $0 run
-    - Linting                         $0 lint
-    - Deploy to lambda without tests  $0 lambda-update
-    - Build Docker                    $0 docker build
-    - Push to Docker Registry         $0 docker push
-    - Update the lambda image         $0 docker update
-    - Run Docker                      $0 docker run
 
-    Note: docker commands might be mixed
-      ex: $0 docker build run
-          $0 docker build push update
-    
+    - Linting                         $0 lint
+    - Build Docker                    $0 docker build
+    - Push to Docker Registry         $0 docker build push
+    - Run Docker                      $0 docker build run
+
     - Show Usage:                     $0 help or --help or -h 
   
   To activate virtual environment for command line shell: (Not required for running '$0')
@@ -54,30 +39,6 @@ function show_usage(){
     'deactivate'
 EOF
   exit 0
-}
-
-# Function to import environment variables from .env file
-function import_env_vars(){
-  
-  IFS=$'\n'
-
-  # Declare environment varibles from env files
-  for env_file in ${env_files[@]}
-  do
-    if [ -f $env_file ]
-    then
-      for env_var in $(cat $env_file)
-      do
-        first_char=${env_var:0:1}
-        if [[ ! $first_char == "#" ]]
-        then
-          export $env_var
-        fi
-      done
-    fi
-  done
-
-  IFS=$' '
 }
 
 # Function for preparing environment
@@ -124,145 +85,8 @@ function install(){
   
 }
 
-function docker_cleanup(){
-  echo "Running docker cleanup"
-  dangling=$(docker images -f "dangling=true" -q)
-  if [ ! -z $dangling ]
-  then
-    echo $dangling
-    echo "Dangling Images found"
-    echo $dangling
-    echo "Removing dangling images"
-    for dang in $dangling
-    do
-      docker rmi -f $dang
-    done
-  else
-    echo "No dangling images found."
-  fi
-  #docker images -f "dangling=true" -q | xargs docker rmi -f
-}
-
-# Function for building docker
-function docker_build(){
-  [ ! -z $NPY_DOCKER_CLEANUP ] && docker_cleanup
-
-  docker build . -t $NPY_DOCKER_IMAGE_NAME \
-    --build-arg PYTHON_VERSION=$NPY_PYTHON_VERSION \
-    --build-arg PYTHON_COMMAND=$NPY_PYTHON_COMMAND \
-    --build-arg START_MODULE=$NPY_SERVER_MODULE \
-    --platform $NPY_DOCKER_PLATFORM
-}
-
-# Function for running docker
-function docker_run(){
-  docker run -p 9000:8080 --rm --platform $NPY_DOCKER_PLATFORM $NPY_DOCKER_IMAGE_NAME $@
-}
-
-# Function for running tests in docker
-function docker_test(){
-  docker run --rm $NPY_DOCKER_IMAGE_NAME test
-}
-
-# Function for sending test request to lambda runtime emulator
-function docker_curl(){
-  curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
-}
-
-# Function for uploading docker image
-function docker_push(){
-  echo "Running Image Push"
-  ECR_REPO=$ECR_AWS_ACCOUNT_ID.dkr.ecr.eu-west-1.amazonaws.com
-  ECR_IMAGE_NAME=$ECR_REPO/$NPY_DOCKER_IMAGE_NAME
-
-  # Docker login to ECR
-  aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REPO
-
-  # Creat Repository
-  set +e
-  IMAGE_VERSION=$(git describe --tags)
-  [ $? -ne 0 ] && echo "There is no versionin tag."
-  aws ecr create-repository --repository-name $NPY_DOCKER_IMAGE_NAME --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE 2>/dev/null
-  if [ $? -eq 0 ]
-  then
-    echo "Repository Created"
-  else
-    echo "Reposotory Already exists"
-  fi
-  set -e
-
-  # Push to repository with latest tag
-  docker tag  $NPY_DOCKER_IMAGE_NAME:latest $ECR_IMAGE_NAME:latest
-  docker push $ECR_IMAGE_NAME:latest
-
-  # Tag with image version - thats only possible with yet another push
-  if [ ! -z $IMAGE_VERSION ]
-  then
-    echo "Image Version : "$IMAGE_VERSION
-    docker tag  $NPY_DOCKER_IMAGE_NAME:latest $ECR_IMAGE_NAME:$IMAGE_VERSION
-    docker push $ECR_IMAGE_NAME:$IMAGE_VERSION >/dev/null 2>&1
-  fi
-
-}
-
-function docker_update(){
-  echo 'Running Image Update'
-  ECR_REPO=$ECR_AWS_ACCOUNT_ID.dkr.ecr.eu-west-1.amazonaws.com
-  ECR_IMAGE_NAME=$ECR_REPO/$NPY_DOCKER_IMAGE_NAME
-
-  aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $ECR_IMAGE_NAME:latest
-}
-
-# Function for calling docker with arguments
-function run_docker(){
-  while (( "$#" ))
-  do
-    case $1 in
-      "build")
-      docker_build;;
-      "run")
-      docker_run;;
-      "test")
-      docker_test;;
-      "curl")
-      docker_curl;;
-      "push")
-      docker_push;;
-      "update")
-      docker_update;;
-      "cleanup")
-      docker_cleanup;;
-    esac
-  shift
-  done
-
-}
-
 function lint(){
   $NPY_PYTHON_COMMAND -m pylint --disable=R src
-}
-
-function lambda_update(){
-  run_docker build push update
-}
-
-function deploy(){
-  echo 'This will update Lambda. Are you sure? (y/n) :' 
-  read answer
-  if [[ "$answer" == "y" ]] || [[ "$answer" == "Y" ]]
-  then
-    run_tests
-    if [ $? -eq 0 ]
-    then
-      run_docker build push update
-    else
-      echo "Some of the tests failed, canceling deployment."
-    fi
-    
-  else
-    echo "Cancelled"
-  fi
-
 }
 
 function environment(){
@@ -271,52 +95,11 @@ function environment(){
 
 }
 
-function api_gateway_test(){
-  api_gateway_stage=${1:-$API_GATEWAY_STAGE}
-  if [ -z $API_GATEWAY_END_POINT_OVERRIDE]
-  then
-    api_gateway_end_point="https://$API_GATEWAY_ID.execute-api.$AWS_REGION.amazonaws.com/$api_gateway_stage/$API_GATEWAY_RESOURCE"
-  else
-    api_gateway_end_point=$API_GATEWAY_END_POINT_OVERRIDE
-  fi
-  
-  event=$(cat src/json/event.json | jq {$API_GATEWAY_COMMAND}.$API_GATEWAY_COMMAND | tr -d "\n\ " | jq . -Rr)
-  echo "Running curl request to $api_gateway_end_point"
-  echo "event=$event"
-  curl "$api_gateway_end_point" \
-  -X POST \
-  -d $event \
-  -H "Content-Type: application/json" \
-  | jq .
-}
-
-# Function for running tests and python script at the same command.
-function run_server(){
-  echo
-  echo "Running Building Docker image "
-  echo
-  docker_build
-  echo
-  echo "Running $NPY_SERVER_MODULE Server in docker"
-  echo
-  docker_run
-}
-
-function start_daemons(){
-  [ $1 == "fresh" ] && [ -f "shared-local-instance.db" ] && rm shared-local-instance.db
-  (trap 'kill %1; kill %2' SIGINT;\
-  java -Djava.library.path=$HOME/$DYNAMODB_PATH/DynamoDBLocal_lib -jar $HOME/$DYNAMODB_PATH/DynamoDBLocal.jar -sharedDb \
-  | tee dynamodb.log | sed -e 's/^/[DynamoDB] /' & \
-  $HOME/$XRAY_DEAMON_PATH/xray_mac --config $HOME/$XRAY_DEAMON_PATH/cfg.yaml \
-  | tee xray.log | sed -e 's/^/[X-Ray] /' & \
-  wait)
-}
-
 # ------------------ Main Routine -------------------------
 
-import_env_vars
+source scripts/import-env-vars.sh
 
-if [ "$1" != "install"  ] && [ "$1" != "help" ] && [ "$1" != "docker-test" ] && [ "$1" != "docker" ]
+if [ "$1" != "install"  ] && [ "$1" != "help" ] && [ "$1" != "docker" ]
 then
   activate_virtual_env
 fi
@@ -325,30 +108,18 @@ fi
 case $1 in
   "--help"|"-h"|"help")
   show_usage;;
-  "run")
-  run_application $@;;
+  "runner")
+  ./runner $@;;
   "install")
   install;;
-  "test"|"docker-test")
+  "test")
   run_tests;;
-  "start")
-  run_server;;
   "docker")
-  shift;run_docker $@;;
+  shift 2;docker/build $@;;
   "lint")
   lint;;
-  "lambda-update")
-  lambda_update;;
-  "deploy")
-  deploy;;
   "env")
   environment;;
-  "api")
-  shift
-  api_gateway_test $@;;
-  "daemons")
-  shift
-  start_daemons $@;;
   *)
   echo "Wrong Argument";show_usage;;
 esac

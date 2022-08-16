@@ -37,19 +37,22 @@ logger.setLevel(logging.ERROR)
 # patch_all()
 
 
-def stack_folder_name():
+def stack_folder_name(module_folder=True):
+  repo_root = os.getenv('REPO_ROOT') if os.getenv('REPO_ROOT') else f'{os.getcwd()}'
+  working_dir = os.getenv('WORK_FOLDER_NAME')
   workspace_id = os.getenv('WORKSPACE_ID')
   stack_folder= os.getenv('STACK_FOLDER')
-  #workspace_id = subprocess.run('echo $WORKSPACE_ID | envsubst', capture_output=True, text=True, shell=True).stdout.strip()
-  working_dir = f'{workspace_id}/{stack_folder}'
-  return working_dir
+  job_folder_name = 'temp-job'
+  run_module = os.getenv('RUN_MODULE')
+  run_all = 'run-all' if os.getenv('RUN_ALL') == "true" else None
+  abs_working_dir = f'{repo_root}/{working_dir}/{job_folder_name}/{workspace_id}/{stack_folder}/{run_module if module_folder and not run_all else ""}'
+  return abs_working_dir
 
 def find_groups(*args, **kwargs):
   job_folder_name='temp-job'
   os.putenv('TG_DISABLE_CONFIRM','true')
-  os.chdir(f'{os.path.dirname(__file__)}/../{job_folder_name}/{stack_folder_name()}')
-  cwd=os.getcwd()
-  result = subprocess.run(['terragrunt', 'run-all', 'apply'], capture_output=True,text=True,input='n')
+  tg_working_dir=stack_folder_name()
+  result = subprocess.run(['terragrunt', 'run-all', 'apply', '--terragrunt-working-dir', tg_working_dir], capture_output=True,text=True,input='n')
 
   a = re.sub(r'\n\n','\n#\n',result.stderr)
   b = re.findall('Group .\n([^#]+)', a)
@@ -63,8 +66,8 @@ def find_groups(*args, **kwargs):
     d.pop(0)
     for k in d:
       r = k.replace('Module ','').replace('\n','')
-      s = r.replace(os.path.abspath(f'{os.path.dirname(__file__)}/../{job_folder_name}/stack/') + '/','')
-      s = s.replace(cwd + '/','')
+      s = r.replace(stack_folder_name(module_folder=False) ,'')
+      
       l.append(s)
       g[c].append(s)
 
@@ -72,7 +75,7 @@ def find_groups(*args, **kwargs):
 
 def find_modules(*args, **kwargs):
   
-  os.chdir(f'{os.path.dirname(__file__)}/../temp-job/{stack_folder_name()}')
+  os.chdir(stack_folder_name())
   os.putenv('TG_DISABLE_CONFIRM','true')
   result = subprocess.run(['terragrunt', 'graph-dependencies'], capture_output=True,text=True)
   b = re.findall('\"(.+)\" ;', result.stdout)

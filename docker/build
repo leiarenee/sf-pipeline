@@ -1,0 +1,90 @@
+#!/bin/bash
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+image_name=tf-docker-executor
+region=${AWS_REGION:-"eu-west-1"}
+set -e
+caller_identity=$(aws sts get-caller-identity)
+account_id=$(echo $caller_identity | jq -r .Account)
+echo 
+echo caller identity $caller_identity
+echo AWS Account is $account_id
+echo AWS Region is $region
+
+echo Logging into AWS public repository
+aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+
+echo Building $image_name
+context=$script_dir/..
+
+if [[ $TERRAFORM_VERSION == latest ]]
+then
+ export TERRAFORM_VERSION=`curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest |  grep tag_name | cut -d: -f2 | tr -d \"\,\v | awk '{$1=$1};1'`
+fi
+
+if [[ $TERRAGRUNT_VERSION == latest ]]
+then
+ export TERRAGRUNT_VERSION=`curl -s https://api.github.com/repos/gruntwork-io/terragrunt/releases/latest |  grep tag_name | cut -d: -f2 | tr -d \"\,\v | awk '{$1=$1};1'`
+fi
+
+if [[ $1 == "run" ]]
+then
+docker_platform=$DOCKER_RUN_PLATFORM
+image_name=$image_name-local
+fi
+
+if [[ $1 == "push" ]]
+then
+docker_platform=$DOCKER_BUILD_PLATFORM
+image_name=$image_name-remote
+fi
+
+
+docker buildx build $context --platform $docker_platform -t $image_name --file $context/docker/Dockerfile \
+  --build-arg TERRAFORM_VERSION=$TERRAFORM_VERSION --build-arg TERRAGRUNT_VERSION=$TERRAGRUNT_VERSION 
+
+if [[ $DOCKER_INTERACTIVE == true ]]
+then
+it_flag=-it 
+pass_args=/bin/bash
+else
+unset it_flag
+pass_args=$2
+fi
+
+if [[ $1 == "run" ]]
+then
+  # if override.env does not exist then copy .env as override.env
+  [ ! -f override.env ] && touch override.env 
+
+  step_uuid=$(uuidgen)
+  batch_uuid=$(uuidgen)
+
+  # Run Docker
+  docker run $it_flag --platform $DOCKER_RUN_PLATFORM --env-file .env --env-file override.env --env INTERACTIVE=false \
+    --env RUNNER_MACHINE=local-docker --env SF_EXECUTION_NAME=Docker-Local-$(whoami)-$sf-$(uuidgen) \
+    --env AWS_BATCH_JOB_ID=batch-$(uuidgen) \
+    -v $context/../$LOCAL_APP_REPO:/home/$LOCAL_APP_REPO \
+    -v $HOME/.terraform.d/plugin-cache:/home/app/.terraform.d/plugin-cache \
+    -v $context/$WORK_FOLDER_NAME:/home/app/$WORK_FOLDER_NAME \
+    $image_name $pass_args 
+fi
+
+if [[ $1 == "push" ]]
+then
+  repository=$account_id.dkr.ecr.$region.amazonaws.com
+  remote_tag=$repository/$image_name
+  
+  # Login
+  echo Logging into $repository
+  aws ecr get-login-password | docker login --username AWS --password-stdin $account_id.dkr.ecr.$region.amazonaws.com
+  
+  # Tag Image
+  docker tag $image_name $account_id.dkr.ecr.$region.amazonaws.com/$image_name
+  
+  # Push
+  echo Pushing $remote_tag
+  docker push $account_id.dkr.ecr.$region.amazonaws.com/$image_name
+fi
+
+# Enter shell
+# docker run -it --entrypoint=bash --platform linux/x86_64 $image_name

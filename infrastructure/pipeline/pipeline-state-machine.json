@@ -214,6 +214,14 @@
 						"Value.$": "$.replace.parameters.CLUSTER"
 					},
 					{
+						"Name": "RUNNER_MACHINE",
+						"Value.$": "$.pipeline.runnerMachine"
+					},
+					{
+						"Name": "WORK_FOLDER_NAME",
+						"Value.$": "$.pipeline.workFolderName"
+					},
+					{
 						"Name": "INITIAL_PROGRESS",
 						"Value.$": "$.pipeline.initialProgress"
 					},
