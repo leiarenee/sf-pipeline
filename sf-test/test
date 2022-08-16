@@ -16,15 +16,14 @@ function print_log(){
 
 }
 
-#[ ! -z $TERM ] && clear
+[ ! -z $TERM ] && clear
 
 # Main Routine
-echo started
+
 script_dir=$( cd .. "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-echo hey
+
 export REPO_ROOT=$script_dir
-echo $REPO_ROOT
-exit
+
 source $REPO_ROOT/scripts/import-env-vars.sh quiet
 
 # Command Line Arguments
