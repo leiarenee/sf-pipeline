@@ -18,5 +18,5 @@ result=$(aws --region $PIPELINE_AWS_REGION stepfunctions start-execution --state
 echo $result | jq .
 execution_arn=$(echo $result | jq -r .executionArn)
 IFS=":"; arr=($execution_arn); unset IFS
-EXECUTION_NAME=${arr[7]}
+export EXECUTION_NAME=${arr[7]}
 
