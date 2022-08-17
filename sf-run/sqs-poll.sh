@@ -96,7 +96,11 @@ do
   [ ! -z $LOG_STREAM_NAME ] && print_log
 done
 
+echo "S3_JOB_FOLDER = s3://sf-pipeline-jobs/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID"
+echo "LOG_STREAM_NAME = aws/batch/job:$LOG_STREAM_NAME"
+
 # Send to ENV
 echo "AWS_BATCH_JOB_ID=$AWS_BATCH_JOB_ID" >> $GITHUB_ENV
 echo "LOG_STREAM_NAME=$LOG_STREAM_NAME" >> $GITHUB_ENV
-
+echo "S3_JOB_FOLDER=$S3_JOB_FOLDER" >> $GITHUB_ENV
+echo "LOG_STREAM_NAME"=aws/batch/job:$LOG_STREAM_NAME" >> $GITHUB_ENV
