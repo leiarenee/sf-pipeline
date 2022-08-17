@@ -1,11 +1,23 @@
 #!/bin/bash
 
+log_file=log.txt
+
 # ------------ Poll Sqs Status Messages and Log Updates ---------------------------------------------
 
-# SQS
-SQS_QUEUE_URL="https://sqs.$PIPELINE_AWS_REGION.amazonaws.com/$PIPELINE_AWS_ACCOUNT_ID/$EXECUTION_NAME.fifo"
-echo SQS_QUEUE_URL : $SQS_QUEUE_URL
+function print_log(){
+  aws logs tail /aws/batch/job --log-stream-names $LOG_STREAM_NAME --since 1d --format short > $log_file
+  linesold=$lines
+  lines=$(wc -l $log_file | awk '{ print $1 }')
 
+  if [[ $linesold != $lines ]]
+  then 
+    echo 
+    awk -v linesold=$linesold 'NR > linesold' $log_file | sed '/^$/d'
+    logupdated=true
+  fi
+}
+
+# SQS
 echo "Waiting 5 Seconds for initialization of State Machine..."
 sleep 5
 
@@ -16,7 +28,7 @@ while [ -z $end ]
 do
   if [ -z "$simulate" ]
   then
-    sqs_messages=$(aws --region $PIPELINE_AWS_REGION sqs receive-message --queue-url $SQS_QUEUE_URL --max-number-of-messages $MAX_SQS_MESSAGES )
+    sqs_messages=$(aws sqs receive-message --queue-url $SQS_QUEUE_URL --max-number-of-messages $MAX_SQS_MESSAGES )
     messages=$(echo $sqs_messages | jq -r '.Messages[] | @base64')
   else
     messages=$(cat messages.json | jq -r '.Messages[] | @base64')
@@ -38,9 +50,9 @@ do
     
     if [[ $batch_id != null ]] && [[ $status == "Batch_Job_Started" ]]
     then
-      log_stream_name=$(aws batch describe-jobs --jobs $batch_id | jq -r '.jobs[0].container.logStreamName')
-      echo Log Stream : $log_stream_name
-      AWS_BATCH_JOB_ID=$batch_id
+      export LOG_STREAM_NAME=$(aws batch describe-jobs --jobs $batch_id | jq -r '.jobs[0].container.logStreamName')
+      echo Log Stream : $LOG_STREAM_NAME
+      export AWS_BATCH_JOB_ID=$batch_id
       # Get Job Id
       job_id=$!
       echo Job: $job_id
@@ -52,7 +64,7 @@ do
       unset batch_id
     fi
     set +e
-    aws --region $PIPELINE_AWS_REGION sqs delete-message --queue-url $SQS_QUEUE_URL --receipt-handle $receipt_handle
+    aws sqs delete-message --queue-url $SQS_QUEUE_URL --receipt-handle $receipt_handle
     set -e
     # Write status
     bar_end=$(($progress*3/10))
@@ -80,6 +92,10 @@ do
   done
 
   sleep $POLL_INTERVAL
-  [ ! -z $log_stream_name ] && print_log
+  [ ! -z $LOG_STREAM_NAME ] && print_log
 done
+
+# Send to ENV
+echo "AWS_BATCH_JOB_ID=$AWS_BATCH_JOB_ID" >> $GITHUB_ENV
+echo "LOG_STREAM_NAME=$LOG_STREAM_NAME" >> $GITHUB_ENV
 

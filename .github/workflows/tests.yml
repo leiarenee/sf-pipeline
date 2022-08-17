@@ -95,13 +95,13 @@ jobs:
           PIPELINE_SF_TEMPLATE_FILE: ./sf-run/sf-template.json
 
           # SQS POLLING
-          POLL_INTERVAL: 5
+          POLL_INTERVAL: 10
           MAX_SQS_MESSAGES: 10
 
           # RUNTIME
           SQS_QUEUE_URL: 
           EXECUTION_NAME:  
         run: ./sf-run/sf-execute.sh
-      - name: Poll SQS
+      - name: Poll SQS Messages
         shell: bash
         run: ./sf-run/sqs-poll.sh
