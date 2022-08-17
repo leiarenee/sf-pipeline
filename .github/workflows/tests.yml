@@ -74,7 +74,7 @@ jobs:
           INITIAL_PROGRESS: 10
           MODULES_FINAL_PROGRESS: 90
           FINAL_PROGRESS: 95
-          S3_JOBS_BUCKET: sf-pipeline-jobs-github
+          S3_JOBS_BUCKET: sf-pipeline-jobs
           EVENTBRIDGE_RULE: SF-Cron-Pipeline
           UPLOAD_WORKFOLDER: always
           UPLOAD_JOB_RESOURCES: true
@@ -95,7 +95,7 @@ jobs:
           PIPELINE_SF_TEMPLATE_FILE: ./sf-run/sf-template.json
 
           # SQS POLLING
-          POLL_INTERVAL: 10
+          POLL_INTERVAL: 30
           MAX_SQS_MESSAGES: 10
 
           # RUNTIME
