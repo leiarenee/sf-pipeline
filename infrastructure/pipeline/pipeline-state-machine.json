@@ -278,6 +278,10 @@
             "Value.$": "$.pipeline.uploadJobResources"
           },
           {
+            "Name": "UPLOAD_PLAN_FILES",
+            "Value.$": "$.pipeline.uploadPlanFiles"
+          },
+          {
             "Name": "SEND_SQS_MESSAGES",
             "Value.$": "$.pipeline.sendSqsMessages"
           },
