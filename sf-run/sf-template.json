@@ -47,6 +47,7 @@
 		"eventBridgeRule": "${EVENTBRIDGE_RULE}",
 		"uploadWorkFolder": "${UPLOAD_WORKFOLDER}",
 		"uploadJobResources": "${UPLOAD_JOB_RESOURCES}",
+		"uploadPlanFiles": "${UPLOAD_PLAN_FILES}",
 		"sendSqsMessages": "${SEND_SQS_MESSAGES}"
 	},
 	"job": {
