@@ -1,30 +1,6 @@
 #!/bin/bash
 set -e
 
-function import_env_vars(){
-  env_files=(".env" "override.env")
-  IFS=$'\n'
-
-  # Declare environment varibles from env files
-  for env_file in ${env_files[@]}
-  do
-    if [ -f $env_file ]
-    then
-      for env_var in $(cat $env_file)
-      do
-        first_char=${env_var:0:1}
-        if [[ ! $first_char == "#" ]]
-        then
-          export $env_var
-          
-        fi
-      done
-    fi
-  done
-
-  IFS=$' '
-}
-
 function print_log(){
   aws logs tail /aws/batch/job --log-stream-names $log_stream_name --since 1d --format short > $log_file
   linesold=$lines
@@ -39,9 +15,6 @@ function print_log(){
 
 
 }
-
-# Main Routine
-import_env_vars
 
 # Command Line Arguments
 export TG_COMMAND=${1:-"$TG_COMMAND"}
@@ -59,10 +32,11 @@ log_file=log.txt
 # export CRON_EXPRESSION=$(python3 -m cron $duration)
 
 # Prepare Inputs
-test_inputs=$(cat $TEST_CLIENT_INPUT_FILE | envsubst | tr -d '\n' | jq -r . | sed s/\"\{/\{/ | sed s/\}\"/}/)
+
+test_inputs=$(cat $PIPELINE_SF_TEMPLATE_FILE | envsubst | tr -d '\n' | jq -r . )
+
 echo $test_inputs | jq . > test-client-inputs.json
 
-clear
 echo
 echo $test_inputs | jq .
 echo
@@ -71,6 +45,7 @@ echo Max SQS Messages : $MAX_SQS_MESSAGES
 echo
 echo "Starting \"$state_machine_arn\""
 echo "Do you confirm? (y)"
+
 read answer
 
 if [[ $answer != "y" ]]
@@ -170,10 +145,10 @@ do
   [ ! -z $log_stream_name ] && print_log
 done
 
-echo
-echo Job Resources
-echo
-aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION s3 cp s3://$S3_JOBS_BUCKET/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID/job-resources/outputs.json job-resources.json
-cat job-resources.json | jq .
-echo
+# echo
+# echo Job Resources
+# echo
+# aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION s3 cp s3://$S3_JOBS_BUCKET/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID/job-resources/outputs.json job-resources.json
+# cat job-resources.json | jq .
+# echo
 

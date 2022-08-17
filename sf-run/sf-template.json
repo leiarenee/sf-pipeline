@@ -26,6 +26,7 @@
 	"terragrunt": {
 		"runAll": "${RUN_ALL}",
 		"tgCommand": "${TG_COMMAND}",
+		"tgArguments": "${TG_ARGUMENTS}",
 		"runModule": "${RUN_MODULE}",
 		"stackFolder": "${STACK_FOLDER}"
 	},
@@ -38,6 +39,7 @@
 		}
 	},
 	"pipeline": {
+		"workFolderName": "${WORK_FOLDER_NAME}",
 		"initialProgress": "${INITIAL_PROGRESS}",
 		"modulesFinalProgress": "${MODULES_FINAL_PROGRESS}",
 		"finalProgress": "${FINAL_PROGRESS}",
@@ -45,6 +47,7 @@
 		"eventBridgeRule": "${EVENTBRIDGE_RULE}",
 		"uploadWorkFolder": "${UPLOAD_WORKFOLDER}",
 		"uploadJobResources": "${UPLOAD_JOB_RESOURCES}",
+		"uploadPlanFiles": "${UPLOAD_PLAN_FILES}",
 		"sendSqsMessages": "${SEND_SQS_MESSAGES}"
 	},
 	"job": {

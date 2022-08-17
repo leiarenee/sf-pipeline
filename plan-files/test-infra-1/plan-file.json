@@ -1,0 +1,174 @@
+{
+  "format_version": "1.1",
+  "terraform_version": "1.2.7",
+  "variables": {
+    "aws_batch_id": {
+      "value": ""
+    },
+    "common_tags": {
+      "value": {}
+    },
+    "region": {
+      "value": "eu-west-1"
+    },
+    "replace_variables": {
+      "value": 0
+    },
+    "user_email": {
+      "value": ""
+    },
+    "uuid": {
+      "value": ""
+    }
+  },
+  "planned_values": {
+    "outputs": {
+      "random_pet": {
+        "sensitive": false
+      }
+    },
+    "root_module": {
+      "resources": [
+        {
+          "address": "random_pet.this",
+          "mode": "managed",
+          "type": "random_pet",
+          "name": "this",
+          "provider_name": "registry.terraform.io/hashicorp/random",
+          "schema_version": 0,
+          "values": {
+            "keepers": null,
+            "length": 3,
+            "prefix": null,
+            "separator": "-"
+          },
+          "sensitive_values": {}
+        }
+      ]
+    }
+  },
+  "resource_changes": [
+    {
+      "address": "random_pet.this",
+      "mode": "managed",
+      "type": "random_pet",
+      "name": "this",
+      "provider_name": "registry.terraform.io/hashicorp/random",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "keepers": null,
+          "length": 3,
+          "prefix": null,
+          "separator": "-"
+        },
+        "after_unknown": {
+          "id": true
+        },
+        "before_sensitive": false,
+        "after_sensitive": {}
+      }
+    }
+  ],
+  "output_changes": {
+    "random_pet": {
+      "actions": [
+        "create"
+      ],
+      "before": null,
+      "after_unknown": true,
+      "before_sensitive": false,
+      "after_sensitive": false
+    }
+  },
+  "configuration": {
+    "provider_config": {
+      "aws": {
+        "name": "aws",
+        "full_name": "registry.terraform.io/hashicorp/aws",
+        "expressions": {
+          "region": {
+            "constant_value": "eu-west-1"
+          }
+        }
+      },
+      "aws.eu-central-1": {
+        "name": "aws",
+        "full_name": "registry.terraform.io/hashicorp/aws",
+        "alias": "eu-central-1",
+        "expressions": {
+          "region": {
+            "constant_value": "eu-central-1"
+          }
+        }
+      },
+      "random": {
+        "name": "random",
+        "full_name": "registry.terraform.io/hashicorp/random"
+      }
+    },
+    "root_module": {
+      "outputs": {
+        "random_pet": {
+          "expression": {
+            "references": [
+              "random_pet.this.id",
+              "random_pet.this"
+            ]
+          }
+        }
+      },
+      "resources": [
+        {
+          "address": "random_pet.this",
+          "mode": "managed",
+          "type": "random_pet",
+          "name": "this",
+          "provider_config_key": "random",
+          "expressions": {
+            "length": {
+              "constant_value": 3
+            }
+          },
+          "schema_version": 0
+        }
+      ],
+      "variables": {
+        "aws_batch_id": {
+          "default": "",
+          "description": "aws batch id"
+        },
+        "common_tags": {
+          "default": {},
+          "description": "Common tags"
+        },
+        "region": {
+          "default": "eu-west-1",
+          "description": "AWS Region"
+        },
+        "replace_variables": {
+          "default": {}
+        },
+        "user_email": {
+          "default": "",
+          "description": "The e-mail of the participant"
+        },
+        "uuid": {
+          "default": "",
+          "description": "Automatically generated uuid for each session"
+        }
+      }
+    }
+  },
+  "relevant_attributes": [
+    {
+      "resource": "random_pet.this",
+      "attribute": [
+        "id"
+      ]
+    }
+  ]
+}
