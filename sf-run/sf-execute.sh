@@ -21,5 +21,6 @@ echo $result | jq .
 execution_arn=$(echo $result | jq -r .executionArn)
 IFS=":"; arr=($execution_arn); unset IFS
 export EXECUTION_NAME=${arr[7]}
+echo "EXECUTION_NAME=$EXECUTION_NAME" 
 echo "EXECUTION_NAME=$EXECUTION_NAME" >> $GITHUB_ENV
 

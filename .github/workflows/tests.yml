@@ -18,11 +18,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-1
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
-      - name: Validate Terraform
+      - name: Execute Step Functions
         shell: bash
-        run: |
-          ./sf-run/sf-execute.sh
-          ./sf-run/sqs-poll.sh
         env: 
           # PYTHON
           PYTHONPATH: src
@@ -100,4 +97,11 @@ jobs:
           # SQS POLLING
           POLL_INTERVAL: 5
           MAX_SQS_MESSAGES: 10
-                  
+
+          # RUNTIME
+          SQS_QUEUE_URL: 
+          EXECUTION_NAME:  
+        run: ./sf-run/sf-execute.sh
+      - name: Poll SQS
+        shell: bash
+        run: ./sf-run/sf-poll.sh
