@@ -39,7 +39,7 @@ function job_definitions(){
   [ -d $WORK_FOLDER/temp-job ] && rm -rf $WORK_FOLDER/temp-job
   [ ! -d $WORK_FOLDER/temp-job ] && mkdir $WORK_FOLDER_NAME/temp-job
   
-  tg_command=${1:-$TG_COMMAND}
+  export TG_COMMAND=${1:-$TG_COMMAND}
   cron_job=$2
 
   [ -z $SQS_MESSAGE_GROUP_ID ] && export SQS_MESSAGE_GROUP_ID=$AWS_BATCH_JOB_ID
@@ -250,72 +250,9 @@ function test_progress(){
     done
 }
 
-# Run Terragrunt
-function run_terragrunt(){
-
-  # Prepare command line arguments
-
-  if [[ $INTERACTIVE != true ]]
-  then
-    tg_non_interactive="--terragrunt-non-interactive"
-    [[ $RUN_ALL != "true" ]] && tg_non_interactive="$tg_non_interactive -auto-approve"
-  fi
-
-  if [[ $RUN_ALL == "true" ]] 
-  then
-    tg_run_all=run-all
-  fi
-
-  working_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER/$RUN_MODULE
-
-  # Escape / Character
-  escaped_stack_path=$(echo "$WORK_FOLDER/temp-job" | sed s/\\//\\\\\\//g)
-  
-  # Prepare command line arguments for interactive or non-interactive usage
-  if [[ $INTERACTIVE == "true" ]]
-  then
-    stderr_output=1
-    log_level=info
-  else
-    export TG_DISABLE_CONFIRM=true
-    stderr_output=/dev/null
-    log_level=debug
-    no_color=-no-color
-  fi
-  
-  set +e
-
-  # Run terragrunt
-    terragrunt $tg_run_all $tg_command \
-      --terragrunt-debug --terragrunt-working-dir $working_dir  \
-      $tg_non_interactive --terragrunt-log-level $log_level $no_color \
-      $TG_ARGUMENTS \
-      > >(tee $WORK_FOLDER/temp-job/stdout.log) \
-      2> >(tee $WORK_FOLDER/temp-job/stderr.log >&$stderr_output) 
-
-  # Get Exit Code
-  export tg_err=$?
-  [ $tg_err -ne 0 ] && echo Terragrunt Exitcode: $tg_err
-
-  # Prepare a consise error log
-  cat $WORK_FOLDER/temp-job/stderr.log | grep -vE 'level=debug|locals|msg=run_cmd|msg=Detected|msg=Included|msg=\[Partial\]|msg=Executing|msg=WARN|msg=Setting|^$|msg=Generated|msg=Downloading|msg=The|msg=Are|msg=Reading|msg=Copying|msg=Debug|must wait|msg=Variables|msg=Dependency|msg=[0-9] error occurred|Cannot process|=>|msg=Stack|msg=Unable|errors occurred|sensitive|BEGIN RSA|\[0m|You may now|any changes|should now|If you ever|If you forget|- Reusing previous| \* exit status|Include this file|Terraform can guarantee|^\t\* |^ prefix' \
-    | sed s/$escaped_stack_path//g > $WORK_FOLDER/temp-job/stderr_filtered.log
-  
-  # If error occurs write filtered error into terminal (stdout)
-  if [ $tg_err -ne 0 ]
-  then
-  echo ------- Error log ----------
-  cat $WORK_FOLDER/temp-job/stderr_filtered.log # | grep -E 'error|Error'
-  exit $tg_err
-  fi
-
-  set -e
-
-}
-
 # Put outputs to S3
 function put_outputs_to_s3(){
-  if [[ $tg_command == "apply" ]] && [[ $RUN_ALL == "true" ]] && [ $tg_err -eq 0 ] 
+  if [[ $TG_COMMAND == "apply" ]] && [[ $RUN_ALL == "true" ]] && [ $tg_err -eq 0 ] 
   then
     s3_parent_key="$S3_JOBS_BUCKET/$job_name"
     cd $WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER/job-resources
@@ -368,6 +305,7 @@ function createSqsQueue(){
     fi
 
     echo "SQS Messaging endpoind for the Job is $SQS_QUEUE_URL"
+
   fi
 }
 
@@ -382,7 +320,7 @@ function send_sqs_status(){
 
 function remove_event_rule(){
   set +e
-  if [[ $tg_command == 'destroy' ]]
+  if [[ $TG_COMMAND == 'destroy' ]]
   then
     python3 -m runtask delete-event --name $EVENTBRIDGE_RULE
   fi
@@ -394,6 +332,77 @@ function send_progress(){
   send_sqs_status "$sqs_message"
 }
 
+# Run Terragrunt
+function run_terragrunt(){
+
+  # Prepare command line arguments
+
+  if [[ $INTERACTIVE != true ]]
+  then
+    tg_non_interactive="--terragrunt-non-interactive"
+    if [[ $TG_COMMAND == "apply" ]] || [[ $TG_COMMAND == "destroy" ]] && [[ $RUN_ALL != "true" ]] 
+    then
+      tg_non_interactive="$tg_non_interactive -auto-approve"
+    fi
+  fi
+
+  if [[ $RUN_ALL == "true" ]] 
+  then
+    tg_run_all=run-all
+  fi
+
+  if [[ $TG_COMMAND == plan ]]
+  then
+   TG_ARGUMENTS="$TG_ARGUMENTS -out=plan-state-file"
+  fi
+
+  working_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER/$RUN_MODULE
+
+  # Escape / Character
+  escaped_stack_path=$(echo "$WORK_FOLDER/temp-job" | sed s/\\//\\\\\\//g)
+  
+  # Prepare command line arguments for interactive or non-interactive usage
+  if [[ $INTERACTIVE == "true" ]]
+  then
+    stderr_output=1
+    log_level=info
+  else
+    export TG_DISABLE_CONFIRM=true
+    #stderr_output=/dev/null
+    stderr_output=1
+    log_level=info
+    no_color=-no-color
+  fi
+  
+  set +e
+
+  # Run terragrunt
+    terragrunt $tg_run_all $TG_COMMAND \
+      --terragrunt-debug --terragrunt-working-dir $working_dir  \
+      $tg_non_interactive --terragrunt-log-level $log_level $no_color \
+      $TG_ARGUMENTS \
+      > >(tee $WORK_FOLDER/temp-job/stdout.log) \
+      2> >(tee $WORK_FOLDER/temp-job/stderr.log >&$stderr_output) 
+
+  # Get Exit Code
+  export tg_err=$?
+  [ $tg_err -ne 0 ] && echo Terragrunt Exitcode: $tg_err
+
+  # Prepare a consise error log
+  cat $WORK_FOLDER/temp-job/stderr.log | grep -vE 'level=debug|locals|msg=run_cmd|msg=Detected|msg=Included|msg=\[Partial\]|msg=Executing|msg=WARN|msg=Setting|^$|msg=Generated|msg=Downloading|msg=The|msg=Are|msg=Reading|msg=Copying|msg=Debug|must wait|msg=Variables|msg=Dependency|msg=[0-9] error occurred|Cannot process|=>|msg=Stack|msg=Unable|errors occurred|sensitive|BEGIN RSA|\[0m|You may now|any changes|should now|If you ever|If you forget|- Reusing previous| \* exit status|Include this file|Terraform can guarantee|^\t\* |^ prefix' \
+    | sed s/$escaped_stack_path//g > $WORK_FOLDER/temp-job/stderr_filtered.log
+  
+  # If error occurs write filtered error into terminal (stdout)
+  if [ $tg_err -ne 0 ]
+  then
+  echo ------- Error log ----------
+  cat $WORK_FOLDER/temp-job/stderr_filtered.log # | grep -E 'error|Error'
+  exit $tg_err
+  fi
+
+  set -e
+
+}
 
 # Main Routine
 job_definitions $@

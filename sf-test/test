@@ -145,10 +145,10 @@ do
   [ ! -z $log_stream_name ] && print_log
 done
 
-echo
-echo Job Resources
-echo
-aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION s3 cp s3://$S3_JOBS_BUCKET/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID/job-resources/outputs.json job-resources.json
-cat job-resources.json | jq .
-echo
+# echo
+# echo Job Resources
+# echo
+# aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION s3 cp s3://$S3_JOBS_BUCKET/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID/job-resources/outputs.json job-resources.json
+# cat job-resources.json | jq .
+# echo
 
