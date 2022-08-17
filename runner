@@ -252,6 +252,8 @@ function test_progress(){
 
 # Put outputs to S3
 function put_outputs_to_s3(){
+
+  # For Apply
   if [[ $TG_COMMAND == "apply" ]] && [[ $RUN_ALL == "true" ]] && [ $tg_err -eq 0 ] 
   then
     s3_parent_key="$S3_JOBS_BUCKET/$job_name"
@@ -271,9 +273,49 @@ function put_outputs_to_s3(){
 
     if [[ $UPLOAD_JOB_RESOURCES == "true" ]]
     then
-      result=$(aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.json s3://$s3_parent_key/job-resources/outputs.json)
+      aws --profile $PIPELINE_AWS_PROFILE s3 cp outputs.json s3://$s3_parent_key/job-resources/outputs.json
     fi
+
   fi
+
+  # For Plan Files
+  if [[ $TG_COMMAND == "plan" ]] && [[ $UPLOAD_PLAN_FILES ]]
+  then
+    tg_working_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID
+    job_log_file=$tg_working_dir/completed_tasks.log
+
+    if [ -f $job_log_file ]
+    then
+      completed_tasks=$(cat $job_log_file )
+    else
+      completed_tasks=$(python3 -m runtask json_modules | sed s/\\\[//g | sed s/\\\]//g | sed s/\"//g | sed s/,//g)
+    fi
+
+    mkdir $tg_working_dir/plan-files
+
+    for module_folder in $completed_tasks
+    do
+      for file in plan-state-file plan-file.txt plan-file.json
+      do
+        [ ! -d $tg_working_dir/plan-files/${module_folder//\/.} ] && mkdir $tg_working_dir/plan-files/${module_folder//\/.}
+        src=$tg_working_dir/$STACK_FOLDER/$module_folder/$file
+        dst=$tg_working_dir/plan-files/$module_folder
+        [ -f $src ] && cp $src $dst
+      done
+    done
+
+    # Upload
+    echo "Uploading plan files to s3://$S3_JOBS_BUCKET/$job_name/plan-files"
+    result=$(aws --profile $PIPELINE_AWS_PROFILE s3 cp $tg_working_dir/plan-files s3://$S3_JOBS_BUCKET/$job_name/plan-files --recursive)
+    if [ $? -ne 0 ]
+    then
+      echo $result
+    else
+      echo Upload complete
+    fi
+
+  fi
+
 }
 
 function delete_temp_files(){
@@ -395,8 +437,9 @@ function run_terragrunt(){
   # If error occurs write filtered error into terminal (stdout)
   if [ $tg_err -ne 0 ]
   then
-  echo ------- Error log ----------
-  cat $WORK_FOLDER/temp-job/stderr_filtered.log # | grep -E 'error|Error'
+  echo
+  echo ------- STDERR  ----------
+  cat $WORK_FOLDER/temp-job/stderr_filtered.log | grep -E 'error|Error'
   exit $tg_err
   fi
 

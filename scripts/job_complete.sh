@@ -27,8 +27,11 @@ fi
 # Prepare PLAN Files
 if [[ $TG_COMMAND == plan ]] && [[ -f plan-state-file ]]
 then
-  terraform show plan-state-file > plan-file.txt
-  terraform show -json plan-state-file > plan-file.json
+  tg_module_folder=$WORK_FOLDER/temp-job/$WORKSPACE_ID/$1
+  cp ./plan-state-file $tg_module_folder
+  terraform show plan-state-file > $tg_module_folder/plan-file.txt
+  terraform show -json plan-state-file | jq . > $tg_module_folder/plan-file.json
+  echo Plan files are created in $tg_module_folder
 fi
 
 # SQS Message Handling
