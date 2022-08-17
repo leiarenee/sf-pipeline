@@ -38,6 +38,8 @@ function job_definitions(){
   [ ! -d $WORK_FOLDER ] && mkdir $WORK_FOLDER_NAME
   [ -d $WORK_FOLDER/temp-job ] && rm -rf $WORK_FOLDER/temp-job
   [ ! -d $WORK_FOLDER/temp-job ] && mkdir $WORK_FOLDER_NAME/temp-job
+
+  env >  $WORK_FOLDER/temp-job/envvars.log
   
   export TG_COMMAND=${1:-$TG_COMMAND}
   cron_job=$2
@@ -410,8 +412,8 @@ function run_terragrunt(){
     log_level=info
   else
     export TG_DISABLE_CONFIRM=true
-    #stderr_output=/dev/null
-    stderr_output=1
+    stderr_output=/dev/null
+    #stderr_output=1
     log_level=info
     #no_color=-no-color
   fi
@@ -438,8 +440,8 @@ function run_terragrunt(){
   if [ $tg_err -ne 0 ]
   then
   echo
-  echo ------- STDERR  ----------
-  cat $WORK_FOLDER/temp-job/stderr_filtered.log | grep -E 'error|Error'
+  # echo ------- STDERR  ----------
+  # cat $WORK_FOLDER/temp-job/stderr_filtered.log | grep -E 'error|Error'
   exit $tg_err
   fi
 

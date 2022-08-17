@@ -58,7 +58,7 @@ function printout_info(){
 
 if [[ $TG_DISABLE_CONFIRM == "true" ]]
 then
-  [ $TG_COMMAND == "apply" ] && echo && echo "Processing $hclpath"
+  [ $TG_COMMAND == "apply" ] && echo && echo "Processing $hclpath" 
   exit 0
 fi
 
