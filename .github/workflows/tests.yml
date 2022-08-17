@@ -108,7 +108,7 @@ jobs:
       - name: Fetch Plans from S3
         id: fetch-plans
         run: |
-          aws s3 --recursive cp s3://sf-pipeline-jobs/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID/plan-files plan-files
+          aws s3 --recursive cp $S3_JOB_FOLDER/plan-files plan-files
           merged=merged-plan-files.txt;cat $merged;echo Terraform Plans > $merged;for file in $(ls plan-files);do echo ${file/.txt/} Module >> $merged;cat plan-files/$file/plan-file.txt >> $merged;echo >> $merged;done
           body="$(cat $merged | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")";body="${body//'%'/'%25'}";body="${body//$'\n'/'%0A'}";body="${body//$'\r'/'%0D'}" 
           echo "::set-output name=body::$body"
