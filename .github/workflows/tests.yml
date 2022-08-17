@@ -104,4 +104,4 @@ jobs:
         run: ./sf-run/sf-execute.sh
       - name: Poll SQS
         shell: bash
-        run: ./sf-run/sf-poll.sh
+        run: ./sf-run/sqs-poll.sh
