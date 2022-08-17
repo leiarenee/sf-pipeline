@@ -371,7 +371,7 @@ function run_terragrunt(){
     #stderr_output=/dev/null
     stderr_output=1
     log_level=info
-    no_color=-no-color
+    #no_color=-no-color
   fi
   
   set +e

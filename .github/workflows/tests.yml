@@ -44,7 +44,7 @@ jobs:
 
           # TERRAGRUNT
           RUN_ALL: true
-          TG_COMMAND: apply
+          TG_COMMAND: plan
           TG_ARGUMENTS:
           RUN_MODULE:
           STACK_FOLDER: test
