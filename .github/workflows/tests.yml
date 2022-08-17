@@ -78,6 +78,7 @@ jobs:
           EVENTBRIDGE_RULE: SF-Cron-Pipeline
           UPLOAD_WORKFOLDER: always
           UPLOAD_JOB_RESOURCES: true
+          UPLOAD_PLAN_FILES: true
           SEND_SQS_MESSAGES: true
 
           # JOB
