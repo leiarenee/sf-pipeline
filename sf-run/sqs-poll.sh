@@ -23,6 +23,7 @@ sleep 5
 
 cnt=0
 echo "Polling messages..."
+echo "::set-output name=greeting::Polling messages"
 
 while [ -z $end ]
 do
