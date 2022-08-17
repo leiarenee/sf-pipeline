@@ -20,5 +20,5 @@ jobs:
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
       - name: Publish Comment on PR
         run: |
-          aws cp s3://sf-pipeline-jobs/testing/Dev-leia-D48FE2A8-0782-4BF7-B787-77C214E9C5C1/Process-63938/plan-files/*.txt .
-          cat ./job-resources/plan-file.txt
+          aws s3 --recursive cp s3://sf-pipeline-jobs/testing/Dev-leia-D48FE2A8-0782-4BF7-B787-77C214E9C5C1/Process-63938/plan-files plan-files
+          cat plan-files/job-resources/plan-file.txt
