@@ -281,7 +281,7 @@ function put_outputs_to_s3(){
   fi
 
   # For Plan Files
-  if [[ $TG_COMMAND == "plan" ]] && [[ $UPLOAD_PLAN_FILES ]]
+  if [[ $TG_COMMAND == "plan" ]] && [[ $UPLOAD_PLAN_FILES == "true" ]]
   then
     tg_working_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID
     job_log_file=$tg_working_dir/completed_tasks.log
