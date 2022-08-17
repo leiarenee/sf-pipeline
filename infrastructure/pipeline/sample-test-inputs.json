@@ -38,6 +38,8 @@
 		}
 	},
 	"pipeline": {
+		"runnerMachine": "Console-Step-Functions",
+		"workFolderName": "temp-volume",
 		"initialProgress": "10",
 		"modulesFinalProgress": "90",
 		"finalProgress": "95",

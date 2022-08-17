@@ -1,0 +1,115 @@
+{
+  "format_version": "1.1",
+  "terraform_version": "1.2.7",
+  "variables": {
+    "aws_batch_id": {
+      "value": ""
+    },
+    "common_tags": {
+      "value": {}
+    },
+    "region": {
+      "value": "eu-west-1"
+    },
+    "replace_variables": {
+      "value": 0
+    },
+    "user_email": {
+      "value": ""
+    },
+    "uuid": {
+      "value": ""
+    }
+  },
+  "planned_values": {
+    "outputs": {
+      "job_resources": {
+        "sensitive": false,
+        "type": "string",
+        "value": "{\"Server\":\"https://example.com\"}"
+      }
+    },
+    "root_module": {}
+  },
+  "output_changes": {
+    "job_resources": {
+      "actions": [
+        "create"
+      ],
+      "before": null,
+      "after": "{\"Server\":\"https://example.com\"}",
+      "after_unknown": false,
+      "before_sensitive": false,
+      "after_sensitive": false
+    }
+  },
+  "prior_state": {
+    "format_version": "1.0",
+    "terraform_version": "1.2.7",
+    "values": {
+      "outputs": {
+        "job_resources": {
+          "sensitive": false,
+          "value": "{\"Server\":\"https://example.com\"}",
+          "type": "string"
+        }
+      },
+      "root_module": {}
+    }
+  },
+  "configuration": {
+    "provider_config": {
+      "aws": {
+        "name": "aws",
+        "full_name": "registry.terraform.io/hashicorp/aws",
+        "expressions": {
+          "region": {
+            "constant_value": "eu-west-1"
+          }
+        }
+      },
+      "aws.eu-central-1": {
+        "name": "aws",
+        "full_name": "registry.terraform.io/hashicorp/aws",
+        "alias": "eu-central-1",
+        "expressions": {
+          "region": {
+            "constant_value": "eu-central-1"
+          }
+        }
+      }
+    },
+    "root_module": {
+      "outputs": {
+        "job_resources": {
+          "expression": {}
+        }
+      },
+      "variables": {
+        "aws_batch_id": {
+          "default": "",
+          "description": "aws batch id"
+        },
+        "common_tags": {
+          "default": {},
+          "description": "Common tags"
+        },
+        "region": {
+          "default": "eu-west-1",
+          "description": "AWS Region"
+        },
+        "replace_variables": {
+          "default": {}
+        },
+        "user_email": {
+          "default": "",
+          "description": "The e-mail of the participant"
+        },
+        "uuid": {
+          "default": "",
+          "description": "Automatically generated uuid for each session"
+        }
+      }
+    }
+  }
+}
