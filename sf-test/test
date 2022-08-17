@@ -16,16 +16,6 @@ function print_log(){
 
 }
 
-[ ! -z $TERM ] && clear
-
-# Main Routine
-
-script_dir=$( cd .. "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
-export REPO_ROOT=$script_dir
-
-source $REPO_ROOT/scripts/import-env-vars.sh quiet
-
 # Command Line Arguments
 export TG_COMMAND=${1:-"$TG_COMMAND"}
 export WORKSPACE_ID=${2:-"testing"}
@@ -43,7 +33,7 @@ log_file=log.txt
 
 # Prepare Inputs
 
-test_inputs=$(cat $TEST_CLIENT_INPUT_FILE | envsubst | tr -d '\n' | jq -r . )
+test_inputs=$(cat $PIPELINE_SF_TEMPLATE_FILE | envsubst | tr -d '\n' | jq -r . )
 
 echo $test_inputs | jq . > test-client-inputs.json
 

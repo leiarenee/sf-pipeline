@@ -24,7 +24,7 @@ function job_definitions(){
   else
     uuid=$(uuidgen)
     export SF_EXECUTION_NAME=Dev-$(whoami)-$uuid
-    export AWS_BATCH_JOB_ID=Process-$$
+    export AWS_BATCH_JOB_ID="Process-$$"
     set +e;a=$([ ! -z $TERM ] && clear);set -
     echo 
     echo $RUNNER_MACHINE Environment Variables Loaded
@@ -304,7 +304,8 @@ function run_terragrunt(){
   # If error occurs write filtered error into terminal (stdout)
   if [ $tg_err -ne 0 ]
   then
-  cat $WORK_FOLDER/temp-job/stderr_filtered.log | grep -E 'error|Error'
+  echo ------- Error log ----------
+  cat $WORK_FOLDER/temp-job/stderr_filtered.log # | grep -E 'error|Error'
   exit $tg_err
   fi
 
@@ -375,7 +376,7 @@ function send_sqs_status(){
   if [[ $SEND_SQS_MESSAGES == "true" ]]
   then
     echo "sending SQS message : $sqs_message"
-    result=(aws --profile $SQS_AWS_PROFILE sqs send-message --queue-url "$SQS_QUEUE_URL" --message-group-id "$SQS_MESSAGE_GROUP_ID" --message-body "$1")
+    aws --profile $SQS_AWS_PROFILE sqs send-message --queue-url "$SQS_QUEUE_URL" --message-group-id "$SQS_MESSAGE_GROUP_ID" --message-body "$1"
   fi
 }
 
@@ -390,7 +391,7 @@ function remove_event_rule(){
 
 function send_progress(){
   sqs_message="{\"message\":{\"status\":\"$1\",\"progress\":$2,\"jobId\":\"$AWS_BATCH_JOB_ID\"}}"
-  send_sqs_status $sqs_message
+  send_sqs_status "$sqs_message"
 }
 
 
