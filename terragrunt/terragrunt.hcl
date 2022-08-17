@@ -155,7 +155,6 @@ terraform {
     commands = concat(local.all_commands, ["init", "init-all"])
     optional_var_files = ["inputs.tfvars.json"]
     env_vars = {
-      # TG_COMMAND_ACTIVE=get_env("TG_COMMAND_ACTIVE")
       TG_PARRENT_DIR=get_parent_terragrunt_dir()
       TG_MODULES_LIST=get_env("TG_MODULES_LIST", "")
       TG_MODULES_COUNT=get_env("TG_MODULES_COUNT", "")
