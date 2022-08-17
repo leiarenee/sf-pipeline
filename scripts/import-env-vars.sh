@@ -26,7 +26,7 @@ do
         # IFS='=';arr=($env_var);key=${arr[0]};unset arr[0];len=${#arr[@]};value=${arr[@]};unset IFS
         subst=${env_var/=/≈};IFS='≈';arr=($subst);key=${arr[0]};value=${arr[1]};unset IFS #new one liner ;-)
         export $key="$value"
-        #echo "$key=$value" 
+        [[ $1 != quiet ]] && echo "$key=$value"
         
       fi
     done
