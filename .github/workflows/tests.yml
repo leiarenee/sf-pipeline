@@ -102,20 +102,18 @@ jobs:
           SQS_QUEUE_URL: 
           EXECUTION_NAME:  
         run: ./sf-run/sf-execute.sh
-      - name: TRACE
+      - name: Trace Logs and SQS Messages
         shell: bash
         run: ./sf-run/sqs-poll.sh
-      - id: get-comment-body
+      - name: Create PR Comment
+        uses: peter-evans/create-or-update-comment@v2
         run: |
           aws s3 --recursive cp s3://sf-pipeline-jobs/testing/Dev-leia-D48FE2A8-0782-4BF7-B787-77C214E9C5C1/Process-63938/plan-files plan-files
           merged=merged-plan-files.txt;echo Terraform Plans > $merged;for file in $(ls plan-files);do echo ${file/.txt/} Module >> $merged;cat plan-files/$file/plan-file.txt >> $merged;echo >> $merged;done
           body="$(cat $merged | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")";body="${body//'%'/'%25'}";body="${body//$'\n'/'%0A'}";body="${body//$'\r'/'%0D'}" 
-          echo "::set-output name=body::$body"
-      - name: Create PR Comment
-        uses: peter-evans/create-or-update-comment@v2
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ steps.get-comment-body.outputs.body }}
+          body: $body
 
 
 
