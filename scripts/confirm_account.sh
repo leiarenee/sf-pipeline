@@ -22,6 +22,7 @@ function printout_info(){
   echo "Runner: $bucket_suffix"
   echo
   echo "Running '$tg_command' command in '$region' Region for '$environment' Environment:"
+  pwd
   echo 
   echo "Terragrunt : "
   echo

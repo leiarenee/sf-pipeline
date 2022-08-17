@@ -102,6 +102,6 @@ jobs:
           SQS_QUEUE_URL: 
           EXECUTION_NAME:  
         run: ./sf-run/sf-execute.sh
-      - name: Poll SQS Messages
+      - name: TRACE
         shell: bash
         run: ./sf-run/sqs-poll.sh

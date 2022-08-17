@@ -412,8 +412,8 @@ function run_terragrunt(){
     log_level=info
   else
     export TG_DISABLE_CONFIRM=true
-    stderr_output=/dev/null
-    #stderr_output=1
+    # stderr_output=/dev/null
+    stderr_output=1
     log_level=info
     #no_color=-no-color
   fi
