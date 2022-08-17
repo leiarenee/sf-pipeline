@@ -98,7 +98,7 @@ done
 
 # Write to ENV
 
-export S3_JOB_FOLDER= s3://sf-pipeline-jobs/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID
+export S3_JOB_FOLDER=s3://sf-pipeline-jobs/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID
 
 echo "S3_JOB_FOLDER = S3_JOB_FOLDER"
 echo "LOG_STREAM_NAME = aws/batch/job:$LOG_STREAM_NAME"
