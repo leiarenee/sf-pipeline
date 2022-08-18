@@ -16,7 +16,12 @@ echo ------------------------------------------------------
 echo 
 
 # Calculate percentage
-progress=$(($INITIAL_PROGRESS + ($module_count * ($MODULES_FINAL_PROGRESS - $INITIAL_PROGRESS) / $TG_MODULES_COUNT)))
+if [ ! -z $TG_MODULES_COUNT]
+then
+  progress=$(($INITIAL_PROGRESS + ($module_count * ($MODULES_FINAL_PROGRESS - $INITIAL_PROGRESS) / $TG_MODULES_COUNT)))
+else
+  progress=$MODULES_FINAL_PROGRESS
+fi
 
 if [ $progress -gt $MODULES_FINAL_PROGRESS ]
 then

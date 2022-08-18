@@ -9,11 +9,16 @@ locals {
   all_commands=["apply", "plan","destroy","apply-all","plan-all","destroy-all"]
 
   # Automatically load account-level variables
-  config_file = "${get_parent_terragrunt_dir()}/config.hcl"
+  config_file = "${get_parent_terragrunt_dir()}/config.tftpl"
   config_exists = fileexists(local.config_file)
-  default_values = {aws_region:"eu-west-1",account_name:"my-testing-account",aws_account_id:"01234567890",aws_profile:"testing",bucket_suffix:"dev",parameters:{DOMAIN:"dev.example.com",DNS_ZONE_ID:"",CLUSTER:"my-testing-k8s",CERTIFICATE:""}}
+  default_values = {aws_region:"eu-west-1",account_name:"my-testing-account",aws_account_id:"01234567890",aws_profile:"testing",bucket_suffix:"dev",parameters:{REGION:"eu-west-1",DOMAIN:"dev.example.com",DNS_ZONE_ID:"",CLUSTER:"my-testing-k8s",CERTIFICATE:""}}
   default_config = {locals:{config:"testing", testing:local.default_values}}
-  config = local.config_exists ? read_terragrunt_config(local.config_file) : local.default_config
+  env_vars = jsondecode("${run_cmd("--terragrunt-quiet", "${get_parent_terragrunt_dir()}/${local.scripts_folder}/env-to-json.sh")}")
+  prepare_config = "${run_cmd("${get_parent_terragrunt_dir()}/${local.scripts_folder}/envsubst-to-file.sh", "${get_parent_terragrunt_dir()}/config.tpl", "${get_parent_terragrunt_dir()}/config.hcl")}"
+ 
+  #config = local.config_exists ? templatefile(local.config_file, local.env_vars) : local.default_config
+  
+  config = read_terragrunt_config("${get_parent_terragrunt_dir()}/config.hcl", local.default_config)
   config_vars = local.config.locals
   environment = get_env("WORKSPACE_ID", local.config_vars.config)
   account = lookup(local.config_vars, local.environment, local.default_values)
