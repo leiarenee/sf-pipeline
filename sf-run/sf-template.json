@@ -14,10 +14,11 @@
 		"userEmail": "${USER_EMAIL}"
 	},
 	"aws": {
-		"region": "${TARGET_AWS_REGION}",
+		"targetAwsRegion": "${TARGET_AWS_REGION}",
 		"targetAwsAccountName": "${TARGET_AWS_ACCOUNT_NAME}",
 		"targetAwsAccountId": "${TARGET_AWS_ACCOUNT_ID}",
 		"targetAwsProfile": "${TARGET_AWS_PROFILE}",
+		"pipelineAwsRegion": "${PIPELINE_AWS_REGION}",
 		"pipelineAwsProfile": "${PIPELINE_AWS_PROFILE}",
 		"pipelineAwsAccountId": "${PIPELINE_AWS_ACCOUNT_ID}",
 		"ecrAwsAccountId": "${ECR_AWS_ACCOUNT_ID}",

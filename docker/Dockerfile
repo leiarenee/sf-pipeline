@@ -40,5 +40,10 @@ COPY scripts scripts
 COPY docker/entrypoint .
 COPY runner .
 
+# SSH
+RUN mkdir .ssh && touch .ssh/known_hosts
+RUN ssh-keygen -R github.com
+RUN ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+
 ENTRYPOINT [ "./entrypoint" ]
 CMD ["validate"]
