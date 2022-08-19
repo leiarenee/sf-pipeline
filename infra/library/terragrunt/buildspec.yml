@@ -16,7 +16,6 @@ phases:
     commands:
       - if [ $CODEBUILD_BUILD_SUCCEEDING -eq 0 ];then exit 1;fi
       - echo Building the Docker image...
-      - cd $BUILD_CONTEXT
       - $BUILD_FILE
 
   post_build:
