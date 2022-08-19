@@ -38,6 +38,7 @@ function job_definitions(){
   [ ! -d $WORK_FOLDER ] && mkdir $WORK_FOLDER_NAME
   [ -d $WORK_FOLDER/temp-job ] && rm -rf $WORK_FOLDER/temp-job
   [ ! -d $WORK_FOLDER/temp-job ] && mkdir $WORK_FOLDER_NAME/temp-job
+  
 
   env >  $WORK_FOLDER/temp-job/envvars.log
   
@@ -86,7 +87,7 @@ function fetch_from_github(){
   echo Commit Hash : $commit
   export COMMIT_HASH=$commit
   # create a clone
-  rsync -a $dir_name/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
+  rsync -a --exclude=scripts $dir_name/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
   cd $REPO_ROOT
    
 
@@ -124,7 +125,7 @@ function copy_local_app_repo(){
   echo Copying source files from Local $infra_repo folder 
   rsync -a --exclude-from=$infra_repo/.gitignore $infra_repo/* $WORK_FOLDER/temp-job/$LOCAL_APP_REPO
   # create a clone
-  rsync -a $WORK_FOLDER/temp-job/$LOCAL_APP_REPO/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
+  rsync -a --exclude=scripts $WORK_FOLDER/temp-job/$LOCAL_APP_REPO/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
   # get commit hash
   export COMMIT_HASH=$(git -C $infra_repo log main..$REPO_REFERENCE --format="%h" -n 1)
   echo Commit Hash : $COMMIT_HASH
@@ -147,7 +148,8 @@ function fetch_app_repo(){
 function overwrite_terragrunt(){
   # Copy common folders
   rsync -a $REPO_ROOT/terragrunt/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/
-  rsync -a $REPO_ROOT/scripts/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/scripts/
+  scripts_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID/scripts
+  rsync -a $REPO_ROOT/scripts/* $scripts_dir/
 }
 
 # Upload Temp Folder
