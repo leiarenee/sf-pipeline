@@ -1,9 +1,10 @@
 #!/bin/bash
 # Calculate progress
-
-completed_module=$(echo $1 | sed s/$STACK_FOLDER\\\///g)
+path_relative_to_include=$1
+terrafrom_command=$2
+completed_module=$(echo $path_relative_to_include| sed s/$STACK_FOLDER\\\///g)
 echo
-echo TERRAGRUNT COMMAND \"$TG_COMMAND\"
+echo TERRAFORM COMMAND \"$terrafrom_command\"
 echo SUB PROCESS $$ 
 echo MODULE COMPLETE \"$completed_module\"
 

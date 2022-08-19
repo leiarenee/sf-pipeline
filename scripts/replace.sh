@@ -123,6 +123,6 @@ do
       #echo
     done
   prtd=""
-  echo
+  #echo
   done
 done
