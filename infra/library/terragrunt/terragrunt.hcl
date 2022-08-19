@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------------------------------------------------
 
 locals {
-  scripts_folder = "scripts"
+  scripts_folder = "library/scripts"
   all_commands=["apply", "plan","destroy","apply-all","plan-all","destroy-all"]
 
   # Automatically load account-level variables
@@ -80,15 +80,10 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias = "eu-central-1"
-  region = "${local.aws_region}"
-    default_tags {
-    tags = {
-      created_by    = "terragrunt"
-      environment   = "${local.environment}"
-      
-    }
-  }
+  alias = "secrets"
+  region = "${get_env("PIPELINE_AWS_REGION")}"
+  profile = "${get_env("PIPELINE_AWS_PROFILE")}"
+
 }
 EOF
 }
@@ -136,7 +131,7 @@ terraform {
    
   before_hook "before_hook_copy_common_modules" {
     commands     = concat(local.all_commands, ["init", "init-all"])
-    execute      = ["${get_parent_terragrunt_dir()}/scripts/copy-common-modules.sh", get_parent_terragrunt_dir()]
+    execute      = ["${get_parent_terragrunt_dir()}/${local.scripts_folder}/copy-common-modules.sh", get_parent_terragrunt_dir()]
    }
 
   after_hook "after_hook_1" {
@@ -146,7 +141,7 @@ terraform {
 
   before_hook "before_hook_refresh_kube_token" {
     commands     = concat(local.all_commands, ["init", "init-all"])
-    execute      = ["${get_parent_terragrunt_dir()}/scripts/refresh-kube-token.sh", local.aws_profile, local.account.parameters.CLUSTER, local.account_id, local.aws_region]
+    execute      = ["${get_parent_terragrunt_dir()}/${local.scripts_folder}/refresh-kube-token.sh", local.aws_profile, local.account.parameters.CLUSTER, local.account_id, local.aws_region]
    }
 
   extra_arguments "arguments" {

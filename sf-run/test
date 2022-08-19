@@ -33,7 +33,7 @@ log_file=log.txt
 
 # Prepare Inputs
 
-test_inputs=$(cat $REPO_ROOT/sf-run/sf-template.json | envsubst | tr -d '\n' | jq -r . )
+test_inputs=$(cat ./sf-template.json | envsubst | tr -d '\n' | jq -r . )
 
 echo $test_inputs | jq . > test-client-inputs.json
 
