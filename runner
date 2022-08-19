@@ -29,7 +29,7 @@ function job_definitions(){
     echo 
     echo $RUNNER_MACHINE Environment Variables Loaded
     echo
-    source $REPO_ROOT/scripts/import-env-vars.sh
+    source $REPO_ROOT/infra/library/scripts/import-env-vars.sh
     echo
   fi
   export WORK_FOLDER=$REPO_ROOT/$WORK_FOLDER_NAME
@@ -147,9 +147,7 @@ function fetch_app_repo(){
 
 function overwrite_terragrunt(){
   # Copy common folders
-  rsync -a $REPO_ROOT/terragrunt/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/
-  scripts_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID/scripts
-  rsync -a $REPO_ROOT/scripts/* $scripts_dir/
+  rsync -a $REPO_ROOT/infra/library/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/
 }
 
 # Upload Temp Folder

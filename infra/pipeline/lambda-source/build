@@ -18,12 +18,12 @@ docker buildx build . --platform linux/x86_64 -t $image_name
 
 if [[ $1 == "run" ]]
 then
-  # if override.env does not exist then copy .env as override.env
-  [ ! -f override.env ] && cp .env override.env
+  # if .dev.env does not exist then copy .env as .dev.env
+  [ ! -f .dev.env ] && cp .env .dev.env
 
   # Run Docker
-  docker run --platform linux/x86_64 --env-file .env --env-file override.env $image_name $2 #Command override
-  # docker run --env-file .env --env-file override.env $image_name
+  docker run --platform linux/x86_64 --env-file .env --env-file .dev.env $image_name $2 #Command override
+  # docker run --env-file .env --env-file .dev.env $image_name
 fi
 
 if [[ $1 == "push" ]]

@@ -17,6 +17,8 @@ locals {
       CLUSTER        = "${CLUSTER}"
       CERTIFICATE    = "${CERTIFICATE}"
       AWS_ACCOUNT_ID = "${TARGET_AWS_ACCOUNT_ID}"
+      PIPELINE_AWS_REGION = "${PIPELINE_AWS_REGION}"
+      PIPELINE_AWS_ACCOUNT_ID = "${PIPELINE_AWS_ACCOUNT_ID}"
       IAM_USER       = "cicd"
     }
   }
