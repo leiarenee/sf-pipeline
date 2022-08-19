@@ -395,7 +395,7 @@
           ],
           "BackoffRate": 2,
           "IntervalSeconds": 20,
-          "MaxAttempts": 2
+          "MaxAttempts": 0
         }
       ],
       "Catch": [
