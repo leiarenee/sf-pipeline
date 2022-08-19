@@ -17,7 +17,7 @@ echo ------------------------------------------------------
 echo 
 
 # Calculate percentage
-if [ ! -z $TG_MODULES_COUNT]
+if [ ! -z $TG_MODULES_COUNT ]
 then
   progress=$(($INITIAL_PROGRESS + ($module_count * ($MODULES_FINAL_PROGRESS - $INITIAL_PROGRESS) / $TG_MODULES_COUNT)))
 else
@@ -38,6 +38,7 @@ then
   terraform show plan-state-file > $tg_module_folder/plan-file.txt
   terraform show -json plan-state-file | jq . > $tg_module_folder/plan-file.json
   echo Plan files are created in $tg_module_folder
+  cat $tg_module_folder/plan-file.txt
 fi
 
 # SQS Message Handling
