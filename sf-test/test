@@ -18,8 +18,8 @@ function print_log(){
 
 # Command Line Arguments
 export TG_COMMAND=${1:-"$TG_COMMAND"}
-export WORKSPACE_ID=${2:-"testing"}
-export STACK_FOLDER=${3:-"test"}
+export WORKSPACE_ID=${2:-"$WORKSPACE_ID"}
+export STACK_FOLDER=${3:-"$STACK_FOLDER"}
 
 poll=$4
 simulate=$5
@@ -33,7 +33,7 @@ log_file=log.txt
 
 # Prepare Inputs
 
-test_inputs=$(cat $PIPELINE_SF_TEMPLATE_FILE | envsubst | tr -d '\n' | jq -r . )
+test_inputs=$(cat $REPO_ROOT/sf-run/sf-template.json | envsubst | tr -d '\n' | jq -r . )
 
 echo $test_inputs | jq . > test-client-inputs.json
 

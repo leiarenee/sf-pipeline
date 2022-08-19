@@ -162,8 +162,8 @@
             "Value.$": "$.repository.repoType"
           },
           {
-            "Name": "AWS_REGION",
-            "Value.$": "$.aws.region"
+            "Name": "TARGET_AWS_REGION",
+            "Value.$": "$.aws.targetAwsRegion"
           },
           {
             "Name": "TARGET_AWS_ACCOUNT_NAME",
@@ -180,6 +180,10 @@
           {
             "Name": "PIPELINE_AWS_PROFILE",
             "Value.$": "$.aws.pipelineAwsProfile"
+          },
+          {
+            "Name": "PIPELINE_AWS_REGION",
+            "Value.$": "$.aws.pipelineAwsRegion"
           },
           {
             "Name": "PIPELINE_AWS_ACCOUNT_ID",
