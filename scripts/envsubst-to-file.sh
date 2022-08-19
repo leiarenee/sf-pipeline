@@ -5,6 +5,6 @@ then
   exit 1
 fi
 
-echo Preparing $2 from $1
+# echo Preparing $2 from $1
 cat $1 | envsubst > $2
 cat $2

@@ -4,8 +4,7 @@ locals {
   environment = get_env("WORKSPACE_ID", "testing")
 
   tags = {
-    environment   = local.environment
-    created_with  = "terraform"
+    
   }
 
   environment_variables = [{

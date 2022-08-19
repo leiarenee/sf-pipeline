@@ -14,7 +14,7 @@ locals {
   default_values = {aws_region:"eu-west-1",account_name:"my-testing-account",aws_account_id:"01234567890",aws_profile:"testing",bucket_suffix:"dev",parameters:{REGION:"eu-west-1",DOMAIN:"dev.example.com",DNS_ZONE_ID:"",CLUSTER:"my-testing-k8s",CERTIFICATE:""}}
   default_config = {locals:{config:"testing", testing:local.default_values}}
   env_vars = jsondecode("${run_cmd("--terragrunt-quiet", "${get_parent_terragrunt_dir()}/${local.scripts_folder}/env-to-json.sh")}")
-  prepare_config = "${run_cmd("${get_parent_terragrunt_dir()}/${local.scripts_folder}/envsubst-to-file.sh", "${get_parent_terragrunt_dir()}/config.tpl", "${get_parent_terragrunt_dir()}/config.hcl")}"
+  prepare_config = "${run_cmd("--terragrunt-quiet","${get_parent_terragrunt_dir()}/${local.scripts_folder}/envsubst-to-file.sh", "${get_parent_terragrunt_dir()}/config.tpl", "${get_parent_terragrunt_dir()}/config.hcl")}"
  
   #config = local.config_exists ? templatefile(local.config_file, local.env_vars) : local.default_config
   
@@ -40,9 +40,10 @@ locals {
   aws_region   = get_env("TARGET_AWS_REGION", local.account.aws_region)
   assume_profile = lookup(local.account, "parent_profile", local.aws_profile)
   repository = get_env("REPOSITORY_FQDN", "local")
+  datetime = run_cmd("--terragrunt-quiet","bash", "-c", "date '+%Y-%m-%d %H:%M:%S'")
 
   common_inputs = {
-    # aws_batch_id = get_env("AWS_BATCH_ID")
+    
   }
 
   # Automatically load region-level variables
@@ -69,12 +70,25 @@ provider "aws" {
 
   # Only these AWS Account IDs may be operated on by this template
   # allowed_account_ids = ["${local.account_id}"]
+
+  default_tags {
+    tags = {
+      created_by    = "terragrunt"
+      environment   = "${local.environment}"
+    }
+  }
 }
 
 provider "aws" {
   alias = "eu-central-1"
-  region = "eu-central-1"
-
+  region = "${local.aws_region}"
+    default_tags {
+    tags = {
+      created_by    = "terragrunt"
+      environment   = "${local.environment}"
+      
+    }
+  }
 }
 EOF
 }
@@ -93,27 +107,6 @@ variable "replace_variables" {
 variable "region" {
   description = "AWS Region"
   default = "${local.aws_region}"
-}
-
-variable "user_email" {
-  description = "The e-mail of the participant"
-  default = ""
-}
-
-variable "uuid" {
-  description = "Automatically generated uuid for each session"
-  default = ""
-}
-
-variable "aws_batch_id" {
-  description = "aws batch id"
-  default = ""
-}
-
-variable "common_tags" {
-  type = map
-  description = "Common tags"
-  default = {}
 }
 
 EOF
@@ -141,24 +134,24 @@ terraform {
     execute      = ["${get_parent_terragrunt_dir()}/${local.scripts_folder}/replace.sh","$TF_VAR_replace_variables",".","self","yaml,yml,json,jsn","false",2,jsonencode(local.account.parameters)]
    }
    
-  # before_hook "before_hook_copy_common_modules" {
-  #   commands     = concat(local.all_commands, ["init", "init-all"])
-  #   execute      = ["${get_parent_terragrunt_dir()}/scripts/copy-common-modules.sh", get_parent_terragrunt_dir()]
-  #  }
+  before_hook "before_hook_copy_common_modules" {
+    commands     = concat(local.all_commands, ["init", "init-all"])
+    execute      = ["${get_parent_terragrunt_dir()}/scripts/copy-common-modules.sh", get_parent_terragrunt_dir()]
+   }
 
   after_hook "after_hook_1" {
     commands     = local.all_commands
-    execute      = ["${get_parent_terragrunt_dir()}/${local.scripts_folder}/job_complete.sh", path_relative_to_include()]
+    execute      = ["${get_parent_terragrunt_dir()}/${local.scripts_folder}/job_complete.sh", path_relative_to_include(), get_terraform_command()]
    }
 
-  # before_hook "before_hook_refresh_kube_token" {
-  #   commands     = concat(local.all_commands, ["init", "init-all"])
-  #   execute      = ["${get_parent_terragrunt_dir()}/scripts/refresh-kube-token.sh", local.aws_profile, local.account.parameters.CLUSTER, local.account_id, local.aws_region]
-  #  }
+  before_hook "before_hook_refresh_kube_token" {
+    commands     = concat(local.all_commands, ["init", "init-all"])
+    execute      = ["${get_parent_terragrunt_dir()}/scripts/refresh-kube-token.sh", local.aws_profile, local.account.parameters.CLUSTER, local.account_id, local.aws_region]
+   }
 
   extra_arguments "arguments" {
     commands = concat(local.all_commands, ["init", "init-all"])
-    optional_var_files = ["inputs.tfvars.json"]
+    required_var_files = ["inputs.tfvars.json"]
     env_vars = {
       TG_PARRENT_DIR=get_parent_terragrunt_dir()
       TG_MODULES_LIST=get_env("TG_MODULES_LIST", "")
@@ -188,8 +181,7 @@ inputs = merge(
   local.account,
   local.region_config,
   local.environment_config,
-  local.common_inputs,
-  { common_tags = local.common_inputs }
+  local.common_inputs
 )
 
 # download_dir = "${get_parent_terragrunt_dir()}/.terragrunt-cache/${local.account_id}/${path_relative_to_include()}"
