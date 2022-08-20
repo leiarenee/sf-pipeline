@@ -87,7 +87,7 @@ function fetch_from_github(){
   echo Commit Hash : $commit
   export COMMIT_HASH=$commit
   # create a clone
-  rsync -a --exclude=scripts $dir_name/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
+  rsync -a --exclude=scripts $dir_name/infra/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
   cd $REPO_ROOT
    
 
@@ -147,7 +147,8 @@ function fetch_app_repo(){
 
 function overwrite_terragrunt(){
   # Copy common folders
-  rsync -a $REPO_ROOT/infra/library/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/
+  rm $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
+  rsync -a $REPO_ROOT/infra/library/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
 }
 
 # Upload Temp Folder
