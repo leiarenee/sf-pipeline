@@ -33,9 +33,8 @@ ENV PYTHONPATH=src
 
 # Copy Files
 COPY src src
-COPY infra/library/terragrunt terragrunt
-COPY infra/library/terraform terraform
-COPY infra/library/scripts scripts
+COPY infra/library library
+
 
 # Copy Folder
 COPY infra/docker/entrypoint .
