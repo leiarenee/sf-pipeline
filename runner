@@ -148,7 +148,7 @@ function fetch_app_repo(){
 function overwrite_terragrunt(){
   # Copy common folders
   rm $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
-  rsync -a $REPO_ROOT/infra/library/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
+  rsync -a infra/library/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
 }
 
 # Upload Temp Folder

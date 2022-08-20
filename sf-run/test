@@ -1,5 +1,9 @@
 #!/bin/bash
 set -e
+test_script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source $test_script_dir/../.getenv
+clear
+./npy docker build push
 
 function print_log(){
   aws logs tail /aws/batch/job --log-stream-names $log_stream_name --since 1d --format short > $log_file
@@ -33,7 +37,7 @@ log_file=log.txt
 
 # Prepare Inputs
 
-test_inputs=$(cat ./sf-template.json | envsubst | tr -d '\n' | jq -r . )
+test_inputs=$(cat $test_script_dir/sf-template.json | envsubst | tr -d '\n' | jq -r . )
 
 echo $test_inputs | jq . > test-client-inputs.json
 
