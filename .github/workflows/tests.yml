@@ -47,7 +47,7 @@ jobs:
           TG_COMMAND: plan
           TG_ARGUMENTS:
           RUN_MODULE:
-          STACK_FOLDER: test
+          STACK_FOLDER: live
           BUCKET_SUFFIX: github-actions
           INTERACTIVE: false
 
