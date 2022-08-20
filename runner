@@ -77,7 +77,6 @@ function fetch_from_github(){
 
   [[ $REPO_TYPE == "private" ]] && token_header=--header\="Authorization:token $token" 
   
-  cd $WORK_FOLDER/temp-job
   wget $token_header --header=Accept:application/vnd.github.v3.raw -O - $repo_download_link | tar xz
   
   # Rename extracted folder name to repo name
@@ -88,9 +87,9 @@ function fetch_from_github(){
   export COMMIT_HASH=$commit
   # create a clone
   rsync -a --exclude=scripts $dir_name/infra/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
-  cd $REPO_ROOT
+  rm $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
+  rsync -a $HOME/library/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
    
-
 }
 
 # Fetch Repo
@@ -125,13 +124,14 @@ function copy_local_app_repo(){
   echo Copying source files from Local $infra_repo folder 
   rsync -a --exclude-from=$infra_repo/.gitignore $infra_repo/* $WORK_FOLDER/temp-job/$LOCAL_APP_REPO
   # create a clone
-  rsync -a --exclude=scripts $WORK_FOLDER/temp-job/$LOCAL_APP_REPO/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
+  rsync -a --exclude=scripts $WORK_FOLDER/temp-job/$LOCAL_APP_REPO/infra/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
   # get commit hash
   export COMMIT_HASH=$(git -C $infra_repo log main..$REPO_REFERENCE --format="%h" -n 1)
   echo Commit Hash : $COMMIT_HASH
   echo Repo Head : $(git -C $infra_repo describe --all)
   echo Changed Files : $(git -C $infra_repo status -s | sed s/??//g | tr -d '\n')
-  
+  rm $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
+  rsync -a $REPO_ROOT/infra/library/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
 }
 
 function fetch_app_repo(){
@@ -145,11 +145,6 @@ function fetch_app_repo(){
   
 }
 
-function overwrite_terragrunt(){
-  # Copy common folders
-  rm $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
-  rsync -a infra/library/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
-}
 
 # Upload Temp Folder
 function upload_temp_folder(){
@@ -454,7 +449,6 @@ function run_terragrunt(){
 job_definitions $@
 echo $job_name Job Started
 fetch_app_repo
-overwrite_terragrunt
 configure_aws_profile
 if [[ $1 == "bash" ]];then /bin/bash;exit $?;fi 
 createSqsQueue
