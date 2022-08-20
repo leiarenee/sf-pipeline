@@ -32,8 +32,9 @@ jobs:
           # APP REPOSITORY
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
-          REPO_NAME: sf-infra
-          REPO_REFERENCE: main
+          REPO_NAME: ${{ github.repository }}
+          REPO_REFERENCE: ${{ github.ref }}
+          REPO_HASH: ${{ github.sha }}
           REPO_TYPE: public
           USER_NAME: Test User
           USER_EMAIL: test@me.com
