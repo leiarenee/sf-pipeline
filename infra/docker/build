@@ -1,5 +1,11 @@
 #!/bin/bash
-script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+set -e
+
+build_script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+context_dir=$( cd $build_script_dir/../.. "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source $context_dir/.getenv
+[[ $CLEAR_SCREEN == "true" ]] && clear
+
 image_name=tf-docker-executor
 region=${AWS_REGION:-"eu-west-1"}
 set -e
@@ -36,22 +42,11 @@ docker_platform=$DOCKER_BUILD_PLATFORM
 image_name=$image_name
 fi
 
-docker_file=Dockerfile
-
-if [[ $docker_platform == "linux/arm64" ]]
-then
-docker_file=Dockerfile.arm64
-fi
-
-if [[ $docker_platform == "linux/amd64" ]] || [[ $docker_platform == "linux/x86_64" ]]
-then
-docker_file=Dockerfile
-fi
-
+docker_file=${DOCKER_FILE:-"Dockerfile"}
 
 echo platform $docker_platform
 echo Building $image_name
-context=$script_dir/../..
+context=$context_dir
 docker_folder=$context/infra/docker
 
 docker buildx build $context --platform $docker_platform -t $image_name --file $docker_folder/$docker_file \
@@ -60,9 +55,10 @@ docker buildx build $context --platform $docker_platform -t $image_name --file $
 if [[ $1 == shell ]]
 then
 it_flag="-it"
-pass_args=bash
+pass_args=shell
 else
-pass_args=$1
+pass_args=$2
+[[ $INTERACTIVE == "true" ]] && it_flag="-it"
 fi
 
 if [[ $1 == "run" ]] || [[ $1 == "shell" ]]
@@ -71,13 +67,13 @@ then
   [ ! -f .dev.env ] && touch .dev.env 
 
   # Run Docker
-  docker run $it_flag --platform $DOCKER_RUN_PLATFORM --env-file .env --env-file .dev.env --env INTERACTIVE=false \
+  docker run $it_flag --platform $DOCKER_RUN_PLATFORM --env-file .env --env-file .dev.env \
     --env RUNNER_MACHINE=local-docker --env SF_EXECUTION_NAME=Docker-Local-$(whoami)-$sf-$(uuidgen) \
     --env AWS_BATCH_JOB_ID=batch-$(uuidgen) \
-    -v $context/../$LOCAL_APP_REPO:/home/$LOCAL_APP_REPO \
+    -v $context/../$LOCAL_APP_REPO:/home/app/local/$LOCAL_APP_REPO \
     -v $HOME/.terraform.d/plugin-cache:/home/app/.terraform.d/plugin-cache \
     -v $context/$WORK_FOLDER_NAME:/home/app/$WORK_FOLDER_NAME \
-    $image_name $pass_args 
+    "$image_name" "$pass_args"
 fi
 
 if [[ $1 == "push" ]]

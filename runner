@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+
 trap 'catch $? $LINENO' ERR
 
 function catch() {
@@ -15,23 +16,29 @@ function catch() {
 
 function job_definitions(){
   echo "Pipeline Runner started with arguments \"$@\""
-  script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-  export REPO_ROOT=$script_dir
-  if [[ "$RUNNER_MACHINE" != "local-dev" ]] # For local dev environment
-  then
-    echo $RUNNER_MACHINE ENVIRONMENT VARIABLES
-    env
-  else
+
+  if [[ "$RUNNER_MACHINE" = "local-dev" ]]
+  then # For local dev environment
+    script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    export REPO_ROOT=$script_dir
+    export LOCAL_DEV=true
     uuid=$(uuidgen)
     export SF_EXECUTION_NAME=Dev-$(whoami)-$uuid
     export AWS_BATCH_JOB_ID="Process-$$"
-    set +e;a=$([ ! -z $TERM ] && clear);set -
-    echo 
-    echo $RUNNER_MACHINE Environment Variables Loaded
-    echo
+    
     source $REPO_ROOT/infra/library/scripts/import-env-vars.sh
+    
     echo
+    [[ $CLEAR_SCREEN == "true" ]] && clear
+  else  # Run For local docker or remote environment
+    export REPO_ROOT=$HOME
   fi
+
+  [[ $ECHO_COMMANDS == "true" ]] && set -x
+  echo "\"$RUNNER_MACHINE\"" Environment Variables
+  echo
+  env | sort | grep -vE 'DIRENV|__|_|aws_access_key_id|aws_secret_access_key|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|OLDPWD'
+  echo 
   export WORK_FOLDER=$REPO_ROOT/$WORK_FOLDER_NAME
   echo Repository folder : \"$REPO_ROOT\"
   echo Work folder : \"$WORK_FOLDER\"
@@ -77,6 +84,8 @@ function fetch_from_github(){
 
   [[ $REPO_TYPE == "private" ]] && token_header=--header\="Authorization:token $token" 
   
+  cwd=$(pwd)
+  cd $WORK_FOLDER/temp-job/
   wget $token_header --header=Accept:application/vnd.github.v3.raw -O - $repo_download_link | tar xz
   
   # Rename extracted folder name to repo name
@@ -85,11 +94,17 @@ function fetch_from_github(){
   commit=$(echo $dir_name | sed s/$REPO_ACCOUNT-$REPO_NAME-//g)
   echo Commit Hash : $commit
   export COMMIT_HASH=$commit
+  echo $dir_name
   # create a clone
-  rsync -a --exclude=scripts $dir_name/infra/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
-  rm $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
-  rsync -a $HOME/library/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
-   
+  echo Creating a clone
+  rsync -a --exclude=scripts --exclude=library $WORK_FOLDER/temp-job/$dir_name/infra/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
+
+  library_folder=$REPO_ROOT/infra/library
+  echo Copying library_folder $library_folder
+  rsync -a $library_folder/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
+  
+  cd $cwd
+  
 }
 
 # Fetch Repo
@@ -120,17 +135,19 @@ function fetch_repository(){
 }
 
 function copy_local_app_repo(){
-  infra_repo=$( cd $REPO_ROOT/../$LOCAL_APP_REPO "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-  echo Copying source files from Local $infra_repo folder 
-  rsync -a --exclude-from=$infra_repo/.gitignore $infra_repo/* $WORK_FOLDER/temp-job/$LOCAL_APP_REPO
+  infra_repo_link=$REPO_ROOT/local/$LOCAL_APP_REPO 
+  echo Copying source files from Local $infra_repo_link folder 
+  rsync -a --exclude-from=$infra_repo_link/.gitignore $infra_repo_link/* $WORK_FOLDER/temp-job/$LOCAL_APP_REPO
   # create a clone
+  echo creating a clone 
   rsync -a --exclude=scripts $WORK_FOLDER/temp-job/$LOCAL_APP_REPO/infra/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
   # get commit hash
-  export COMMIT_HASH=$(git -C $infra_repo log main..$REPO_REFERENCE --format="%h" -n 1)
+  export COMMIT_HASH=$(git -C $infra_repo_link log main..$REPO_REFERENCE --format="%h" -n 1)
   echo Commit Hash : $COMMIT_HASH
-  echo Repo Head : $(git -C $infra_repo describe --all)
-  echo Changed Files : $(git -C $infra_repo status -s | sed s/??//g | tr -d '\n')
+  echo Repo Head : $(git -C $infra_repo_link describe --all)
+  echo Changed Files : $(git -C $infra_repo_link status -s | sed s/??//g | tr -d '\n')
   rm $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
+  echo copying library
   rsync -a $REPO_ROOT/infra/library/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
 }
 

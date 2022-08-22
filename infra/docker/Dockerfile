@@ -33,7 +33,7 @@ ENV PYTHONPATH=src
 
 # Copy Files
 COPY src src
-COPY infra/library library
+COPY infra/library infra/library
 
 
 # Copy Folder
