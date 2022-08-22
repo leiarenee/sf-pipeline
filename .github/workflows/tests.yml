@@ -43,10 +43,10 @@ jobs:
           TERRAGRUNT_VERSION: 0.38.7
 
           # TERRAGRUNT
-          RUN_ALL: true
-          TG_COMMAND: plan
+          RUN_ALL: false
+          TG_COMMAND: validate
           TG_ARGUMENTS:
-          RUN_MODULE:
+          RUN_MODULE: test-infra-0
           STACK_FOLDER: test
           BUCKET_SUFFIX: github-actions
           INTERACTIVE: false
@@ -102,6 +102,8 @@ jobs:
           # RUNTIME
           SQS_QUEUE_URL: 
           EXECUTION_NAME:  
+          ECHO_COMMANDS: true
+
         run: ./sf-run/sf-execute.sh
       - name: Trace Logs and SQS Messages
         shell: bash

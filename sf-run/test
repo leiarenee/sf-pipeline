@@ -3,7 +3,7 @@ set -e
 test_script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $test_script_dir/../.getenv
 clear
-./npy docker build push
+source $test_script_dir/../infra/docker/build push
 
 function print_log(){
   aws logs tail /aws/batch/job --log-stream-names $log_stream_name --since 1d --format short > $log_file

@@ -99,7 +99,7 @@ do
     echo Step Functions FAILED
     exit 1
   else 
-    echo $sf_status
+    echo "STATUS : $sf_status"
   fi
 
   sleep $POLL_INTERVAL

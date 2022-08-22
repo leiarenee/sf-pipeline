@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 # Shell Script for State Machine Execution
 export STATE_MACHINE_ARN=arn:aws:states:$PIPELINE_AWS_REGION:$PIPELINE_AWS_ACCOUNT_ID:stateMachine:$PIPELINE_STATE_MACHINE_NAME
 echo 
@@ -25,6 +25,7 @@ export EXECUTION_NAME=${arr[7]}
 export SQS_QUEUE_URL="https://sqs.$PIPELINE_AWS_REGION.amazonaws.com/$PIPELINE_AWS_ACCOUNT_ID/$EXECUTION_NAME.fifo"
 
 echo EXECUTION_NAME=$EXECUTION_NAME
+echo EXECUTION_ARN=$EXECUTION_ARN
 echo SQS_QUEUE_URL : $SQS_QUEUE_URL
 
 # Send to next step
