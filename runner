@@ -94,9 +94,10 @@ function fetch_from_github(){
   commit=$(echo $dir_name | sed s/$REPO_ACCOUNT-$REPO_NAME-//g)
   echo Commit Hash : $commit
   export COMMIT_HASH=$commit
-  echo $dir_name
+  echo dir_name : $dir_name
   # create a clone
   echo Creating a clone
+  
   rsync -a --exclude=scripts --exclude=library $WORK_FOLDER/temp-job/$dir_name/infra/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
 
   library_folder=$REPO_ROOT/infra/library

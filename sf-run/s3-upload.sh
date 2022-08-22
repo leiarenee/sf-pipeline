@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 # ------------ Send Job Resources to S3 ---------------------------------------------
 
 echo
