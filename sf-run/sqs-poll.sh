@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 log_file=log.txt
 
 # ------------ Poll Sqs Status Messages and Log Updates ---------------------------------------------
@@ -93,7 +93,7 @@ do
   done
 
   # Check Status
-  sf_status=$(aws stepfunctions describe-execution --execution-arn $execution_arn | jq -r '.status')
+  sf_status=$(aws stepfunctions describe-execution --execution-arn $EXECUTION_ARN | jq -r '.status')
   if [[ $sf_status == "FAILED" ]]
   then
     echo Step Functions FAILED
