@@ -93,7 +93,7 @@ do
   done
 
   # Check Status
-  sf_status=$(aws stepfunctions --endpoint-url $SF_ENDPOINT_URL describe-execution --execution-arn $execution_arn | jq -r '.status')
+  sf_status=$(aws stepfunctions describe-execution --execution-arn $execution_arn | jq -r '.status')
   if [[ $sf_status == "FAILED" ]]
   then
     echo Step Functions FAILED
