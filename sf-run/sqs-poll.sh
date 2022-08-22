@@ -92,6 +92,16 @@ do
 
   done
 
+  # Check Status
+  sf_status=$(aws stepfunctions --endpoint-url $SF_ENDPOINT_URL describe-execution --execution-arn $execution_arn | jq -r '.status')
+  if [[ $sf_status == "FAILED" ]]
+  then
+    echo Step Functions FAILED
+    exit 1
+  else 
+    echo $sf_status
+  fi
+
   sleep $POLL_INTERVAL
   [ ! -z $LOG_STREAM_NAME ] && print_log
 done

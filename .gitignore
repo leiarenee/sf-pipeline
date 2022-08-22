@@ -49,3 +49,4 @@ log.txt
 job-resources.json
 temp-volume
 aggragated-sf-inputs.json
+sf-local.env
