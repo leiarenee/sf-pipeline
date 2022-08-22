@@ -18,8 +18,8 @@ echo
 echo "State Machine Starting..."
 result=$(aws --region $PIPELINE_AWS_REGION stepfunctions start-execution --state-machine-arn $STATE_MACHINE_ARN --input "$test_inputs")
 echo $result | jq .
-execution_arn=$(echo $result | jq -r .executionArn)
-IFS=":"; arr=($execution_arn); unset IFS
+export EXECUTION_ARN=$(echo $result | jq -r .executionArn)
+IFS=":"; arr=($EXECUTION_ARN); unset IFS
 
 export EXECUTION_NAME=${arr[7]}
 export SQS_QUEUE_URL="https://sqs.$PIPELINE_AWS_REGION.amazonaws.com/$PIPELINE_AWS_ACCOUNT_ID/$EXECUTION_NAME.fifo"
@@ -34,5 +34,6 @@ echo "SQS_QUEUE_URL=$SQS_QUEUE_URL" >> $GITHUB_ENV
 echo "MAX_SQS_MESSAGES=$MAX_SQS_MESSAGES" >> $GITHUB_ENV
 echo "POLL_INTERVAL=$POLL_INTERVAL" >> $GITHUB_ENV
 echo "WORKSPACE_ID=$WORKSPACE_ID" >> $GITHUB_ENV
+echo "EXECUTION_ARN"=$EXECUTION_ARN" >> $GITHUB_ENV
 
 
