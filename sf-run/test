@@ -40,12 +40,12 @@ function check_log_stream_exists(){
     echo "Checking log_group $log_group"
 
     # Check if Log group exists
-    if [[ $(cw ls groups | grep -e "$log_group$") != "" ]]
+    if [[ $( aws logs describe-log-groups | grep -e '"logGroupName": "/aws/batch/job"') != "" ]]
     then
       log_group_exists=true
       echo -e "${GREEN}Log group exists.${NC}"
       echo "Checking stream $LOG_STREAM_NAME"
-      if [[ $(cw ls streams $log_group | grep -e "$LOG_STREAM_NAME$") != "" ]]
+      if [[ $(aws logs describe-log-streams --log-group-name /aws/batch/job --log-stream-name-prefix $LOG_STREAM_NAME | jq -r '.logStreams[0].logStreamName' | grep -e "$LOG_STREAM_NAME$") != "" ]]
       then
         echo -e "${GREEN}Log stream exists.${NC}"
         log_stream_exists=true
