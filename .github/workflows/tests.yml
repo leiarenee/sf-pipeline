@@ -110,7 +110,7 @@ jobs:
         run: ./sf-run/sqs-poll.sh
       - name: Fetch Plans from S3
         id: fetch-plans
-        if: ${{ $TG_COMMAND == 'plan' }}
+        if: ${{ env.TG_COMMAND == 'plan' }}
         run: |
           echo TG_COMMAND $TG_COMMAND
           echo S3_JOB_FOLDER $S3_JOB_FOLDER
