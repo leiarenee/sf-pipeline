@@ -30,7 +30,7 @@ on:
         default: 60
       others:
         description: Other Parameters
-        default: 
+        default: "
           bucketSuffix: github-actions
           targetAwsAccountName: testing  
           targetAwsProfile: leia-testing
@@ -46,6 +46,7 @@ on:
           echoCommands: true
           pollIntervals: 5
           maxSqsMessages: 10
+          "
 
 jobs:
   terragrunt-validate-build-test:
