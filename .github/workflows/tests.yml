@@ -34,10 +34,10 @@ jobs:
 
           # APP REPOSITORY
           VCS_PROVIDER: github
-          REPO_ACCOUNT: ${{ github.repository_owner }}
-          REPO_NAME: ${{ github.event.repository.name }}
-          REPO_REFERENCE: ${{ github.ref_name }}
-          REPO_TYPE: ${{ github.repository_visibility }}
+          REPO_ACCOUNT: leiarenee
+          REPO_NAME: sf-infra
+          REPO_REFERENCE: main
+          REPO_TYPE: public
           USER_NAME: ${{ github.triggering_actor }}
           USER_EMAIL: ${{ github.event.pusher.email }}
 
@@ -103,7 +103,7 @@ jobs:
           MAX_SQS_MESSAGES: 10
 
           # RUNTIME 
-          ECHO_COMMANDS: true
+          ECHO_COMMANDS: false
 
 
         run: ./sf-run/sf-execute.sh
