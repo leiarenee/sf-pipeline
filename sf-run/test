@@ -1,12 +1,19 @@
 #!/bin/bash
 set -e
 test_script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
 source $test_script_dir/../.getenv
 clear
 source $test_script_dir/../infra/docker/build push
 
-function print_log(){
-  aws logs tail /aws/batch/job --log-stream-names $log_stream_name --since 1d --format short > $log_file
+function fetch_logs(){
+  echo Fetching Batch Logs
+  aws logs tail /aws/batch/job --log-stream-names $LOG_STREAM_NAME --since 1d --format short > $log_file
   linesold=$lines
   lines=$(wc -l $log_file | awk '{ print $1 }')
 
@@ -16,10 +23,56 @@ function print_log(){
     awk -v linesold=$linesold 'NR > linesold' $log_file | sed '/^$/d'
     logupdated=true
   fi
-
-
 }
 
+max_log_retry=5
+log_group="/aws/batch/job"
+init_wait_time=5
+
+function check_log_stream_exists(){
+  echo "Checking if Log Stream exists..."
+  # Wait for initialization
+  declare -i log_retry_count=0
+  while [ $log_retry_count -lt $max_log_retry ]
+  do
+    log_retry_count=$((log_retry_count+1))
+    echo "Try count: $log_retry_count"
+    echo "Checking log_group $log_group"
+
+    # Check if Log group exists
+    if [[ $(cw ls groups | grep -e "$log_group$") != "" ]]
+    then
+      log_group_exists=true
+      echo -e "${GREEN}Log group exists.${NC}"
+      echo "Checking stream $LOG_STREAM_NAME"
+      if [[ $(cw ls streams $log_group | grep -e "$LOG_STREAM_NAME$") != "" ]]
+      then
+        echo -e "${GREEN}Log stream exists.${NC}"
+        log_stream_exists=true
+      else
+        echo -e "${RED}Log stream does not exist.${NC}"
+      fi
+    else
+      echo -e "${RED}Log group does not exist.${NC}"
+    fi
+
+    if [ $log_stream_exists ]
+      then
+        break
+      else
+        if [ $log_retry_count -lt $max_log_retry ]
+          then 
+            echo "Wait for stream, trying in $init_wait_time seconds."
+          else
+            echo
+            echo -e "${RED}Error: Couldn't find log stream. Exiting.${NC}"
+            exit 1
+        fi
+    fi
+          
+    sleep $init_wait_time
+  done
+}
 # Command Line Arguments
 export TG_COMMAND=${1:-"$TG_COMMAND"}
 export WORKSPACE_ID=${2:-"$WORKSPACE_ID"}
@@ -31,7 +84,10 @@ state_machine_arn=arn:aws:states:$PIPELINE_AWS_REGION:$PIPELINE_AWS_ACCOUNT_ID:s
 log_file=log.txt
 [ -f $log_file ] && rm $log_file
 [ -f job-resources.json ] && rm job-resources.json
-
+declare -i lines=0
+declare -i linesold=0
+declare -i elapsedtime=0
+logupdated=false
 # Calculate Cron Expression
 # export CRON_EXPRESSION=$(python3 -m cron $duration)
 
@@ -66,9 +122,9 @@ result=$(aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION stepf
   --state-machine-arn $state_machine_arn \
   --input "$test_inputs")
 echo $result | jq .
-execution_arn=$(echo $result | jq -r .executionArn)
-IFS=":"; arr=($execution_arn); unset IFS
-EXECUTION_NAME=${arr[7]}
+export EXECUTION_ARN=$(echo $result | jq -r .executionArn)
+IFS=":"; arr=($EXECUTION_ARN); unset IFS
+export EXECUTION_NAME=${arr[7]}
 sqs_queue_url="https://sqs.$PIPELINE_AWS_REGION.amazonaws.com/$PIPELINE_AWS_ACCOUNT_ID/$EXECUTION_NAME.fifo"
 fi
 
@@ -76,10 +132,11 @@ echo "Waiting 5 Seconds for initialization of State Machine"
 sleep 5
 
 cnt=0
-echo "Polling messages..."
+
 
 while [ -z $end ]
 do
+  echo "Polling messages..."
   if [ -z "$simulate" ]
   then
     sqs_messages=$(aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION sqs receive-message --queue-url $sqs_queue_url --max-number-of-messages $MAX_SQS_MESSAGES )
@@ -101,22 +158,7 @@ do
     progress=$(echo $message | jq .progress)
     module=$(echo $message | jq .module)
     batch_id=$(echo $message | jq -r .jobId)
-    
-    if [[ $batch_id != null ]] && [[ $status == "Batch_Job_Started" ]]
-    then
-      log_stream_name=$(aws batch describe-jobs --jobs $batch_id | jq -r '.jobs[0].container.logStreamName')
-      echo Log Stream : $log_stream_name
-      AWS_BATCH_JOB_ID=$batch_id
-      # Get Job Id
-      job_id=$!
-      echo Job: $job_id
-      declare -i lines=0
-      declare -i linesold=0
-      declare -i elapsedtime=0
-      logupdated=false
-    else
-      unset batch_id
-    fi
+
     set +e
     aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION sqs delete-message --queue-url $sqs_queue_url --receipt-handle $receipt_handle
     set -e
@@ -127,7 +169,8 @@ do
     for ((i=1; i<=$bar_end; i++)); do echo -n "="; done
     for ((i=$bar_end; i<=30; i++)); do echo -n " "; done
     echo -n "] "
-    echo "  Progress : $progress%    Status : $status $batch_id"
+    echo "  Progress : $progress%    Status : $status"
+    [ ! -z $batch_id ] && [[ $batch_id != "null" ]] && echo $batch_id
     #echo -ne "    Progress : $progress%        Status : $status\033[0K\r"
     
     end=$(echo $message | jq .end)
@@ -145,14 +188,68 @@ do
 
   done
 
+  if [ -z $AWS_BATCH_JOB_ID ]
+  then
+    export AWS_BATCH_JOB_NAME=$EXECUTION_NAME
+    export AWS_BATCH_JOB_ID=$(aws batch list-jobs --filters name=JOB_NAME,values=$AWS_BATCH_JOB_NAME --job-queue tf-deployment-job-queue | jq -r '.jobSummaryList[0].jobId')
+    [[ $AWS_BATCH_JOB_ID == null ]] && unset AWS_BATCH_JOB_ID
+  fi
+
+  describe_batch=$(aws batch describe-jobs --jobs $AWS_BATCH_JOB_ID)
+
+  if [ -z $LOG_STREAM_NAME ]
+  then
+    export LOG_STREAM_NAME=$(echo $describe_batch | jq -r '.jobs[0].container.logStreamName')
+    [[ $LOG_STREAM_NAME == null ]] && unset LOG_STREAM_NAME
+    if [ ! -z $LOG_STREAM_NAME ]
+    then
+      echo "Log LOG_STREAM_NAME : $LOG_STREAM_NAME"
+      check_log_stream_exists
+    fi
+  fi
+
+  export BATCH_STATUS=$(echo $describe_batch | jq -r '.jobs[0].status')
+  [[ $BATCH_STATUS == null ]] && unset BATCH_STATUS
+  if [[ $old_batch_status != $BATCH_STATUS ]]
+  then
+    old_batch_status=$BATCH_STATUS
+    if [[ BATCH_STATUS == RUNNING ]]
+    then
+      echo Batch Job Started Running
+      echo $describe_batch | jq '.jobs[0]'
+    fi
+    echo "BATCH_STATUS : $BATCH_STATUS"
+  fi
+
+  # Fetch Batch Log
+  if [ ! -z $LOG_STREAM_NAME ] && [[ $LOG_STREAM_NAME != null ]] && [ ! -z $AWS_BATCH_JOB_ID ] 
+  then
+    fetch_logs
+  fi
+
+  # Check SF Status
+  export SF_STATUS=$(aws stepfunctions describe-execution --execution-arn $EXECUTION_ARN | jq -r '.status')
+
+  if [[ $SF_STATUS == "FAILED" ]]
+  then
+    echo Step Functions FAILED
+    exit 1
+  elif [[ $SF_STATUS == "SUCCEEDED" ]]
+  then
+    echo Step Functions SUCCEEDED
+    exit 0
+  else 
+    echo "SF STATUS : $SF_STATUS"
+  fi
+
   sleep $POLL_INTERVAL
-  [ ! -z $log_stream_name ] && print_log
+  
 done
 
-# echo
-# echo Job Resources
-# echo
-# aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION s3 cp s3://$S3_JOBS_BUCKET/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID/job-resources/outputs.json job-resources.json
-# cat job-resources.json | jq .
-# echo
+echo
+echo Job Resources
+echo
+aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION s3 cp s3://$S3_JOBS_BUCKET/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID/job-resources/outputs.json job-resources.json
+cat job-resources.json | jq .
+echo
 
