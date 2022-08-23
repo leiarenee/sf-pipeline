@@ -5,6 +5,9 @@ on:
 
 jobs:
   terragrunt-validate-build-test:
+    strategy:
+      matrix:
+        tg_commands: ["validate", "plan"]
     runs-on: ubuntu-latest
     outputs:
       env-name: ${{ steps.env-name.outputs.environment }}
@@ -44,7 +47,7 @@ jobs:
 
           # TERRAGRUNT
           RUN_ALL: false
-          TG_COMMAND: validate
+          TG_COMMAND: ${{ matrix.version }}
           TG_ARGUMENTS:
           RUN_MODULE: test-infra-0
           STACK_FOLDER: test
