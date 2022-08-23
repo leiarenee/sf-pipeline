@@ -90,6 +90,11 @@ jobs:
           ECR_AWS_ACCOUNT_ID: 377449198785
           SQS_AWS_PROFILE: pipeline
 
+          # REPLACE Parameters
+          DOMAIN: testing.dev.leiarenee.io
+          DNS_ZONE_ID: Z0890541BQO7OVB8F6WL
+          CERTIFICATE: arn:aws:acm:eu-west-1:377449198785:certificate/431ea958-254b-4f8c-995f-a311559fcce5
+          CLUSTER: my-testing-k8s
 
           # PIPELINE
           RUNNER_MACHINE: github-actions

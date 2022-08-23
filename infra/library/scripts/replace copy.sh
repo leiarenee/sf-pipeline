@@ -85,17 +85,23 @@ for i in "${!extension_array[@]}"
 do
   list=$list" "$(eval $find_command)
 done
+echo $replace_args
+keys=$(echo $replace_args | jq 'to_entries | .[] | .key ' | sed s/\"\"/\"_\"/g)
+echo keys
+echo $keys
+echo ----------
 
-# yml=$(find $dst_dir -type f -name "*.yml")
-# yaml=$(find $dst_dir -type f -name "*.yaml")
-# list=$yml" "$yaml
+values=$(echo $replace_args | jq 'to_entries | .[] | .value ' | sed s/\"\"/\"_\"/g)
+echo values
+echo $values
+echo ----------
 
-keys=$(echo $replace_args | jq -r keys[])
-values=$(echo $replace_args | jq -r 'keys[] as $k | .[$k]')
-
-set -f                      # avoid globbing (expansion of *).
+set -f   # avoid globbing (expansion of *).
 keys_array=($keys)
 values_array=($values)
+echo number of keys ${#keys[@]}
+echo number of values ${#values[@]}
+echo ${values[@]}
 [[ -z $quiet ]] && echo
 # Repeat max_cnt times
 for cnt in $(seq 1 $max_cnt)
