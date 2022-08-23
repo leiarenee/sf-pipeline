@@ -2,12 +2,17 @@ name: Terragrunt Build, Deploy
 on:
   workflow_dispatch:
     inputs:
-      logLevel:
-        description: Log level     
-        required: true
-        default: warning
-      tags:
-        description: Test scenario tags 
+      accountId:
+        description: AWS Account Id     
+        default: 553688522943
+      runAll:
+        description: Terragrunt run-all
+        default: true 
+      tgCommand: Terragrunt command
+        default: validate
+      stackFolder:
+        default: test
+      runModule:
   push:
     branches: [ main ]
 
@@ -52,7 +57,7 @@ jobs:
 
           # TERRAGRUNT
           RUN_ALL: false
-          TG_COMMAND: ${{ matrix.tg_command }}
+          TG_COMMAND: apply
           TG_ARGUMENTS:
           RUN_MODULE: 
           STACK_FOLDER: test
