@@ -96,7 +96,7 @@ function fetch_from_github(){
   export COMMIT_HASH=$commit
   echo dir_name : $dir_name
   # create a clone
-  upload_temp_folder
+  
   echo Creating a clone
   
   rsync -a --exclude=scripts --exclude=library $WORK_FOLDER/temp-job/$dir_name/infra/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
