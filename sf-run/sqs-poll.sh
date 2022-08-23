@@ -181,16 +181,14 @@ do
   # Check SF Status
   export SF_STATUS=$(aws stepfunctions describe-execution --execution-arn $EXECUTION_ARN | jq -r '.status')
 
-  if [[ $SF_STATUS == "FAILED" ]]
-  then
-    echo Step Functions FAILED
-    exit 1
-  elif [[ $SF_STATUS == "SUCCEEDED" ]]
+  if [[ $SF_STATUS == "SUCCEEDED" ]]
   then
     echo Step Functions SUCCEEDED
-    exit 0
+    POLL_INTERVAL=0
+    end=true
   else 
     echo "SF_STATUS : $SF_STATUS"
+    exit 1
   fi
 
   sleep $POLL_INTERVAL
