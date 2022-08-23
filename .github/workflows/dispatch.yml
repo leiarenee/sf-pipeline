@@ -26,11 +26,11 @@ on:
         description: Terragrunt Module Folder
         default:
       bucketSuffix:
-        description: Terragrunt State Folder
+        description: Terragrunt State Bucket Suffix
         default: github
       ttlDuration:
-        description: Time to Live in minute ( A cron job will destroy infrastructure after this duration)
-        default: 60
+        description: Time to Live in minute 
+        default: 30
 
 jobs:
   terragrunt-validate-build-test:
