@@ -109,6 +109,7 @@ jobs:
         shell: bash
         run: ./sf-run/sqs-poll.sh
       - name: Fetch Plans from S3
+        if: $TG_COMMAND == plan
         id: fetch-plans
         run: |
           aws s3 cp $S3_JOB_FOLDER/plan-files plan-files --recursive 
