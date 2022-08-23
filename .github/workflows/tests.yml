@@ -130,8 +130,8 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            $TG_COMMAND Succesfull
-            - Job Artifacts [create-or-update-comment]($S3_JOB_FOLDER)
+            ${{ env.TG_COMMAND }} Succesfull
+            - Job Artifacts [create-or-update-comment](${{ env.S3_JOB_FOLDER }})
           reactions: '+1'
 
 
