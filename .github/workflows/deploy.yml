@@ -9,10 +9,13 @@ on:
         description: Terragrunt run-all
         default: true 
       tgCommand: Terragrunt command
+        description: Terragrunt command
         default: validate
       stackFolder:
+        description: Main Stack Folder
         default: test
       runModule:
+        description: Terragrunt Module Folder
   push:
     branches: [ main ]
 
