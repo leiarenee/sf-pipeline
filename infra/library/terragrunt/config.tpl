@@ -20,6 +20,7 @@ locals {
       PIPELINE_AWS_REGION = "${PIPELINE_AWS_REGION}"
       PIPELINE_AWS_ACCOUNT_ID = "${PIPELINE_AWS_ACCOUNT_ID}"
       IAM_USER       = "cicd"
+      REPO_REFERENCE = "${REPO_REFERENCE}"
     }
   }
 
