@@ -19,12 +19,12 @@ on:
         default: true 
       tgCommand: 
         description: Terragrunt command
-        default: validate
+        default: plan
       tgArguments:
         description: TG Cli arguments
       stackFolder:
         description: Main Stack Folder
-        default: test
+        default: live
       runModule:
         description: Terragrunt Module Folder
         default:
