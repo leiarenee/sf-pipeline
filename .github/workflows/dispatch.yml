@@ -2,12 +2,30 @@ name: Manual Trigger
 on:
   workflow_dispatch:
     inputs:
-      targetAccountId:
+      workspaceId:
+        description: Workspace Id     
+        default: testing
+      workspaceName:
+        description: Workspace Name     
+        default: Testing Environment
+      repoName:
+        description: Repository name for Infrastructure repository
+        default: ${{ github.event.repository.name }}
+      repoRef:
+        description: Branch name, tag or commit hash for Infrastructure repository
+        default: ${{ github.ref }}
+      targetAwsAccountId:
         description: Target AWS Account Id     
         default: 553688522943
-      targetRegion:
+      targetAwsAccountName:
+        description: Target AWS Account Name     
+        default: testing      
+      targetAwsRegion:
         description: Target AWS Region     
         default: eu-west-1
+      targetAwsProfile:
+        description: Target AWS Profile     
+        default: leia-testing
       runAll:
         description: Terragrunt run-all
         default: true 
@@ -21,9 +39,46 @@ on:
         default: test
       runModule:
         description: Terragrunt Module Folder
+        default:
+      ttlDuration:
+        description: Time to Live in minute ( A cron job will destroy infrastructure after this duration)
+        default: 60
       bucketSuffix:
         description: Terraform State File Suffix (!!! Changing Bucket Suffix can dublicate infrastructure)
         default: github-actions
+      domain:
+        description: Domain Name
+        default: testing.dev.leiarenee.io
+      dnsZoneId:
+        description: Route53 Hosted Zone Id
+        default: Z0890541BQO7OVB8F6WL
+      certificate:
+        description: Certificate ARN
+        default:  arn:aws:acm:eu-west-1:377449198785:certificate/431ea958-254b-4f8c-995f-a311559fcce5
+      cluster:
+        description: Kubernetes Cluster Name
+        default: my-testing-k8s
+      uploadWorkFolder:
+        description: Upload cache folders to S3 - [always|onerror|never]
+        default: always
+      uploadJobResources:
+        description: Upload Job resources to S3 - [true|false]
+        default: true
+      uploadPlanFiles:
+        description: Upload Plan Files to S3 - [true|false]
+        default: true
+      sendSqsMessages:
+        description: Send Sqs messages for status notification - [true|false]
+        default: true
+      echoCommands:
+        description: Echo Shell Commands On/Off- [true|false]
+        default: true
+      pollIntervals:
+        description: Polling intervals in seconds
+        default: 5
+      maxSqsMessages:
+        description: Number of SQS messages to be retreived in one batch
+        default: 10
 
 jobs:
   terragrunt-validate-build-test:
@@ -48,8 +103,8 @@ jobs:
           PYTHONTRACEMALLOC: 25
 
           # WORKSPACE
-          WORKSPACE_ID: testing
-          WORKSPACE_NAME : Testing Environment
+          WORKSPACE_ID: ${{ github.event.inputs.workspaceId }}
+          WORKSPACE_NAME : ${{ github.event.inputs.workspaceName }}
 
           # APP REPOSITORY
           VCS_PROVIDER: github
@@ -65,19 +120,19 @@ jobs:
           TERRAGRUNT_VERSION: 0.38.7
 
           # TERRAGRUNT
-          RUN_ALL: false
-          TG_COMMAND: apply
-          TG_ARGUMENTS:
-          RUN_MODULE: 
-          STACK_FOLDER: test
-          BUCKET_SUFFIX: github-actions
+          RUN_ALL: ${{ github.event.inputs.runAll }}
+          TG_COMMAND: ${{ github.event.inputs.tgCommand }}
+          TG_ARGUMENTS: ${{ github.event.inputs.tgArguments }}
+          RUN_MODULE: ${{ github.event.inputs.runModule }}
+          STACK_FOLDER: ${{ github.event.inputs.stackFolder }}
+          BUCKET_SUFFIX: ${{ github.event.inputs.bucketSuffix }}s
           INTERACTIVE: false
 
           # AWS
-          TARGET_AWS_REGION: eu-west-1
-          TARGET_AWS_ACCOUNT_NAME: testing
-          TARGET_AWS_ACCOUNT_ID: 553688522943
-          TARGET_AWS_PROFILE: leia-testing
+          TARGET_AWS_REGION: ${{ github.event.inputs.targetAwsRegion }}
+          TARGET_AWS_ACCOUNT_NAME: ${{ github.event.inputs.targetAwsAccountId }}
+          TARGET_AWS_ACCOUNT_ID: ${{ github.event.inputs.targetAwsAccountId }}
+          TARGET_AWS_PROFILE: ${{ github.event.inputs.targetAwsProfile }}
           PIPELINE_AWS_REGION: eu-west-1
           PIPELINE_AWS_PROFILE: leia-pipeline
           PIPELINE_AWS_ACCOUNT_ID: 377449198785
@@ -85,10 +140,10 @@ jobs:
           SQS_AWS_PROFILE: leia-pipeline
 
           # REPLACE Parameters
-          DOMAIN: testing.dev.leiarenee.io
-          DNS_ZONE_ID: Z0890541BQO7OVB8F6WL
-          CERTIFICATE: arn:aws:acm:eu-west-1:377449198785:certificate/431ea958-254b-4f8c-995f-a311559fcce5
-          CLUSTER: my-testing-k8s
+          DOMAIN: ${{ github.event.inputs.domain }}
+          DNS_ZONE_ID: ${{ github.event.inputs.dnsZoneId }}
+          CERTIFICATE: ${{ github.event.inputs.certificate }}
+          CLUSTER: ${{ github.event.inputs.cluster }}
 
           # PIPELINE
           RUNNER_MACHINE: github-actions
@@ -98,10 +153,10 @@ jobs:
           FINAL_PROGRESS: 95
           S3_JOBS_BUCKET: sf-pipeline-jobs
           EVENTBRIDGE_RULE: SF-Cron-Pipeline
-          UPLOAD_WORKFOLDER: always
-          UPLOAD_JOB_RESOURCES: true
-          UPLOAD_PLAN_FILES: true
-          SEND_SQS_MESSAGES: true
+          UPLOAD_WORKFOLDER: ${{ github.event.inputs.uploadWorkFolder }}
+          UPLOAD_JOB_RESOURCES: ${{ github.event.inputs.uploadJobResources }}
+          UPLOAD_PLAN_FILES: ${{ github.event.inputs.uploadPlanFiles }}
+          SEND_SQS_MESSAGES: ${{ github.event.inputs.sendSqsMessages }}
 
           # JOB
           JOB_DEFINITION: arn:aws:batch:eu-west-1:377449198785:job-definition/tf_pipeline_job_definition
@@ -111,19 +166,19 @@ jobs:
           ROLE_EVENTBRIDGE: arn:aws:iam::377449198785:role/service-role/Amazon_EventBridge_Invoke_Batch_Job_Queue
 
           # TTL
-          TTL_DURATION_MINUTES: 10
+          TTL_DURATION_MINUTES: ${{ github.event.inputs.ttlDuration }}
 
           # STEP FUNCTIONS
           PIPELINE_STATE_MACHINE_NAME: Pipeline-State-Machine-enabling-drake
           PIPELINE_SF_TEMPLATE_FILE: ./sf-run/sf-template.json
 
           # SQS POLLING
-          POLL_INTERVAL: 30
-          MAX_SQS_MESSAGES: 10
+          POLL_INTERVAL: ${{ github.event.inputs.pollInterval }}
+          MAX_SQS_MESSAGES: ${{ github.event.inputs.maxSqsMessages }}
 
           # RUNTIME
           SQS_QUEUE_URL: 
           EXECUTION_NAME:  
-          ECHO_COMMANDS: true
+          ECHO_COMMANDS: ${{ github.event.inputs.echoCommands }}
         run: |
             env
