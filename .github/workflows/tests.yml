@@ -110,8 +110,9 @@ jobs:
         run: ./sf-run/sqs-poll.sh
       - name: Fetch Plans from S3
         id: fetch-plans
-        if: $TG_COMMAND == 'plan'
         run: |
+          echo TG_COMMAND $TG_COMMAND
+          echo S3_JOB_FOLDER $S3_JOB_FOLDER
           aws s3 cp $S3_JOB_FOLDER/plan-files plan-files --recursive 
           merged=merged-plan-files.txt;echo Terraform Plans > $merged;for file in $(ls plan-files);do echo ${file/.txt/} Module >> $merged;cat plan-files/$file/plan-file.txt >> $merged;echo >> $merged;done;cat $merged
           body="$(cat $merged | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")";body="${body//'%'/'%25'}";body="${body//$'\n'/'%0A'}";body="${body//$'\r'/'%0D'}" 
