@@ -89,11 +89,11 @@ done
 # yml=$(find $dst_dir -type f -name "*.yml")
 # yaml=$(find $dst_dir -type f -name "*.yaml")
 # list=$yml" "$yaml
-
+echo "replace_args:$replace_args"
 keys=$(echo $replace_args | jq -r keys[])
 values=$(echo $replace_args | jq -r 'keys[] as $k | .[$k]')
-echo jeys $keys
-echo values $values
+echo "keys:$keys"
+echo "values:$values"
 
 set -f                      # avoid globbing (expansion of *).
 keys_array=($keys)
