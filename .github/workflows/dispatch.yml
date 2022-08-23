@@ -126,7 +126,7 @@ jobs:
           ECHO_COMMANDS: true
 
           # GITHUB
-          GITHUB_CONTEXT: ${{ toJson(github) }} 
+          # GITHUB_CONTEXT: ${{ toJson(github) }} 
         run: |
           # echo $GITHUB_CONTEXT
           ./runner
