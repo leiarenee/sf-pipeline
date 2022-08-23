@@ -8,6 +8,9 @@ on:
       targetAwsAccountId:
         description: Target AWS Account Id     
         default: 553688522943
+      targetAwsRegion:
+        description: Target AWS Region     
+        default: eu-west-1
       runAll:
         description: Terragrunt run-all
         default: true 
@@ -22,31 +25,12 @@ on:
       runModule:
         description: Terragrunt Module Folder
         default:
-      targetAwsRegion:
-        description: Target AWS Region     
-        default: eu-west-1
+      bucketSuffix:
+        description: Terragrunt State Folder
+        default: github
       ttlDuration:
         description: Time to Live in minute ( A cron job will destroy infrastructure after this duration)
         default: 60
-      others:
-        description: Other Parameters
-        default: "
-          bucketSuffix: github-actions
-          targetAwsAccountName: testing  
-          targetAwsProfile: leia-testing
-          workspaceName: Testing Environment
-          domain: testing.dev.leiarenee.io
-          dnsZoneId: Z0890541BQO7OVB8F6WL
-          certificate: arn:aws:acm:eu-west-1:377449198785:certificate/431ea958-254b-4f8c-995f-a311559fcce5
-          cluster: my-testing-k8s
-          uploadWorkFolder: always
-          uploadJobResources: true
-          uploadPlanFiles: true
-          sendSqsMessages: true
-          echoCommands: true
-          pollIntervals: 5
-          maxSqsMessages: 10
-          "
 
 jobs:
   terragrunt-validate-build-test:
@@ -71,12 +55,11 @@ jobs:
           PYTHONTRACEMALLOC: 25
 
           # WORKSPACE
-          WORKSPACE_ID: ${{ github.event.inputs.others.workspaceId.default }}
-          WORKSPACE_NAME : ${{ github.event.inputs.workspaceName }}
+          WORKSPACE_ID: ${{ github.event.inputs.workspaceId }}
 
           # APP REPOSITORY
           VCS_PROVIDER: github
-          REPO_ACCOUNT: leiarenee
+          REPO_ACCOUNT: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
           REPO_REFERENCE: ${{ github.ref }}
           REPO_TYPE: public
@@ -98,20 +81,15 @@ jobs:
 
           # AWS
           TARGET_AWS_REGION: ${{ github.event.inputs.targetAwsRegion }}
-          TARGET_AWS_ACCOUNT_NAME: ${{ github.event.inputs.targetAwsAccountId }}
+          TARGET_AWS_ACCOUNT_NAME: Testing Environment
           TARGET_AWS_ACCOUNT_ID: ${{ github.event.inputs.targetAwsAccountId }}
-          TARGET_AWS_PROFILE: ${{ github.event.inputs.targetAwsProfile }}
+          TARGET_AWS_PROFILE: testing
           PIPELINE_AWS_REGION: eu-west-1
-          PIPELINE_AWS_PROFILE: leia-pipeline
+          PIPELINE_AWS_PROFILE: pipeline
           PIPELINE_AWS_ACCOUNT_ID: 377449198785
           ECR_AWS_ACCOUNT_ID: 377449198785
-          SQS_AWS_PROFILE: leia-pipeline
+          SQS_AWS_PROFILE: pipeline
 
-          # REPLACE Parameters
-          DOMAIN: ${{ github.event.inputs.domain }}
-          DNS_ZONE_ID: ${{ github.event.inputs.dnsZoneId }}
-          CERTIFICATE: ${{ github.event.inputs.certificate }}
-          CLUSTER: ${{ github.event.inputs.cluster }}
 
           # PIPELINE
           RUNNER_MACHINE: github-actions
@@ -121,10 +99,10 @@ jobs:
           FINAL_PROGRESS: 95
           S3_JOBS_BUCKET: sf-pipeline-jobs
           EVENTBRIDGE_RULE: SF-Cron-Pipeline
-          UPLOAD_WORKFOLDER: ${{ github.event.inputs.uploadWorkFolder }}
-          UPLOAD_JOB_RESOURCES: ${{ github.event.inputs.uploadJobResources }}
-          UPLOAD_PLAN_FILES: ${{ github.event.inputs.uploadPlanFiles }}
-          SEND_SQS_MESSAGES: ${{ github.event.inputs.sendSqsMessages }}
+          UPLOAD_WORKFOLDER: always
+          UPLOAD_JOB_RESOURCES: true
+          UPLOAD_PLAN_FILES: true
+          SEND_SQS_MESSAGES: true
 
           # JOB
           JOB_DEFINITION: arn:aws:batch:eu-west-1:377449198785:job-definition/tf_pipeline_job_definition
@@ -141,12 +119,12 @@ jobs:
           PIPELINE_SF_TEMPLATE_FILE: ./sf-run/sf-template.json
 
           # SQS POLLING
-          POLL_INTERVAL: ${{ github.event.inputs.pollInterval }}
-          MAX_SQS_MESSAGES: ${{ github.event.inputs.maxSqsMessages }}
+          POLL_INTERVAL: 5
+          MAX_SQS_MESSAGES: 10
 
           # RUNTIME
           SQS_QUEUE_URL: 
           EXECUTION_NAME:  
-          ECHO_COMMANDS: ${{ github.event.inputs.echoCommands }}
+          ECHO_COMMANDS: true
         run: |
-            env
+            env | sort
