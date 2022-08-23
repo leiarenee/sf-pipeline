@@ -35,11 +35,11 @@ ENV PYTHONPATH=src
 
 # Copy Files
 COPY src src
-COPY terragrunt terragrunt
-COPY scripts scripts
+COPY infra/library infra/library
+
 
 # Copy Folder
-COPY docker/entrypoint .
+COPY infra/docker/entrypoint .
 COPY runner .
 
 ENTRYPOINT [ "./entrypoint" ]

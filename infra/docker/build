@@ -34,18 +34,20 @@ if [[ $1 == "run" ]] || [[ $1 == "shell" ]]
 then
 docker_platform=$DOCKER_RUN_PLATFORM
 image_name=$image_name-local
+docker_file=${DOCKER_FILE_RUN}
 fi
 
 if [[ $1 == "push" ]]
 then
 docker_platform=$DOCKER_BUILD_PLATFORM
 image_name=$image_name
+docker_file=${DOCKER_FILE_BUILD}
 fi
 
-docker_file=${DOCKER_FILE:-"Dockerfile"}
 
 echo platform $docker_platform
 echo Building $image_name
+echo Docker file $docker_file
 context=$context_dir
 docker_folder=$context/infra/docker
 

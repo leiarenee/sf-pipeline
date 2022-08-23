@@ -30,7 +30,7 @@ RUN useradd -ms /bin/bash app
 USER app
 WORKDIR /home/app
 RUN mkdir .aws && touch .aws/credentials
-# RUN mkdir .terraform.d && mkdir .terraform.d/plugin-cache
+RUN mkdir .terraform.d && mkdir .terraform.d/plugin-cache
 
 # Environment variables
 ENV PYTHONPATH=src

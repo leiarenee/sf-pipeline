@@ -92,6 +92,8 @@ done
 
 keys=$(echo $replace_args | jq -r keys[])
 values=$(echo $replace_args | jq -r 'keys[] as $k | .[$k]')
+echo jeys $keys
+echo values $values
 
 set -f                      # avoid globbing (expansion of *).
 keys_array=($keys)
