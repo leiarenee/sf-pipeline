@@ -239,7 +239,7 @@ do
     echo Step Functions SUCCEEDED
     exit 0
   else 
-    echo "SF STATUS : $SF_STATUS"
+    echo "SF_STATUS : $SF_STATUS"
   fi
 
   sleep $POLL_INTERVAL
