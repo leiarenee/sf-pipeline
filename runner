@@ -35,10 +35,10 @@ function job_definitions(){
   fi
 
   [[ $ECHO_COMMANDS == "true" ]] && set -x
-  echo "\"$RUNNER_MACHINE\"" Environment Variables
-  echo
-  env | sort | grep -vE 'DIRENV|__|_|aws_access_key_id|aws_secret_access_key|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|OLDPWD'
-  echo 
+  # echo "\"$RUNNER_MACHINE\"" Environment Variables
+  # echo
+  # env | sort | grep -vE 'DIRENV|__|_|aws_access_key_id|aws_secret_access_key|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|OLDPWD'
+  # echo 
   export WORK_FOLDER=$REPO_ROOT/$WORK_FOLDER_NAME
   echo Repository folder : \"$REPO_ROOT\"
   echo Work folder : \"$WORK_FOLDER\"
@@ -46,7 +46,11 @@ function job_definitions(){
   [ -d $WORK_FOLDER/temp-job ] && rm -rf $WORK_FOLDER/temp-job
   [ ! -d $WORK_FOLDER/temp-job ] && mkdir $WORK_FOLDER_NAME/temp-job
   
-
+  pwd
+  ls -la 
+  echo
+  ls -la $WORK_FOLDER/temp-job
+  echo
   env >  $WORK_FOLDER/temp-job/envvars.log
   
   export TG_COMMAND=${1:-$TG_COMMAND}
