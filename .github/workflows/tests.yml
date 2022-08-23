@@ -129,11 +129,12 @@ jobs:
         uses: peter-evans/create-or-update-comment@v2
         with:
           issue-number: ${{ github.event.pull_request.number }}
+          reactions: '+1'
           body: |
-            ${{ env.TG_COMMAND }} Succesfull
+            $TG_COMMAND Succesfull
             - [Job Artifacts][1]
 
-            [1]: ${{ env.S3_JOB_FOLDER }}
+            [1]: $JOB_FOLDER 
           reactions: '+1'
 
 
