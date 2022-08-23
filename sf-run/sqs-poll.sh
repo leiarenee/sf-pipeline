@@ -67,6 +67,17 @@ function check_log_stream_exists(){
   done
 }
 
+# --------- Main routine ----------
+
+declare -i lines=0
+declare -i linesold=0
+declare -i elapsedtime=0
+logupdated=false
+max_log_retry=5
+log_group="/aws/batch/job"
+init_wait_time=5
+
+
 # SQS
 echo "Waiting 5 Seconds for initialization of State Machine..."
 sleep 5
@@ -99,21 +110,6 @@ do
     module=$(echo $message | jq .module)
     batch_id=$(echo $message | jq -r .jobId)
     
-    if [[ $batch_id != null ]] && [[ $status == "Batch_Job_Started" ]]
-    then
-      export LOG_STREAM_NAME=$(aws batch describe-jobs --jobs $batch_id | jq -r '.jobs[0].container.logStreamName')
-      echo Log Stream : $LOG_STREAM_NAME
-      export AWS_BATCH_JOB_ID=$batch_id
-      # Get Job Id
-      job_id=$!
-      echo Job: $job_id
-      declare -i lines=0
-      declare -i linesold=0
-      declare -i elapsedtime=0
-      logupdated=false
-    else
-      unset batch_id
-    fi
     set +e
     aws sqs delete-message --queue-url $SQS_QUEUE_URL --receipt-handle $receipt_handle
     set -e
