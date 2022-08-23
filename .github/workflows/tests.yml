@@ -5,6 +5,9 @@ on:
 
 jobs:
   terragrunt-validate-build-test:
+    strategy:
+      matrix:
+        tg_command: ["validate", "plan"]
     runs-on: ubuntu-latest
     outputs:
       env-name: ${{ steps.env-name.outputs.environment }}
@@ -33,7 +36,7 @@ jobs:
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
           REPO_NAME: sf-infra
-          REPO_REFERENCE: main
+          REPO_REFERENCE: build
           REPO_TYPE: public
           USER_NAME: Test User
           USER_EMAIL: test@me.com
@@ -43,10 +46,10 @@ jobs:
           TERRAGRUNT_VERSION: 0.38.7
 
           # TERRAGRUNT
-          RUN_ALL: true
-          TG_COMMAND: plan
+          RUN_ALL: false
+          TG_COMMAND: ${{ matrix.tg_command }}
           TG_ARGUMENTS:
-          RUN_MODULE:
+          RUN_MODULE: test-infra-0
           STACK_FOLDER: test
           BUCKET_SUFFIX: github-actions
           INTERACTIVE: false
@@ -102,22 +105,38 @@ jobs:
           # RUNTIME
           SQS_QUEUE_URL: 
           EXECUTION_NAME:  
+          ECHO_COMMANDS: true
+
         run: ./sf-run/sf-execute.sh
       - name: Trace Logs and SQS Messages
         shell: bash
         run: ./sf-run/sqs-poll.sh
       - name: Fetch Plans from S3
         id: fetch-plans
+        if: ${{ env.TG_COMMAND == 'plan' }}
         run: |
+          echo TG_COMMAND $TG_COMMAND
+          echo S3_JOB_FOLDER $S3_JOB_FOLDER
           aws s3 cp $S3_JOB_FOLDER/plan-files plan-files --recursive 
           merged=merged-plan-files.txt;echo Terraform Plans > $merged;for file in $(ls plan-files);do echo ${file/.txt/} Module >> $merged;cat plan-files/$file/plan-file.txt >> $merged;echo >> $merged;done;cat $merged
           body="$(cat $merged | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")";body="${body//'%'/'%25'}";body="${body//$'\n'/'%0A'}";body="${body//$'\r'/'%0D'}" 
           echo "::set-output name=body::$body"
-      - name: Create PR Comment
+      - name: Submit Plan to PR 
+        if: ${{ env.TG_COMMAND == 'plan' }}
         uses: peter-evans/create-or-update-comment@v2
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.fetch-plans.outputs.body }}
+      - name: Create Success comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## ${{ env.TG_COMMAND }} Command Succesfull
+            ### Artifacts
+            - [S3_JOB_FOLDER][1]
+            
+            [1]: ${{ env.S3_JOB_FOLDER }}
 
-
+          reactions: '+1'
 

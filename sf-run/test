@@ -1,12 +1,15 @@
 #!/bin/bash
 set -e
-log_file=log.txt
+test_script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
-# ------------ Poll Sqs Status Messages and Log Updates ---------------------------------------------
+
+source $test_script_dir/../.getenv
+clear
+source $test_script_dir/../infra/docker/build push
 
 function fetch_logs(){
   echo Fetching Batch Logs
@@ -21,6 +24,10 @@ function fetch_logs(){
     logupdated=true
   fi
 }
+
+max_log_retry=5
+log_group="/aws/batch/job"
+init_wait_time=5
 
 function check_log_stream_exists(){
   echo "Checking if Log Stream exists..."
@@ -66,31 +73,73 @@ function check_log_stream_exists(){
     sleep $init_wait_time
   done
 }
+# Command Line Arguments
+export TG_COMMAND=${1:-"$TG_COMMAND"}
+export WORKSPACE_ID=${2:-"$WORKSPACE_ID"}
+export STACK_FOLDER=${3:-"$STACK_FOLDER"}
 
-# --------- Main routine ----------
-
+poll=$4
+simulate=$5
+state_machine_arn=arn:aws:states:$PIPELINE_AWS_REGION:$PIPELINE_AWS_ACCOUNT_ID:stateMachine:$PIPELINE_STATE_MACHINE_NAME
+log_file=log.txt
+[ -f $log_file ] && rm $log_file
+[ -f job-resources.json ] && rm job-resources.json
 declare -i lines=0
 declare -i linesold=0
 declare -i elapsedtime=0
 logupdated=false
-max_log_retry=5
-log_group="/aws/batch/job"
-init_wait_time=5
+# Calculate Cron Expression
+# export CRON_EXPRESSION=$(python3 -m cron $duration)
+
+# Prepare Inputs
+
+test_inputs=$(cat $test_script_dir/sf-template.json | envsubst | tr -d '\n' | jq -r . )
+
+echo $test_inputs | jq . > test-client-inputs.json
+
+echo
+echo $test_inputs | jq .
+echo
+echo Polling Interval : $POLL_INTERVAL
+echo Max SQS Messages : $MAX_SQS_MESSAGES
+echo
+echo "Starting \"$state_machine_arn\""
+echo "Do you confirm? (y)"
+
+read answer
+
+if [[ $answer != "y" ]]
+then
+ exit
+fi
 
 
-# SQS
-echo "Waiting 5 Seconds for initialization of State Machine..."
+# Execute State Machine
+if [ -z "$simulate" ] && [[ "$poll" != "poll" ]]
+then
+echo Executing $PIPELINE_STATE_MACHINE_NAME
+result=$(aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION stepfunctions start-execution \
+  --state-machine-arn $state_machine_arn \
+  --input "$test_inputs")
+echo $result | jq .
+export EXECUTION_ARN=$(echo $result | jq -r .executionArn)
+IFS=":"; arr=($EXECUTION_ARN); unset IFS
+export EXECUTION_NAME=${arr[7]}
+sqs_queue_url="https://sqs.$PIPELINE_AWS_REGION.amazonaws.com/$PIPELINE_AWS_ACCOUNT_ID/$EXECUTION_NAME.fifo"
+fi
+
+echo "Waiting 5 Seconds for initialization of State Machine"
 sleep 5
 
 cnt=0
-echo "Polling messages..."
-echo "::set-output name=greeting::Polling messages"
+
 
 while [ -z $end ]
 do
+  echo "Polling messages..."
   if [ -z "$simulate" ]
   then
-    sqs_messages=$(aws sqs receive-message --queue-url $SQS_QUEUE_URL --max-number-of-messages $MAX_SQS_MESSAGES )
+    sqs_messages=$(aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION sqs receive-message --queue-url $sqs_queue_url --max-number-of-messages $MAX_SQS_MESSAGES )
     messages=$(echo $sqs_messages | jq -r '.Messages[] | @base64')
   else
     messages=$(cat messages.json | jq -r '.Messages[] | @base64')
@@ -109,9 +158,9 @@ do
     progress=$(echo $message | jq .progress)
     module=$(echo $message | jq .module)
     batch_id=$(echo $message | jq -r .jobId)
-    
+
     set +e
-    aws sqs delete-message --queue-url $SQS_QUEUE_URL --receipt-handle $receipt_handle
+    aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION sqs delete-message --queue-url $sqs_queue_url --receipt-handle $receipt_handle
     set -e
     # Write status
     bar_end=$(($progress*3/10))
@@ -120,7 +169,7 @@ do
     for ((i=1; i<=$bar_end; i++)); do echo -n "="; done
     for ((i=$bar_end; i<=30; i++)); do echo -n " "; done
     echo -n "] "
-    echo "  Progress : $progress%    Status : $status $batch_id"
+    echo "  Progress : $progress%    Status : $status"
     [ ! -z $batch_id ] && [[ $batch_id != "null" ]] && echo $batch_id
     #echo -ne "    Progress : $progress%        Status : $status\033[0K\r"
     
@@ -187,25 +236,20 @@ do
     exit 1
   elif [[ $SF_STATUS == "SUCCEEDED" ]]
   then
-    echo Pipeline State Machine SUCCEEDED
-    POLL_INTERVAL=0
-    break
+    echo Step Functions SUCCEEDED
+    exit 0
   else 
     echo "SF_STATUS : $SF_STATUS"
   fi
 
   sleep $POLL_INTERVAL
+  
 done
 
-# Write to ENV
+echo
+echo Job Resources
+echo
+aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION s3 cp s3://$S3_JOBS_BUCKET/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID/job-resources/outputs.json job-resources.json
+cat job-resources.json | jq .
+echo
 
-export S3_JOB_FOLDER="s3://sf-pipeline-jobs/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID"
-
-echo "S3_JOB_FOLDER = $S3_JOB_FOLDER"
-echo "LOG_STREAM_NAME = aws/batch/job:$LOG_STREAM_NAME"
-
-# Send to ENV
-echo "AWS_BATCH_JOB_ID=$AWS_BATCH_JOB_ID" >> $GITHUB_ENV
-echo "LOG_STREAM_NAME=$LOG_STREAM_NAME" >> $GITHUB_ENV
-echo "S3_JOB_FOLDER=$S3_JOB_FOLDER" >> $GITHUB_ENV
-echo "LOG_STREAM_NAME=aws/batch/job:$LOG_STREAM_NAME" >> $GITHUB_ENV

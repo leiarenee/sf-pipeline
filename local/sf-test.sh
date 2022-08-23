@@ -1,5 +1,9 @@
 #!/bin/bash
 set -e
+test_script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source $test_script_dir/../.getenv
+#clear
+#./npy docker build push
 
 function print_log(){
   aws logs tail /aws/batch/job --log-stream-names $log_stream_name --since 1d --format short > $log_file
@@ -20,10 +24,14 @@ function print_log(){
 export TG_COMMAND=${1:-"$TG_COMMAND"}
 export WORKSPACE_ID=${2:-"$WORKSPACE_ID"}
 export STACK_FOLDER=${3:-"$STACK_FOLDER"}
+export STATE_MACHINE_ARN=${4:-"$STATE_MACHINE_ARN"}
+export STATE_MACHINE_NAME=${5:-"$PIPELINE_STATE_MACHINE_NAME"}
+export SF_ENDPOINT_URL=${6:-""}
 
-poll=$4
-simulate=$5
-state_machine_arn=arn:aws:states:$PIPELINE_AWS_REGION:$PIPELINE_AWS_ACCOUNT_ID:stateMachine:$PIPELINE_STATE_MACHINE_NAME
+poll=$7
+simulate=$8
+
+
 log_file=log.txt
 [ -f $log_file ] && rm $log_file
 [ -f job-resources.json ] && rm job-resources.json
@@ -33,7 +41,7 @@ log_file=log.txt
 
 # Prepare Inputs
 
-test_inputs=$(cat $REPO_ROOT/sf-run/sf-template.json | envsubst | tr -d '\n' | jq -r . )
+test_inputs=$(cat $test_script_dir/sf-template.json | envsubst | tr -d '\n' | jq -r . )
 
 echo $test_inputs | jq . > test-client-inputs.json
 
@@ -43,7 +51,7 @@ echo
 echo Polling Interval : $POLL_INTERVAL
 echo Max SQS Messages : $MAX_SQS_MESSAGES
 echo
-echo "Starting \"$state_machine_arn\""
+echo "Starting \"$STATE_MACHINE_ARN\""
 echo "Do you confirm? (y)"
 
 read answer
@@ -57,9 +65,9 @@ fi
 # Execute State Machine
 if [ -z "$simulate" ] && [[ "$poll" != "poll" ]]
 then
-echo Executing $PIPELINE_STATE_MACHINE_NAME
+echo Executing $STATE_MACHINE_ARN
 result=$(aws --profile $PIPELINE_AWS_PROFILE --region $PIPELINE_AWS_REGION stepfunctions start-execution \
-  --state-machine-arn $state_machine_arn \
+  --state-machine-arn $STATE_MACHINE_ARN --endpoint-url $SF_ENDPOINT_URL \
   --input "$test_inputs")
 echo $result | jq .
 execution_arn=$(echo $result | jq -r .executionArn)
@@ -141,7 +149,20 @@ do
 
   done
 
+  # Check Status
+  sf_status=$(aws stepfunctions describe-execution --execution-arn $execution_arn | jq -r '.status')
+  if [[ $sf_status == "FAILED" ]]
+  then
+    echo Step Functions FAILED
+    exit 1
+  else 
+    echo $sf_status
+  fi
+
+  # Wait for poll interval
   sleep $POLL_INTERVAL
+
+  # Fetch latest logs
   [ ! -z $log_stream_name ] && print_log
 done
 

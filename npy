@@ -8,7 +8,7 @@ set -e
 export AWS_PAGER=""
 
 # Declare default variables
-env_files=(".env" "override.env")
+env_files=(".env" ".dev.env")
 
 # Function for showing usage
 function show_usage(){
@@ -97,7 +97,7 @@ function environment(){
 
 # ------------------ Main Routine -------------------------
 
-source scripts/import-env-vars.sh
+source infra/library/scripts/import-env-vars.sh
 
 if [ "$1" != "install"  ] && [ "$1" != "help" ] && [ "$1" != "docker" ]
 then
@@ -115,7 +115,7 @@ case $1 in
   "test")
   run_tests;;
   "docker")
-  shift 2;docker/build $@;;
+  shift 2;infra/docker/build $@;;
   "lint")
   lint;;
   "env")

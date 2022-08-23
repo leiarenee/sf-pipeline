@@ -292,6 +292,10 @@
           {
             "Name": "INTERACTIVE",
             "Value": "false"
+          },
+          {
+            "Name": "ECHO_COMMANDS",
+            "Value.$": "$.pipeline.echoCommands"
           }
         ]
       },

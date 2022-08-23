@@ -36,7 +36,7 @@ temp-job
 __pycache__
 .pytest_cache
 archive
-override.env
+.dev.env
 *.log
 results.txt
 *.tar
@@ -49,3 +49,4 @@ log.txt
 job-resources.json
 temp-volume
 aggragated-sf-inputs.json
+sf-local.env

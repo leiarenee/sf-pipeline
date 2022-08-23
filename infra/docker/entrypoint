@@ -2,5 +2,10 @@
 echo "Running entrypoint with Entrypoint arguments $@"
 
 # Run the script
-exec ./runner $@
+if [[ "$@" == "shell" ]]
+then 
+ exec /bin/bash
+else
+ exec ./runner $@
+fi
 
