@@ -29,7 +29,7 @@ on:
         description: Terragrunt State Bucket Suffix
         default: github
       ttlDuration:
-        description: Time to Live in minute 
+        description: Time to Live in minutes 
         default: 30
 
 jobs:
@@ -61,7 +61,7 @@ jobs:
           VCS_PROVIDER: github
           REPO_ACCOUNT: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
-          REPO_REFERENCE: ${{ github.ref }}
+          REPO_REFERENCE: ${GITHUB_REF##*/}
           REPO_TYPE: public
           USER_NAME: Test User
           USER_EMAIL: test@me.com
@@ -127,4 +127,4 @@ jobs:
           EXECUTION_NAME:  
           ECHO_COMMANDS: true
         run: |
-            env | sort
+          env | sort
