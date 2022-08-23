@@ -131,8 +131,9 @@ jobs:
           body: |
             ## ${{ env.TG_COMMAND }} Command Succesfull
             ### Artifacts
-            - [S3_JOB_FOLDER](${{ env.S3_JOB_FOLDER }} )
+            - [S3_JOB_FOLDER][1]
+            
+            [1]: (${{ env.S3_JOB_FOLDER }} )
 
-            [1]: 
           reactions: '+1'
 
