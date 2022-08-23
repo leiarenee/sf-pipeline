@@ -194,7 +194,6 @@ do
   fi
 
   sleep $POLL_INTERVAL
-  [ ! -z $LOG_STREAM_NAME ] && print_log
 done
 
 # Write to ENV
