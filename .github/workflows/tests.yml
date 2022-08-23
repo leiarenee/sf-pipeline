@@ -124,6 +124,14 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.fetch-plans.outputs.body }}
+      - name: Create Success comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ${{ env.TG_COMMAND }} Command Succesfull
+            - Artifacts [artifacts][1]
 
-
+            [1]: ${{ env.S3_JOB_FOLDER }} 
+          reactions: '+1'
 
