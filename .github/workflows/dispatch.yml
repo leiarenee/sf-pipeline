@@ -11,6 +11,9 @@ on:
       targetAwsRegion:
         description: Target AWS Region     
         default: eu-west-1
+      repoRef:
+        description: Repository Reference - [branch|tag|hash]   
+        default: main
       runAll:
         description: Terragrunt run-all
         default: true 
@@ -25,9 +28,6 @@ on:
       runModule:
         description: Terragrunt Module Folder
         default:
-      bucketSuffix:
-        description: Terragrunt State Bucket Suffix
-        default: github
       ttlDuration:
         description: Time to Live in minutes 
         default: 30
@@ -61,7 +61,7 @@ jobs:
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
           REPO_NAME: sf-infra
-          REPO_REFERENCE: main
+          REPO_REF: ${{ github.event.inputs.repoRef }}
           REPO_TYPE: public
           USER_NAME: ${{ github.triggering_actor }}
           USER_EMAIL: ${{ github.event.pusher.email }}
@@ -76,7 +76,7 @@ jobs:
           TG_ARGUMENTS: ${{ github.event.inputs.tgArguments }}
           RUN_MODULE: ${{ github.event.inputs.runModule }}
           STACK_FOLDER: ${{ github.event.inputs.stackFolder }}
-          BUCKET_SUFFIX: ${{ github.event.inputs.others.bucketSuffix }}s
+          BUCKET_SUFFIX: github
           INTERACTIVE: false
 
           # AWS
