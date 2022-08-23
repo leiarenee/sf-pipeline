@@ -5,27 +5,9 @@ on:
       workspaceId:
         description: Workspace Id     
         default: testing
-      workspaceName:
-        description: Workspace Name     
-        default: Testing Environment
-      repoName:
-        description: Repository name for Infrastructure repository
-        default: ${{ github.event.repository.name }}
-      repoRef:
-        description: Branch name, tag or commit hash for Infrastructure repository
-        default: ${{ github.ref }}
       targetAwsAccountId:
         description: Target AWS Account Id     
         default: 553688522943
-      targetAwsAccountName:
-        description: Target AWS Account Name     
-        default: testing      
-      targetAwsRegion:
-        description: Target AWS Region     
-        default: eu-west-1
-      targetAwsProfile:
-        description: Target AWS Profile     
-        default: leia-testing
       runAll:
         description: Terragrunt run-all
         default: true 
@@ -40,45 +22,30 @@ on:
       runModule:
         description: Terragrunt Module Folder
         default:
+      targetAwsRegion:
+        description: Target AWS Region     
+        default: eu-west-1
       ttlDuration:
         description: Time to Live in minute ( A cron job will destroy infrastructure after this duration)
         default: 60
-      bucketSuffix:
-        description: Terraform State File Suffix (!!! Changing Bucket Suffix can dublicate infrastructure)
-        default: github-actions
-      domain:
-        description: Domain Name
-        default: testing.dev.leiarenee.io
-      dnsZoneId:
-        description: Route53 Hosted Zone Id
-        default: Z0890541BQO7OVB8F6WL
-      certificate:
-        description: Certificate ARN
-        default:  arn:aws:acm:eu-west-1:377449198785:certificate/431ea958-254b-4f8c-995f-a311559fcce5
-      cluster:
-        description: Kubernetes Cluster Name
-        default: my-testing-k8s
-      uploadWorkFolder:
-        description: Upload cache folders to S3 - [always|onerror|never]
-        default: always
-      uploadJobResources:
-        description: Upload Job resources to S3 - [true|false]
-        default: true
-      uploadPlanFiles:
-        description: Upload Plan Files to S3 - [true|false]
-        default: true
-      sendSqsMessages:
-        description: Send Sqs messages for status notification - [true|false]
-        default: true
-      echoCommands:
-        description: Echo Shell Commands On/Off- [true|false]
-        default: true
-      pollIntervals:
-        description: Polling intervals in seconds
-        default: 5
-      maxSqsMessages:
-        description: Number of SQS messages to be retreived in one batch
-        default: 10
+      others:
+        description: Other Parameters
+        default: 
+          bucketSuffix: github-actions
+          targetAwsAccountName: testing  
+          targetAwsProfile: leia-testing
+          workspaceName: Testing Environment
+          domain: testing.dev.leiarenee.io
+          dnsZoneId: Z0890541BQO7OVB8F6WL
+          certificate: arn:aws:acm:eu-west-1:377449198785:certificate/431ea958-254b-4f8c-995f-a311559fcce5
+          cluster: my-testing-k8s
+          uploadWorkFolder: always
+          uploadJobResources: true
+          uploadPlanFiles: true
+          sendSqsMessages: true
+          echoCommands: true
+          pollIntervals: 5
+          maxSqsMessages: 10
 
 jobs:
   terragrunt-validate-build-test:
@@ -103,13 +70,13 @@ jobs:
           PYTHONTRACEMALLOC: 25
 
           # WORKSPACE
-          WORKSPACE_ID: ${{ github.event.inputs.workspaceId }}
+          WORKSPACE_ID: ${{ github.event.inputs.others.workspaceId.default }}
           WORKSPACE_NAME : ${{ github.event.inputs.workspaceName }}
 
           # APP REPOSITORY
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
-          REPO_NAME: sf-infra
+          REPO_NAME: ${{ github.event.repository.name }}
           REPO_REFERENCE: ${{ github.ref }}
           REPO_TYPE: public
           USER_NAME: Test User
@@ -125,7 +92,7 @@ jobs:
           TG_ARGUMENTS: ${{ github.event.inputs.tgArguments }}
           RUN_MODULE: ${{ github.event.inputs.runModule }}
           STACK_FOLDER: ${{ github.event.inputs.stackFolder }}
-          BUCKET_SUFFIX: ${{ github.event.inputs.bucketSuffix }}s
+          BUCKET_SUFFIX: ${{ github.event.inputs.others.bucketSuffix }}s
           INTERACTIVE: false
 
           # AWS
