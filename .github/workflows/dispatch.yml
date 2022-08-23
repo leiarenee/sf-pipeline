@@ -1,7 +1,29 @@
 name: Terragrunt Build, Deploy
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      targetAccountId:
+        description: Target AWS Account Id     
+        default: 553688522943
+      targetRegion:
+        description: Target AWS Region     
+        default: eu-west-1
+      runAll:
+        description: Terragrunt run-all
+        default: true 
+      tgCommand: 
+        description: Terragrunt command
+        default: validate
+      tgArguments:
+        description: TG Cli arguments
+      stackFolder:
+        description: Main Stack Folder
+        default: test
+      runModule:
+        description: Terragrunt Module Folder
+      bucketSuffix:
+        description: Terraform State File Suffix (!!! Changing Bucket Suffix can dublicate infrastructure)
+        default: github-actions
 
 jobs:
   terragrunt-validate-build-test:
