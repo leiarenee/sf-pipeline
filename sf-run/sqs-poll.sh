@@ -38,7 +38,7 @@ function check_log_stream_exists(){
       log_group_exists=true
       echo -e "${GREEN}Log group exists.${NC}"
       echo "Checking stream $LOG_STREAM_NAME"
-      if [[ $(aws logs describe-log-streams --log-group-name /aws/batch/job --log-stream-name-prefix $LOG_STREAM_NAME | jq -r '.logStreams[0].logStreamName' | grep -e "$LOG_STREAM_NAME$") != "" ]]git 
+      if [[ $(aws logs describe-log-streams --log-group-name /aws/batch/job --log-stream-name-prefix $LOG_STREAM_NAME | jq -r '.logStreams[0].logStreamName' | grep -e "$LOG_STREAM_NAME$") != "" ]]
       then
         echo -e "${GREEN}Log stream exists.${NC}"
         log_stream_exists=true
