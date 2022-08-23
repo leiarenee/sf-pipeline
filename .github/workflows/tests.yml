@@ -129,9 +129,10 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            ${{ env.TG_COMMAND }} Command Succesfull
-            - Artifacts [artifacts][1]
+            ## ${{ env.TG_COMMAND }} Command Succesfull
+            ### Artifacts
+            - [S3_JOB_FOLDER](${{ env.S3_JOB_FOLDER }} )
 
-            [1]: ${{ env.S3_JOB_FOLDER }} 
+            [1]: 
           reactions: '+1'
 
