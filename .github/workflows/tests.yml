@@ -131,10 +131,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           reactions: '+1'
           body: |
-            $TG_COMMAND Succesfull
-            - [Job Artifacts][1]
-
-            [1]: $JOB_FOLDER 
+            $TG_COMMAND Succesfull 
           reactions: '+1'
 
 
