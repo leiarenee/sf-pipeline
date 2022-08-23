@@ -467,8 +467,8 @@ function run_terragrunt(){
 # Main Routine
 job_definitions $@
 echo $job_name Job Started
-fetch_app_repo
 configure_aws_profile
+fetch_app_repo
 if [[ $1 == "bash" ]];then /bin/bash;exit $?;fi 
 createSqsQueue
 send_progress "Batch_Job_Started" $INITIAL_PROGRESS
