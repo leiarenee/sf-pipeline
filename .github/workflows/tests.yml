@@ -32,7 +32,7 @@ jobs:
           # APP REPOSITORY
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
-          REPO_NAME: sf-app
+          REPO_NAME: sf-infra
           REPO_REFERENCE: build
           REPO_TYPE: public
           USER_NAME: Test User
