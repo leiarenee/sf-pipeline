@@ -100,8 +100,9 @@ jobs:
           MAX_SQS_MESSAGES: 10
 
           # RUNTIME
-          SQS_QUEUE_URL: 
-          EXECUTION_NAME:  
           ECHO_COMMANDS: true
+
+          # GITHUB
+          GITHUB_CONTEXT: ${{ toJson(github) }} 
         run: |
-            env
+            echo $GITHUB_CONTEXT
