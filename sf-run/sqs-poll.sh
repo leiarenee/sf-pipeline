@@ -181,14 +181,17 @@ do
   # Check SF Status
   export SF_STATUS=$(aws stepfunctions describe-execution --execution-arn $EXECUTION_ARN | jq -r '.status')
 
-  if [[ $SF_STATUS == "SUCCEEDED" ]]
+  if [[ $SF_STATUS == "FAILED" ]]
   then
-    echo Step Functions SUCCEEDED
+    echo Step Functions FAILED
+    exit 1
+  elif [[ $SF_STATUS == "SUCCEEDED" ]]
+  then
+    echo - End of $PIPELINE_STATE_MACHINE_NAME -
     POLL_INTERVAL=0
-    end=true
+    break
   else 
     echo "SF_STATUS : $SF_STATUS"
-    exit 1
   fi
 
   sleep $POLL_INTERVAL
