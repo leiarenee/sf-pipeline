@@ -187,7 +187,7 @@ do
     exit 1
   elif [[ $SF_STATUS == "SUCCEEDED" ]]
   then
-    echo - End of $PIPELINE_STATE_MACHINE_NAME -
+    echo Pipeline State Machine SUCCEEDED
     POLL_INTERVAL=0
     break
   else 
