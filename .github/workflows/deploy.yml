@@ -8,7 +8,7 @@ on:
       runAll:
         description: Terragrunt run-all
         default: true 
-      tgCommand: Terragrunt command
+      tgCommand: 
         description: Terragrunt command
         default: validate
       stackFolder:
