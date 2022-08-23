@@ -11,7 +11,7 @@ on:
       targetAwsRegion:
         description: Target AWS Region     
         default: eu-west-1
-      repoRef:
+      repoReference:
         description: Repository Reference - [branch|tag|hash]   
         default: main
       runAll:
@@ -61,7 +61,7 @@ jobs:
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
           REPO_NAME: sf-infra
-          REPO_REF: ${{ github.event.inputs.repoRef }}
+          REPO_REFERENCE: ${{ github.event.inputs.repoReference }}
           REPO_TYPE: public
           USER_NAME: ${{ github.triggering_actor }}
           USER_EMAIL: ${{ github.event.pusher.email }}

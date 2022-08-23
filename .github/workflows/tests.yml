@@ -36,7 +36,7 @@ jobs:
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
           REPO_NAME: sf-infra
-          REPO_REF: main
+          REPO_REFERENCE: main
           REPO_TYPE: public
           USER_NAME: ${{ github.triggering_actor }}
           USER_EMAIL: ${{ github.event.pusher.email }}
