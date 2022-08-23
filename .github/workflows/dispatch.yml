@@ -127,6 +127,10 @@ jobs:
 
           # GITHUB
           # GITHUB_CONTEXT: ${{ toJson(github) }} 
-        run: |
-          # echo $GITHUB_CONTEXT
-          ./runner
+        run: ./sf-run/sf-execute.sh
+      - name: Trace Logs and SQS Messages
+        shell: bash
+        run: ./sf-run/sqs-poll.sh
+
+
+

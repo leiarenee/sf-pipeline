@@ -31,14 +31,14 @@ function job_definitions(){
     echo
     [[ $CLEAR_SCREEN == "true" ]] && clear
   else  # Run For local docker or remote environment
-    export REPO_ROOT=$(pwd)
+    export REPO_ROOT=${HOME}
   fi
 
   [[ $ECHO_COMMANDS == "true" ]] && set -x
-  # echo "\"$RUNNER_MACHINE\"" Environment Variables
-  # echo
-  # env | sort | grep -vE 'DIRENV|__|_|aws_access_key_id|aws_secret_access_key|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|OLDPWD'
-  # echo 
+  echo "\"$RUNNER_MACHINE\"" Environment Variables
+  echo
+  env | sort | grep -vE 'DIRENV|__|_|aws_access_key_id|aws_secret_access_key|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|OLDPWD'
+  echo 
   export WORK_FOLDER=$REPO_ROOT/$WORK_FOLDER_NAME
   echo Repository folder : \"$REPO_ROOT\"
   echo Work folder : \"$WORK_FOLDER\"
