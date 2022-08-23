@@ -31,7 +31,7 @@ function job_definitions(){
     echo
     [[ $CLEAR_SCREEN == "true" ]] && clear
   else  # Run For local docker or remote environment
-    export REPO_ROOT=$HOME
+    export REPO_ROOT=$(pwd)
   fi
 
   [[ $ECHO_COMMANDS == "true" ]] && set -x
