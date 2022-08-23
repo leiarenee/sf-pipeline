@@ -6,7 +6,7 @@ trap 'catch $? $LINENO' ERR
 function catch() {
   echo "Bash Script Error $1 occurred on Line $2"
   bash_error=true
-  if [[ $UPLOAD_WORKFOLDER == "always" ]] || [[ $UPLOAD_WORKFOLDER == "onerror" && $tg_err -ne 0 ]]
+  if [[ $UPLOAD_WORKFOLDER == "always" ]] || [[ $UPLOAD_WORKFOLDER == "onerror" ]]
   then
     set +e
     upload_temp_folder
