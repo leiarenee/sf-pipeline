@@ -124,7 +124,6 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.fetch-plans.outputs.body }}
-          echo "::set-output name=body::$body"
 
 
 
