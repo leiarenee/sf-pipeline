@@ -499,7 +499,7 @@ function run_terragrunt(){
 
 }
 
-function log_job_resource_links{
+function log_job_resource_links(){
   s3_folder_link="https://s3.console.aws.amazon.com/s3/object/$S3_JOBS_BUCKET?region=$PIPELINE_AWS_REGION"
   s3_job_folder="$s3_folder_link&prefix=$job_name"
   tar_file="$s3_job_folder/temp-job/$SF_EXECUTION_NAME.tar.gz"
