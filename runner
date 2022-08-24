@@ -480,7 +480,7 @@ function run_terragrunt(){
     | sed s/$escaped_stack_path//g > $WORK_FOLDER/temp-job/stderr_filtered.log
   
   # If error occurs write filtered error into terminal (stdout)
-  if [ $tg_err -ne 0 ]
+  if [ $tg_err -ne 0 ] && [[ $COMPACT_STDOUT == true ]]
   then
   echo ------- STDERR  ----------
   cat $WORK_FOLDER/temp-job/stderr.log
