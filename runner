@@ -447,7 +447,7 @@ function run_terragrunt(){
   
   [[ $INTERACTIVE != "true" ]] && set +e
   [[ -z $LOG_LEVEL ]] && export LOG_LEVEL=info
-  
+
   # Run terragrunt init
   if  [[ $TG_COMMAND == apply ]] || [[ $TG_COMMAND == destroy ]] || [[ $TG_COMMAND == plan ]] 
   then
@@ -483,9 +483,9 @@ function run_terragrunt(){
   if [ $tg_err -ne 0 ]
   then
   echo
-  # echo ------- STDERR  ----------
-  # cat $WORK_FOLDER/temp-job/stderr_filtered.log | grep -E 'error|Error'
-  exit $tg_err
+  echo ------- STDERR  ----------
+  cat $WORK_FOLDER/temp-job/stderr_filtered.log | grep -E 'error|Error'
+  # exit $tg_err
   fi
 
   set -e
