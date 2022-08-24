@@ -47,7 +47,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-1
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
-      - name: Prepare Environment
+      - name: Build Pipeline
+        shell: bash
+        run: infra/docker/build push
+      - name: Execute Pipeline
         shell: bash
         env: 
           # PYTHON
