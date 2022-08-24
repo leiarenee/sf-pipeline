@@ -479,17 +479,46 @@ function run_terragrunt(){
   cat $WORK_FOLDER/temp-job/stderr.log | grep -vE 'level=debug|locals|msg=run_cmd|msg=Detected|msg=Included|msg=\[Partial\]|msg=Executing|msg=WARN|msg=Setting|^$|msg=Generated|msg=Downloading|msg=The|msg=Are|msg=Reading|msg=Copying|msg=Debug|must wait|msg=Variables|msg=Dependency|msg=[0-9] error occurred|Cannot process|=>|msg=Stack|msg=Unable|errors occurred|sensitive|BEGIN RSA|\[0m|You may now|any changes|should now|If you ever|If you forget|- Reusing previous| \* exit status|Include this file|Terraform can guarantee|^\t\* |^ prefix' \
     | sed s/$escaped_stack_path//g > $WORK_FOLDER/temp-job/stderr_filtered.log
   
+  cat $WORK_FOLDER/temp-job/stderr.log | grep -E '|' > $WORK_FOLDER/temp-job/stderr_terraform.log
+
   # If error occurs write filtered error into terminal (stdout)
   if [ $tg_err -ne 0 ] && [[ $COMPACT_STDOUT == true ]]
   then
-  echo ------- STDERR  ----------
-  cat $WORK_FOLDER/temp-job/stderr.log
-  echo
-  echo ------- STDERR FILTERED  ----------
-  cat $WORK_FOLDER/temp-job/stderr_filtered.log | grep -E 'error|Error'
+    echo ------- STDERR  ----------
+    cat $WORK_FOLDER/temp-job/stderr.log
+    echo
+    echo ------- STDERR FILTERED  ----------
+    cat $WORK_FOLDER/temp-job/stderr_filtered.log | grep -E 'error|Error'
+    echo
+    echo ------- STDERR TERRAFORM  ----------
+    echo $WORK_FOLDER/temp-job/stderr_terraform.log
+    echo
   fi
 
   set -e
+
+}
+
+function log_job_resource_links{
+  s3_folder_link="https://s3.console.aws.amazon.com/s3/object/$S3_JOBS_BUCKET?region=$PIPELINE_AWS_REGION"
+  s3_job_folder="$s3_folder_link&prefix=$job_name"
+  tar_file="$s3_job_folder/temp-job/$SF_EXECUTION_NAME.tar.gz"
+  plan_files=$s3_job_folder/plan-files
+  job_resources=$s3_job_folder/job-resources
+  echo
+  echo "-------- Artifacts ----------"
+  echo "S3 Job Folder"
+  echo "$s3_job_folder"
+  echo
+  echo "Compressed Job folder"
+  echo "$tar_file"
+  echo
+  echo "Plan files"
+  echo "$plan_files"
+  echo 
+  echo "Job Resourdes"
+  echo "$job_resources"
+  echo
 
 }
 
@@ -508,5 +537,6 @@ run_terragrunt
 put_outputs_to_s3
 send_progress "Batch_Job_Finished" $FINAL_PROGRESS
 upload_temp_folder
+log_job_resource_links
 echo "End of job routine for $job_name";echo
 exit $tg_err
