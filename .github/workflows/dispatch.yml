@@ -75,7 +75,7 @@ jobs:
           TG_COMMAND: apply
           TG_ARGUMENTS: 
           RUN_MODULE: 
-          STACK_FOLDER: infra/pipeline/live
+          STACK_FOLDER: pipeline/live
           BUCKET_SUFFIX: pipeline
           INTERACTIVE: false
           FORCE_INIT: true
