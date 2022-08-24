@@ -212,4 +212,4 @@ echo "LOG_STREAM_NAME=$LOG_STREAM_NAME" >> $GITHUB_ENV
 echo "S3_JOB_FOLDER=$S3_JOB_FOLDER" >> $GITHUB_ENV
 echo "LOG_STREAM_NAME=aws/batch/job:$LOG_STREAM_NAME" >> $GITHUB_ENV
 
-if [ -z $exit_code ] && exit $exit_code
+[ -z $exit_code ] && exit $exit_code
