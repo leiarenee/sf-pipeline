@@ -78,6 +78,7 @@ jobs:
           STACK_FOLDER: ${{ github.event.inputs.stackFolder }}
           BUCKET_SUFFIX: github
           INTERACTIVE: false
+          FORCE_INIT: true
 
           # AWS
           TARGET_AWS_REGION: ${{ github.event.inputs.targetAwsRegion }}

@@ -416,7 +416,12 @@ function run_terragrunt(){
 
   if [[ $TG_COMMAND == plan ]]
   then
-   TG_ARGUMENTS="$TG_ARGUMENTS -out=plan-state-file"
+    TG_ARGUMENTS="$TG_ARGUMENTS -out=plan-state-file"
+  fi
+
+  if [[ $COMPACT_WARNINGS == true ]]
+  then
+    tf_compact_warnings="-compact-warnings"
   fi
 
   working_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER/$RUN_MODULE
@@ -440,21 +445,24 @@ function run_terragrunt(){
   set +e
 
   # Run terragrunt init
-  if  [[ $FORCE_INIT == true ]] && [[ $TG_COMMAND == apply ]] || [[ $TG_COMMAND == destroy ]] || [[ $TG_COMMAND == plan ]] 
+  if  [[ $TG_COMMAND == apply ]] || [[ $TG_COMMAND == destroy ]] || [[ $TG_COMMAND == plan ]] 
   then
-    echo ---------- Initializing Modules ----------------------
-    terragrunt $tg_run_all init \
-      --terragrunt-working-dir $working_dir  \
-      $tg_non_interactive --terragrunt-log-level $log_level $no_color \
-      > >(tee $WORK_FOLDER/temp-job/stdout.log) \
-      2> >(tee $WORK_FOLDER/temp-job/stderr.log >&$stderr_output) 
+    if [[ $FORCE_INIT == true ]]
+    then
+      echo ---------- Initializing Modules ----------------------
+      terragrunt $tg_run_all init \
+        --terragrunt-working-dir $working_dir  \
+        $tg_non_interactive --terragrunt-log-level $log_level $no_color $tf_compact_warnings \
+        > >(tee $WORK_FOLDER/temp-job/stdout.log) \
+        2> >(tee $WORK_FOLDER/temp-job/stderr.log >&$stderr_output) 
+    fi
   fi
 
   # Run terragrunt command
   echo ------------- Running Terragrunt ----------------------
   terragrunt $tg_run_all $TG_COMMAND \
     --terragrunt-debug --terragrunt-working-dir $working_dir  \
-    $tg_non_interactive --terragrunt-log-level $log_level $no_color \
+    $tg_non_interactive --terragrunt-log-level $log_level $no_color $tf_compact_warnings \
     $TG_ARGUMENTS \
     > >(tee $WORK_FOLDER/temp-job/stdout.log) \
     2> >(tee $WORK_FOLDER/temp-job/stderr.log >&$stderr_output) 
