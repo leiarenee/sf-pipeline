@@ -491,9 +491,10 @@ function run_terragrunt(){
   if [ $tg_err -ne 0 ] && [[ $COMPACT_STDOUT == true ]]
   then
     echo -e "${RED}------- STDERR  ----------${NC}"
-    echo -e $(cat $WORK_FOLDER/temp-job/stderr_filtered.log)
+    cat $WORK_FOLDER/temp-job/stderr_filtered.log
     echo ----------------------------------------
-    echo -e $(cat $WORK_FOLDER/temp-job/stderr.log | grep -E '31m|' || true) 2>/dev/null
+    echo Filtered TF Errors
+    cat $WORK_FOLDER/temp-job/stderr.log | grep -E '31m|'
     echo ----------------------------------------
   fi
 
