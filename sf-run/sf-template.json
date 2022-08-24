@@ -50,7 +50,8 @@
 		"uploadJobResources": "${UPLOAD_JOB_RESOURCES}",
 		"uploadPlanFiles": "${UPLOAD_PLAN_FILES}",
 		"sendSqsMessages": "${SEND_SQS_MESSAGES}",
-		"echoCommands": "${ECHO_COMMANDS}"
+		"echoCommands": "${ECHO_COMMANDS}",
+		"forceInit": "${FORCE_INIT"
 	},
 	"job": {
 		"definition": "${JOB_DEFINITION}",
