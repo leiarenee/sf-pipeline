@@ -183,12 +183,10 @@ do
 
   if [[ $SF_STATUS == "FAILED" ]]
   then
-    echo Step Functions FAILED
-    exit 1
+    exit_code=1
+    break
   elif [[ $SF_STATUS == "SUCCEEDED" ]]
   then
-    echo Pipeline State Machine SUCCEEDED
-    POLL_INTERVAL=0
     break
   else 
     echo "SF_STATUS : $SF_STATUS"
@@ -196,6 +194,10 @@ do
 
   sleep $POLL_INTERVAL
 done
+
+echo "SF_STATUS : $SF_STATUS"
+sleep 5
+fetch_logs
 
 # Write to ENV
 
@@ -209,3 +211,5 @@ echo "AWS_BATCH_JOB_ID=$AWS_BATCH_JOB_ID" >> $GITHUB_ENV
 echo "LOG_STREAM_NAME=$LOG_STREAM_NAME" >> $GITHUB_ENV
 echo "S3_JOB_FOLDER=$S3_JOB_FOLDER" >> $GITHUB_ENV
 echo "LOG_STREAM_NAME=aws/batch/job:$LOG_STREAM_NAME" >> $GITHUB_ENV
+
+if [ -z $exit_code ] && exit $exit_code
