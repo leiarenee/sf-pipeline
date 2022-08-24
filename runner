@@ -42,15 +42,14 @@ function job_definitions(){
   export WORK_FOLDER=$REPO_ROOT/$WORK_FOLDER_NAME
   echo Repository folder : \"$REPO_ROOT\"
   echo Work folder : \"$WORK_FOLDER\"
+  echo
+
+  # Create temporary folders
   [ ! -d $WORK_FOLDER ] && mkdir $WORK_FOLDER_NAME
   [ -d $WORK_FOLDER/temp-job ] && rm -rf $WORK_FOLDER/temp-job
   [ ! -d $WORK_FOLDER/temp-job ] && mkdir $WORK_FOLDER_NAME/temp-job
   
-  pwd
-  ls -la 
-  echo
-  ls -la $WORK_FOLDER/temp-job
-  echo
+  # Write env vars to log file
   env >  $WORK_FOLDER/temp-job/envvars.log
   
   export TG_COMMAND=${1:-$TG_COMMAND}
@@ -429,20 +428,24 @@ function run_terragrunt(){
   # Escape / Character
   escaped_stack_path=$(echo "$WORK_FOLDER/temp-job" | sed s/\\//\\\\\\//g)
   
+  if [[ $COMPACT_STDOUT == true ]]
+  then
+    stderr_output=/dev/null
+  else
+    stderr_output=1
+  fi
+
+
+  
   # Prepare command line arguments for interactive or non-interactive usage
   if [[ $INTERACTIVE == "true" ]]
   then
-    stderr_output=1
-    log_level=info
+    echo Interavtive Session Activated
   else
     export TG_DISABLE_CONFIRM=true
-    # stderr_output=/dev/null
-    stderr_output=1
-    log_level=info
-    #no_color=-no-color
   fi
   
-  set +e
+  [[ $INTERACTIVE != "true" ]] && set +e
 
   # Run terragrunt init
   if  [[ $TG_COMMAND == apply ]] || [[ $TG_COMMAND == destroy ]] || [[ $TG_COMMAND == plan ]] 
@@ -452,7 +455,7 @@ function run_terragrunt(){
       echo ---------- Initializing Modules ----------------------
       terragrunt $tg_run_all init \
         --terragrunt-working-dir $working_dir  \
-        $tg_non_interactive --terragrunt-log-level $log_level $no_color $tf_compact_warnings \
+        $tg_non_interactive --terragrunt-log-level $LOG_LEVEL $no_color $tf_compact_warnings \
         > >(tee $WORK_FOLDER/temp-job/stdout.log) \
         2> >(tee $WORK_FOLDER/temp-job/stderr.log >&$stderr_output) 
     fi
@@ -462,7 +465,7 @@ function run_terragrunt(){
   echo ------------- Running Terragrunt ----------------------
   terragrunt $tg_run_all $TG_COMMAND \
     --terragrunt-debug --terragrunt-working-dir $working_dir  \
-    $tg_non_interactive --terragrunt-log-level $log_level $no_color $tf_compact_warnings \
+    $tg_non_interactive --terragrunt-log-level $LOG_LEVEL $no_color $tf_compact_warnings \
     $TG_ARGUMENTS \
     > >(tee $WORK_FOLDER/temp-job/stdout.log) \
     2> >(tee $WORK_FOLDER/temp-job/stderr.log >&$stderr_output) 

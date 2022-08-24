@@ -29,7 +29,11 @@
 		"tgCommand": "${TG_COMMAND}",
 		"tgArguments": "${TG_ARGUMENTS}",
 		"runModule": "${RUN_MODULE}",
-		"stackFolder": "${STACK_FOLDER}"
+		"stackFolder": "${STACK_FOLDER}",
+		"forceInit": "${FORCE_INIT}",
+		"compactWarnings": "${COMPACT_WARNINGS}",
+		"compactStdout": "${COMPACT_STDOUT}",
+		"logLevel": "${LOG_LEVEL}"
 	},
 	"replace": {
 		"parameters": {
@@ -50,8 +54,7 @@
 		"uploadJobResources": "${UPLOAD_JOB_RESOURCES}",
 		"uploadPlanFiles": "${UPLOAD_PLAN_FILES}",
 		"sendSqsMessages": "${SEND_SQS_MESSAGES}",
-		"echoCommands": "${ECHO_COMMANDS}",
-		"forceInit": "${FORCE_INIT"
+		"echoCommands": "${ECHO_COMMANDS}"
 	},
 	"job": {
 		"definition": "${JOB_DEFINITION}",
