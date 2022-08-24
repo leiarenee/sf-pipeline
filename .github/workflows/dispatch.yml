@@ -49,7 +49,7 @@ jobs:
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
       - name: Build Pipeline
         shell: bash
-        run: infra/docker/build push
+        run: docker
       - name: Execute Pipeline
         shell: bash
         env: 
