@@ -80,6 +80,8 @@ jobs:
           INTERACTIVE: false
           FORCE_INIT: true
           COMPACT_WARNINGS: true
+          COMPACT_STDOUT: true
+          LOG_LEVEL: info
 
           # AWS
           TARGET_AWS_REGION: ${{ github.event.inputs.targetAwsRegion }}

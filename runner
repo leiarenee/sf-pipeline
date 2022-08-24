@@ -446,7 +446,8 @@ function run_terragrunt(){
   fi
   
   [[ $INTERACTIVE != "true" ]] && set +e
-
+  [[ -z $LOG_LEVEL ]] && export LOG_LEVEL=info
+  
   # Run terragrunt init
   if  [[ $TG_COMMAND == apply ]] || [[ $TG_COMMAND == destroy ]] || [[ $TG_COMMAND == plan ]] 
   then
