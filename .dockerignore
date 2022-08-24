@@ -1,0 +1,11 @@
+docs
+local
+temp-volume
+venv
+.dev.env
+.dockerignore
+npy
+.pytest_cache
+.vscode
+.envrc
+.git

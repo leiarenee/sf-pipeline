@@ -115,7 +115,7 @@ case $1 in
   "test")
   run_tests;;
   "docker")
-  shift 2;infra/docker/build $@;;
+  shift 2;infra/pipeline/docker/build $@;;
   "lint")
   lint;;
   "env")

@@ -1,0 +1,11 @@
+{
+  "REPO":"https://github.com/leiarenee/sf-pipeline.git",
+  "REPO_SSH":"https://github.com/leiarenee/sf-pipeline.git",
+  "APP_NAME":"pipeline-runner",
+  "USE_REMOTE_DOCKER_CACHE":"true",
+  "INVALIDATE_REMOTE_CACHE":"false",
+  "RUN_AUTO_BUILD":"false",
+  "DOCKER_FILE":"infra/pipeline/docker/Dockerfile",
+  "BUILD_FILE":"infra/library/codebuild/codebuild.sh",
+  "BUILD_CONTEXT":"."
+}

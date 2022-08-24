@@ -1,14 +1,16 @@
 #!/bin/bash -e
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
+pwd
+echo $inherit_env
 repo_root=$( cd $script_dir/../../.. "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+echo $repo_root
 [ ! -z $repo_root ] && export REPO_ROOT=$repo_root
 export WORK_FOLDER=$REPO_ROOT/$WORK_FOLDER_NAME
 export AWS_PAGER=""
 [ -f .env ] && inherit_env=$(cat .env | grep INHERIT_ENV | sed s/INHERIT_ENV=//g)
 
 # Declare default variables
-env_files=("$inherit_env/.env" "$REPO_ROOT/.env" "$REPO_ROOT/.dev.env")
+env_files=("$REPO_ROOT/.env" "$inherit_env/.env" ".env" ".dev.env")
 IFS=$'\n'
 
 # Declare environment varibles from env files
