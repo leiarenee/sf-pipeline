@@ -218,6 +218,22 @@
             "Value.$": "$.terragrunt.stackFolder"
           },
           {
+            "Name": "FORCE_INIT",
+            "Value.$": "$.terragrunt.forceInit"
+          },          
+          {
+            "Name": "COMPACT_WARNINGS",
+            "Value.$": "$.terragrunt.compactWarnings"
+          },
+          {
+            "Name": "COMPACT_STDOUT",
+            "Value.$": "$.terragrunt.compactStdout"
+          },
+          {
+            "Name": "LOG_LEVEL",
+            "Value.$": "$.terragrunt.logLevel"
+          },
+          {
             "Name": "BUCKET_SUFFIX",
             "Value": "sf-cloud"
           },
@@ -290,16 +306,12 @@
             "Value.$": "$.pipeline.sendSqsMessages"
           },
           {
-            "Name": "INTERACTIVE",
-            "Value": "false"
-          },
-          {
             "Name": "ECHO_COMMANDS",
             "Value.$": "$.pipeline.echoCommands"
           },
           {
-            "Name": "FORCE_INIT",
-            "Value.$": "$.pipeline.forceInit"
+            "Name": "INTERACTIVE",
+            "Value": "false"
           }
         ]
       },

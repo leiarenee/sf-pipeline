@@ -120,7 +120,7 @@ do
     for ((i=1; i<=$bar_end; i++)); do echo -n "="; done
     for ((i=$bar_end; i<=30; i++)); do echo -n " "; done
     echo -n "] "
-    echo "  Progress : $progress%    Status : $status $batch_id"
+    echo "  Progress : $progress%    Status : $status"
     [ ! -z $batch_id ] && [[ $batch_id != "null" ]] && echo $batch_id
     #echo -ne "    Progress : $progress%        Status : $status\033[0K\r"
     

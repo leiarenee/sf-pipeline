@@ -27,7 +27,11 @@
 		"runAll": "true",
 		"tgCommand": "validate",
 		"runModule": "",
-		"stackFolder": "test"
+		"stackFolder": "test",
+		"forceInit": "true",
+		"compactWarnings": "true",
+		"compactStdout": "true",
+		"logLevel": "info"
 	},
 	"replace": {
 		"parameters": {
