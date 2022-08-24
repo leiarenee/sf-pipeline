@@ -2,7 +2,7 @@
 set -e
 
 build_script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-context_dir=$( cd $build_script_dir/../.. "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+context_dir=$(git rev-parse --show-toplevel)
 source $context_dir/.getenv
 [[ $CLEAR_SCREEN == "true" ]] && clear
 
@@ -49,7 +49,7 @@ echo platform $docker_platform
 echo Building $image_name
 echo Docker file $docker_file
 context=$context_dir
-docker_folder=$context/infra/docker
+docker_folder=$build_script_dir
 
 docker buildx build $context --platform $docker_platform -t $image_name --file $docker_folder/$docker_file \
   --build-arg TERRAFORM_VERSION=$TERRAFORM_VERSION --build-arg TERRAGRUNT_VERSION=$TERRAGRUNT_VERSION 

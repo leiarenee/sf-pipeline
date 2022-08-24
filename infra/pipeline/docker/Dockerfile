@@ -41,7 +41,7 @@ COPY infra/library infra/library
 
 
 # Copy Folder
-COPY infra/docker/entrypoint .
+COPY infra/pipeline/docker/entrypoint .
 COPY runner .
 
 # SSH
