@@ -154,7 +154,8 @@ docker build $BUILD_CONTEXT \
   --tag $IMAGE_REPO_URL:$DOCKER_IMAGE_VERSION \
   --tag $IMAGE_REPO_URL:latest \
   --tag $IMAGE_REPO_NAME:latest \
-  $cache_string 
+  $cache_string \
+  $DOCKER_ARGS
   
 # Login to ECR
 if [ ! -z $ECR_LOGIN ]

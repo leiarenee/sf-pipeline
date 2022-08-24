@@ -7,5 +7,6 @@
   "RUN_AUTO_BUILD":"false",
   "DOCKER_FILE":"infra/pipeline/docker/Dockerfile",
   "BUILD_FILE":"infra/library/codebuild/codebuild.sh",
-  "BUILD_CONTEXT":"."
+  "BUILD_CONTEXT":".",
+  "DOCKER_ARGS":"--build-arg TERRAFORM_VERSION=$TERRAFORM_VERSION --build-arg TERRAGRUNT_VERSION=$TERRAGRUNT_VERSION"
 }
