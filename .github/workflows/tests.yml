@@ -54,6 +54,7 @@ jobs:
           BUCKET_SUFFIX: github-actions
           INTERACTIVE: false
           FORCE_INIT: true
+          COMPACT_WARNINGS: true
 
           # AWS
           TARGET_AWS_REGION: eu-west-1
