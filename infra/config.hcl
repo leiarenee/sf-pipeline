@@ -21,6 +21,9 @@ locals {
       PIPELINE_AWS_ACCOUNT_ID = "377449198785"
       IAM_USER       = "cicd"
       REPO_REFERENCE = "main"
+      TERRAFORM_VERSION = "1.2.7" 
+      TERRAGRUNT_VERSION = "0.38.7" 
+
     }
   }
 
