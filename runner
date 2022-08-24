@@ -482,10 +482,11 @@ function run_terragrunt(){
   # If error occurs write filtered error into terminal (stdout)
   if [ $tg_err -ne 0 ]
   then
-  echo
   echo ------- STDERR  ----------
+  cat $WORK_FOLDER/temp-job/stderr.log
+  echo
+  echo ------- STDERR FILTERED  ----------
   cat $WORK_FOLDER/temp-job/stderr_filtered.log | grep -E 'error|Error'
-  # exit $tg_err
   fi
 
   set -e
@@ -508,4 +509,4 @@ put_outputs_to_s3
 send_progress "Batch_Job_Finished" $FINAL_PROGRESS
 upload_temp_folder
 echo "End of job routine for $job_name";echo
-
+exit $tg_err
