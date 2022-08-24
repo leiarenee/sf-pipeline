@@ -479,7 +479,7 @@ function run_terragrunt(){
   cat $WORK_FOLDER/temp-job/stderr.log | grep -vE 'level=debug|locals|msg=run_cmd|msg=Detected|msg=Included|msg=\[Partial\]|msg=Executing|msg=WARN|msg=Setting|^$|msg=Generated|msg=Downloading|msg=The|msg=Are|msg=Reading|msg=Copying|msg=Debug|must wait|msg=Variables|msg=Dependency|msg=[0-9] error occurred|Cannot process|=>|msg=Stack|msg=Unable|errors occurred|sensitive|BEGIN RSA|\[0m|You may now|any changes|should now|If you ever|If you forget|- Reusing previous| \* exit status|Include this file|Terraform can guarantee|^\t\* |^ prefix' \
     | sed s/$escaped_stack_path//g > $WORK_FOLDER/temp-job/stderr_filtered.log
   
-  cat $WORK_FOLDER/temp-job/stderr.log | grep -E '|' > $WORK_FOLDER/temp-job/stderr_terraform.log
+  cat $WORK_FOLDER/temp-job/stderr.log | grep -E '31m|' > $WORK_FOLDER/temp-job/stderr_terraform.log
 
   # If error occurs write filtered error into terminal (stdout)
   if [ $tg_err -ne 0 ] && [[ $COMPACT_STDOUT == true ]]
