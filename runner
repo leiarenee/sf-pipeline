@@ -438,19 +438,19 @@ function run_terragrunt(){
   fi
   
   set +e
+
   # Run terragrunt init
-  if [[ $TG_COMMAND == apply ]] || [[ $TG_COMMAND == destroy ]] || [[ $TG_COMMAND == plan ]]
+  if  [[ $FORCE_INIT == true ]] && [[ $TG_COMMAND == apply ]] || [[ $TG_COMMAND == destroy ]] || [[ $TG_COMMAND == plan ]] 
   then
     echo ---------- Initializing Modules ----------------------
     terragrunt $tg_run_all init \
-      --terragrunt-debug --terragrunt-working-dir $working_dir  \
+      --terragrunt-working-dir $working_dir  \
       $tg_non_interactive --terragrunt-log-level $log_level $no_color \
-      $TG_ARGUMENTS \
       > >(tee $WORK_FOLDER/temp-job/stdout.log) \
       2> >(tee $WORK_FOLDER/temp-job/stderr.log >&$stderr_output) 
   fi
 
-  # Run terragrunt
+  # Run terragrunt command
   echo ------------- Running Terragrunt ----------------------
   terragrunt $tg_run_all $TG_COMMAND \
     --terragrunt-debug --terragrunt-working-dir $working_dir  \
