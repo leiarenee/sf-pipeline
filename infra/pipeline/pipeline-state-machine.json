@@ -296,6 +296,10 @@
           {
             "Name": "ECHO_COMMANDS",
             "Value.$": "$.pipeline.echoCommands"
+          },
+          {
+            "Name": "FORCE_INIT",
+            "Value.$": "$.pipeline.forceInit"
           }
         ]
       },
