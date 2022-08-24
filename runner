@@ -504,22 +504,22 @@ function run_terragrunt(){
 function log_job_resource_links(){
   s3_folder_link="https://s3.console.aws.amazon.com/s3/buckets/$S3_JOBS_BUCKET?region=$PIPELINE_AWS_REGION"
   s3_job_folder="$s3_folder_link&prefix=$job_name"
-  tar_file="$s3_folder_link/temp-job/$SF_EXECUTION_NAME.tar.gz"
-  plan_files="$s3_folder_link/plan-files"
-  job_resources="$s3_folder_link/job-resources"
+  tar_file="$s3_job_folder/temp-job/$AWS_BATCH_JOB_ID.tar.gz"
+  plan_files="$s3_job_folder/plan-files"
+  job_resources="$s3_job_folder/job-resources"
   echo
   echo "-------- Artifacts ----------"
   echo "- S3 Job Folder"
-  echo -e "${BLUE}$s3_job_folder${NC}"
+  echo -e "${BLUE}$s3_job_folder/${NC}"
   echo
-  echo "- Compressed Job folder"
+  echo "- TAR File for $WORK_FOLDER"
   echo -e "${BLUE}$tar_file${NC}"
   echo
   echo "- Plan files"
-  echo -e "${BLUE}$plan_files${NC}"
+  echo -e "${BLUE}$plan_files/${NC}"
   echo 
   echo "- Job Resources"
-  echo -e "${BLUE}$job_resources${NC}"
+  echo -e "${BLUE}$job_resources/${NC}"
   echo
 
 }
