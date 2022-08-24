@@ -21,9 +21,9 @@ ARG TERRAGRUNT_VERSION
 RUN wget https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_amd64 -O terragrunt && \
   chmod +x terragrunt && mv terragrunt /usr/local/bin/terragrunt
 
-# Install cw
-# RUN wget "https://github.com/lucagrulla/cw/releases/download/v4.1.1/cw_4.1.1_Linux_x86_64.tar.gz" -O - | tar xz
-# RUN cp cw_4.1.1_Linux_x86_64/cw /bin/cw
+# Install cw 
+RUN wget "https://github.com/lucagrulla/cw/releases/download/v4.1.1/cw_amd64.deb" -O cw_amd64.deb
+RUN dpkg -i cw_amd64.deb
 
 RUN useradd -ms /bin/bash app
 

@@ -76,7 +76,7 @@ jobs:
           TG_ARGUMENTS: 
           RUN_MODULE: 
           STACK_FOLDER: pipeline/live
-          BUCKET_SUFFIX: pipeline
+          BUCKET_SUFFIX: github
           INTERACTIVE: false
           FORCE_INIT: true
           COMPACT_WARNINGS: true
