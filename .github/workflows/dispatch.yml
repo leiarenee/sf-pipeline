@@ -87,10 +87,10 @@ jobs:
           TARGET_AWS_REGION: eu-west-1
           TARGET_AWS_ACCOUNT_NAME: pipeline
           TARGET_AWS_ACCOUNT_ID: 377449198785
-          TARGET_AWS_PROFILE: target-profile
+          TARGET_AWS_PROFILE: target
           TARGET_AWS_SECRET: PIPELINE_AWS_ACCESS
           PIPELINE_AWS_REGION: eu-west-1
-          PIPELINE_AWS_PROFILE: pipeline-profile
+          PIPELINE_AWS_PROFILE: pipeline
           PIPELINE_AWS_ACCOUNT_ID: 377449198785
           PIPELINE_AWS_SECRET: PIPELINE_AWS_ACCESS
           ECR_AWS_ACCOUNT_ID: 377449198785
