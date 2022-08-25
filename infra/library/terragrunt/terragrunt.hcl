@@ -158,7 +158,7 @@ terraform {
       MODULES_FINAL_PROGRESS=get_env("MODULES_FINAL_PROGRESS", "")
       AWS_PROFILE=local.aws_profile
       AWS_DEFAULT_REGION=local.aws_region
-      TF_PLUGIN_CACHE_DIR="${get_env("HOME")}/.terraform.d/plugin-cache"
+      #TF_PLUGIN_CACHE_DIR="${get_env("HOME")}/.terraform.d/plugin-cache"
     }
     arguments = ["-var","replace_variables=0"]
   }
