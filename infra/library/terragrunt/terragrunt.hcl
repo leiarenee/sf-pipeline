@@ -67,7 +67,7 @@ generate "provider" {
   contents  = <<EOF
 provider "aws" {
   region = "${local.aws_region}"
-
+  profile = "${local.aws_profile}"
   # Only these AWS Account IDs may be operated on by this template
   # allowed_account_ids = ["${local.account_id}"]
 

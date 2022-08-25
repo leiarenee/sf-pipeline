@@ -211,8 +211,8 @@ function fetch_secret {
 
 # Configure aws profile
 function configure_aws_profile(){
-  pipeline_aws_access_key_id=$(echo $PIPELINE_AWS_ACCESS | jq -r .aws_access_key_id)
-  pipeline_aws_secret_access_key=$(echo $PIPELINE_AWS_ACCESS | jq -r .aws_secret_access_key)
+  pipeline_aws_access_key_id=$(echo ${!PIPELINE_AWS_SECRET} | jq -r .aws_access_key_id)
+  pipeline_aws_secret_access_key=$(echo ${!PIPELINE_AWS_SECRET} | jq -r .aws_secret_access_key)
   
   # Default
   if [ ! $(cat $HOME/.aws/credentials | grep default) ]
@@ -237,8 +237,8 @@ EOF
   fi
 
   # Target account
-  aws_access_key_id=$(echo $TARGET_AWS_ACCESS | jq -r .aws_access_key_id)
-  aws_secret_access_key=$(echo $TARGET_AWS_ACCESS | jq -r .aws_secret_access_key)
+  aws_access_key_id=$(echo ${!TARGET_AWS_SECRET} | jq -r .aws_access_key_id)
+  aws_secret_access_key=$(echo ${!TARGET_AWS_SECRET} | jq -r .aws_secret_access_key)
   if [ ! $(cat $HOME/.aws/credentials | grep $TARGET_AWS_PROFILE) ]
   then
     cat <<EOF >> $HOME/.aws/credentials
