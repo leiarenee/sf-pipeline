@@ -282,10 +282,12 @@ function test_progress(){
 # Put outputs to S3
 function put_outputs_to_s3(){
 
+  job_resources_folder="$WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER/job-resources"
   # For Apply
-  if [[ $TG_COMMAND == "apply" ]] && [[ $RUN_ALL == "true" ]] && [ $tg_err -eq 0 ] 
+  if [[ $TG_COMMAND == "apply" ]] && [[ $RUN_ALL == "true" ]] && [ $tg_err -eq 0 ] && [ -d $job_resources_folder ]
   then
     s3_parent_key="$S3_JOBS_BUCKET/$job_name"
+    
     cd $WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER/job-resources
     TG_DISABLE_CONFIRM=true terragrunt output job_resources > outputs.txt 
 
