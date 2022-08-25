@@ -151,15 +151,18 @@ function copy_local_app_repo(){
   rsync -a --exclude-from=$infra_repo_link/.gitignore $infra_repo_link/* $WORK_FOLDER/temp-job/$LOCAL_APP_REPO
   # create a clone
   echo creating a clone 
-  rsync -a --exclude=scripts $WORK_FOLDER/temp-job/$LOCAL_APP_REPO/infra/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
+  rsync -a $WORK_FOLDER/temp-job/$LOCAL_APP_REPO/infra/* $WORK_FOLDER/temp-job/$WORKSPACE_ID
   # get commit hash
   export COMMIT_HASH=$(git -C $infra_repo_link log main..$REPO_REFERENCE --format="%h" -n 1)
   echo Commit Hash : $COMMIT_HASH
   echo Repo Head : $(git -C $infra_repo_link describe --all)
   echo Changed Files : $(git -C $infra_repo_link status -s | sed s/??//g | tr -d '\n')
-  rm $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
-  echo copying library
-  rsync -a $REPO_ROOT/infra/library/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
+  if [ -h $WORK_FOLDER/temp-job/$WORKSPACE_ID/library ]
+  then
+    rm $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
+    echo copying library
+    rsync -a $REPO_ROOT/infra/library/* $WORK_FOLDER/temp-job/$WORKSPACE_ID/library
+  fi
 }
 
 function fetch_app_repo(){

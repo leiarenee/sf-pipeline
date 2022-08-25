@@ -22,7 +22,9 @@
 		"pipelineAwsProfile": "${PIPELINE_AWS_PROFILE}",
 		"pipelineAwsAccountId": "${PIPELINE_AWS_ACCOUNT_ID}",
 		"ecrAwsAccountId": "${ECR_AWS_ACCOUNT_ID}",
-		"sqsAwsProfile": "${SQS_AWS_PROFILE}"
+		"sqsAwsProfile": "${SQS_AWS_PROFILE}",
+		"targetAwsSecret": "${TARGET_AWS_SECRET}",
+		"pipelineAwsSecret": "${PIPELINE_AWS_SECRET}"
 	},
 	"terragrunt": {
 		"runAll": "${RUN_ALL}",
@@ -40,7 +42,9 @@
 			"DOMAIN": "${DOMAIN}",
 			"DNS_ZONE_ID": "${DNS_ZONE_ID}",
 			"CERTIFICATE": "${CERTIFICATE}",
-			"CLUSTER": "${CLUSTER}"
+			"CLUSTER": "${CLUSTER}",
+			"TERRAFORM_VERSION": "${TERRAFORM_VERSION}",
+			"TERRAGRUNT_VERSION": "${TERRAGRUNT_VERSION}"
 		}
 	},
 	"pipeline": {

@@ -90,7 +90,8 @@ done
 # yaml=$(find $dst_dir -type f -name "*.yaml")
 # list=$yml" "$yaml
 # keys=$(echo $replace_args | jq 'to_entries | .[] | .key ' | sed s/\"\"/\"_\"/g)
-replace_args=$(echo $replace_args | sed s/\"\"/null/g)
+replace_args=$(echo $replace_args | sed s/\"\"/\"null\"/g)
+echo $replace_args
 keys=$(echo $replace_args | jq -r keys[])
 values=$(echo $replace_args | jq -r 'keys[] as $k | .[$k]')
 
