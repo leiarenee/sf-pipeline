@@ -35,7 +35,8 @@
 		"forceInit": "${FORCE_INIT}",
 		"compactWarnings": "${COMPACT_WARNINGS}",
 		"compactStdout": "${COMPACT_STDOUT}",
-		"logLevel": "${LOG_LEVEL}"
+		"logLevel": "${LOG_LEVEL}",
+		"bucketSuffix": "${BUCKET_SUFFIX}"
 	},
 	"replace": {
 		"parameters": {

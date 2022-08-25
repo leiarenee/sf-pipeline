@@ -243,7 +243,7 @@
           },
           {
             "Name": "BUCKET_SUFFIX",
-            "Value": "sf-cloud"
+            "Value.$": "$.terragrunt.bucketSuffix"
           },
           {
             "Name": "DOMAIN",
