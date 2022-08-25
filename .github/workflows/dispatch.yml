@@ -67,8 +67,8 @@ jobs:
           USER_EMAIL: ${{ github.event.pusher.email }}
 
           # VERSIONS
-          TERRAFORM_VERSION: 1.2.7
-          TERRAGRUNT_VERSION: 0.38.7
+          TERRAFORM_VERSION: "1.2.7"
+          TERRAGRUNT_VERSION: "0.38.7"
 
           # TERRAGRUNT
           RUN_ALL: true
