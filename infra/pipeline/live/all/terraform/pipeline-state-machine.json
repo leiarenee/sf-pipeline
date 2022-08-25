@@ -178,6 +178,10 @@
             "Value.$": "$.aws.targetAwsProfile"
           },
           {
+            "Name": "TARGET_AWS_SECRET",
+            "Value.$": "$.aws.targetAwsSecret"
+          },
+          {
             "Name": "PIPELINE_AWS_PROFILE",
             "Value.$": "$.aws.pipelineAwsProfile"
           },
@@ -188,6 +192,10 @@
           {
             "Name": "PIPELINE_AWS_ACCOUNT_ID",
             "Value.$": "$.aws.pipelineAwsAccountId"
+          },
+          {
+            "Name": "PIPELINE_AWS_SECRET",
+            "Value.$": "$.aws.pipelineAwsSecret"
           },
           {
             "Name": "ECR_AWS_ACCOUNT_ID",
