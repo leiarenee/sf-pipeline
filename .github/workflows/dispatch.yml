@@ -234,11 +234,6 @@ jobs:
           # GITHUB
           # GITHUB_CONTEXT: ${{ toJson(github) }} 
 
-          # RESET
-          S3_JOB_FOLDER: 
-          LOG_STREAM_NAME:
-          AWS_BATCH_JOB_ID:
-
         run: ./sf-run/sf-execute.sh
       - name: Trace Target Deploy Logs 
         shell: bash
