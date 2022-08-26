@@ -50,3 +50,4 @@ job-resources.json
 temp-volume
 aggragated-sf-inputs.json
 sf-local.env
+.DS_Store
