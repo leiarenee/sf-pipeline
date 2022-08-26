@@ -1,8 +1,3 @@
-variable "cluster_id" {
-  description = "Name of the cluster"
-  type        = string
-}
-
 variable "namespace" {
   type        = string
   default     = ""
@@ -16,4 +11,10 @@ variable "application_name" {
 variable "source_folder" {
   type        = string
   default     = "src"
+}
+
+variable "deployment_type" {
+  type        = string
+  description = "Deployment type for descriptive purpose."
+  default    = ""
 }
