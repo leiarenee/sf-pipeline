@@ -104,6 +104,11 @@ variable "region" {
   default = "${local.aws_region}"
 }
 
+variable "lineage" {
+  type = string
+  default = ""
+}
+
 EOF
 }
 # Configure Terragrunt to automatically store tfstate files in an S3 bucket
