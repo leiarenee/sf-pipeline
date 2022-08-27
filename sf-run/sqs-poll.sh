@@ -12,7 +12,7 @@ source $repo_root/infra/library/scripts/colors.sh
 
 function fetch_logs(){
   echo Fetching Batch Logs
-  aws --profile $PIPELINE_AWS_PROFILE logs tail /aws/batch/job --log-stream-names $LOG_STREAM_NAME --since 1d --format short > $log_file
+  aws logs tail /aws/batch/job --log-stream-names $LOG_STREAM_NAME --since 1d --format short > $log_file
   linesold=$lines
   lines=$(wc -l $log_file | awk '{ print $1 }')
 
@@ -35,12 +35,12 @@ function check_log_stream_exists(){
     echo "Checking log_group $log_group"
 
     # Check if Log group exists
-    if [[ $( aws --profile $PIPELINE_AWS_PROFILE logs describe-log-groups | grep -e '"logGroupName": "/aws/batch/job"') != "" ]]
+    if [[ $( aws logs describe-log-groups | grep -e '"logGroupName": "/aws/batch/job"') != "" ]]
     then
       log_group_exists=true
       echo -e "${GREEN}Log group exists.${NC}"
       echo "Checking stream $LOG_STREAM_NAME"
-      if [[ $(aws --profile $PIPELINE_AWS_PROFILE logs describe-log-streams --log-group-name /aws/batch/job --log-stream-name-prefix $LOG_STREAM_NAME | jq -r '.logStreams[0].logStreamName' | grep -e "$LOG_STREAM_NAME$") != "" ]]
+      if [[ $(aws logs describe-log-streams --log-group-name /aws/batch/job --log-stream-name-prefix $LOG_STREAM_NAME | jq -r '.logStreams[0].logStreamName' | grep -e "$LOG_STREAM_NAME$") != "" ]]
       then
         echo -e "${GREEN}Log stream exists.${NC}"
         log_stream_exists=true
@@ -90,7 +90,7 @@ echo "Polling..."
 while [ -z $end ]
 do
 
-  sqs_messages=$(aws --profile $PIPELINE_AWS_PROFILE sqs receive-message --queue-url $SQS_QUEUE_URL --max-number-of-messages $MAX_SQS_MESSAGES )
+  sqs_messages=$(aws sqs receive-message --queue-url $SQS_QUEUE_URL --max-number-of-messages $MAX_SQS_MESSAGES )
   messages=$(echo $sqs_messages | jq -r '.Messages[] | @base64')
 
   for row in $messages
@@ -109,7 +109,7 @@ do
     
     # Delete message
     set +e
-    aws --profile $PIPELINE_AWS_PROFILE sqs delete-message --queue-url $SQS_QUEUE_URL --receipt-handle $receipt_handle
+    aws sqs delete-message --queue-url $SQS_QUEUE_URL --receipt-handle $receipt_handle
     set -e
 
     # Write status
@@ -138,7 +138,7 @@ do
   done
 
   AWS_BATCH_JOB_NAME=$EXECUTION_NAME
-  job_summary_list=$(aws --profile $PIPELINE_AWS_PROFILE batch list-jobs --filters name=JOB_NAME,values=$AWS_BATCH_JOB_NAME --job-queue tf-deployment-job-queue)
+  job_summary_list=$(aws batch list-jobs --filters name=JOB_NAME,values=$AWS_BATCH_JOB_NAME --job-queue tf-deployment-job-queue)
   batch_attempt=$(echo $job_summary_list | jq '.jobSummaryList | length' )
   batch_index=$(( $batch_attempt - 1 ))
 
@@ -146,7 +146,7 @@ do
   old_aws_batch_job_id=$AWS_BATCH_JOB_ID
   export AWS_BATCH_JOB_ID=$(echo $job_summary_list | jq -r '.jobSummaryList[0].jobId')
 
-  describe_batch=$(aws --profile $PIPELINE_AWS_PROFILE batch describe-jobs --jobs $AWS_BATCH_JOB_ID)
+  describe_batch=$(aws batch describe-jobs --jobs $AWS_BATCH_JOB_ID)
 
   export LOG_STREAM_NAME=$(echo $describe_batch | jq -r '.jobs[0].container.logStreamName')
 
@@ -166,7 +166,7 @@ do
   fi
 
   # Check SF Status
-  export SF_STATUS=$(aws --profile $PIPELINE_AWS_PROFILE stepfunctions describe-execution --execution-arn $EXECUTION_ARN | jq -r '.status')
+  export SF_STATUS=$(aws stepfunctions describe-execution --execution-arn $EXECUTION_ARN | jq -r '.status')
 
   if [[ $SF_STATUS == "FAILED" ]]
   then
