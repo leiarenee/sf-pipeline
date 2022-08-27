@@ -7,16 +7,17 @@
 # --------------------------------------------------------------------------------
 
 # Extracts this script's current working directory
-script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+old_script_dir=$script_dir;script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
 
-# Set REPO_ROOT for persistant use
-export REPO_ROOT=$script_dir
-
-# Extract value of INHERIT_ENV if it exists. It will be used to set values from another repo as well
-[ -f .env ] && inherit_env=$(cat .env | grep INHERIT_ENV | sed s/INHERIT_ENV=//g)
-
-# .env is commited while .dev.env is ignored and used for custem overrides
-env_files=("$REPO_ROOT/.env" "$REPO_ROOT/.dev.env")
+if [ -z $1 ]
+then
+  # Extract value of INHERIT_ENV if it exists. It will be used to set values from another repo as well
+  [ -f .env ] && inherit_env=$(cat .env | grep INHERIT_ENV | sed s/INHERIT_ENV=//g)
+  # .env is commited while .dev.env is ignored and used for custem overrides
+  env_files=("$script_dir/.env" "$script_dir/.dev.env")
+else
+  env_files=($@)
+fi
 
 # Declare environment varibles from env files
 for env_file in ${env_files[@]}
@@ -39,12 +40,15 @@ do
         key=${arr[0]}             # First is variable name.
         value=${arr[1]}           # Second is variable value.
         export $key=$value
+        # echo "$key=$value"
         unset IFS                 # Restore IFS
       fi
     done
   fi
 done
 
+# Restore script_dir to original value if this script is sourced
+[[ "$BASH_SOURCE" != "0" && ! -z $old_script_dir ]] && script_dir=$old_script_dir || true
 
 
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
+script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
+
 # Shell Script for State Machine Execution
 export STATE_MACHINE_ARN=arn:aws:states:$PIPELINE_AWS_REGION:$PIPELINE_AWS_ACCOUNT_ID:stateMachine:$PIPELINE_STATE_MACHINE_NAME
 echo 
@@ -9,9 +11,9 @@ echo "STATE_MACHINE_ARN=$STATE_MACHINE_ARN" >> $GITHUB_ENV
 
 # Variable Substitution
 echo "Variable Substitution"
-test_inputs=$(cat $PIPELINE_SF_TEMPLATE_FILE | envsubst | tr -d '\n' | jq -r . )
+test_inputs=$(cat $script_dir/$PIPELINE_SF_TEMPLATE_FILE | envsubst | tr -d '\n' | jq -r . )
 echo $test_inputs | jq . 
-echo $test_inputs | jq . > ./sf-run/aggragated-sf-inputs.json
+echo $test_inputs | jq . > $script_dir/aggragated-sf-inputs.json
 echo
 
 # Step Functions

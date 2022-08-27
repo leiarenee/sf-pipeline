@@ -1,16 +1,18 @@
 #!/bin/bash
 set -e
 log_file=log.txt
-# colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+
+# Extract repository root
+repo_root=$(git rev-parse --show-toplevel) 
+
+# Source Colors
+source $repo_root/infra/library/scripts/colors.sh
+
 # ------------ Poll Sqs Status Messages and Log Updates ---------------------------------------------
 
 function fetch_logs(){
   echo Fetching Batch Logs
-  aws logs tail /aws/batch/job --log-stream-names $LOG_STREAM_NAME --since 1d --format short > $log_file
+  aws --profile $PIPELINE_AWS_PROFILE logs tail /aws/batch/job --log-stream-names $LOG_STREAM_NAME --since 1d --format short > $log_file
   linesold=$lines
   lines=$(wc -l $log_file | awk '{ print $1 }')
 
@@ -33,12 +35,12 @@ function check_log_stream_exists(){
     echo "Checking log_group $log_group"
 
     # Check if Log group exists
-    if [[ $( aws logs describe-log-groups | grep -e '"logGroupName": "/aws/batch/job"') != "" ]]
+    if [[ $( aws --profile $PIPELINE_AWS_PROFILE logs describe-log-groups | grep -e '"logGroupName": "/aws/batch/job"') != "" ]]
     then
       log_group_exists=true
       echo -e "${GREEN}Log group exists.${NC}"
       echo "Checking stream $LOG_STREAM_NAME"
-      if [[ $(aws logs describe-log-streams --log-group-name /aws/batch/job --log-stream-name-prefix $LOG_STREAM_NAME | jq -r '.logStreams[0].logStreamName' | grep -e "$LOG_STREAM_NAME$") != "" ]]
+      if [[ $(aws --profile $PIPELINE_AWS_PROFILE logs describe-log-streams --log-group-name /aws/batch/job --log-stream-name-prefix $LOG_STREAM_NAME | jq -r '.logStreams[0].logStreamName' | grep -e "$LOG_STREAM_NAME$") != "" ]]
       then
         echo -e "${GREEN}Log stream exists.${NC}"
         log_stream_exists=true
@@ -83,19 +85,14 @@ echo "Waiting 5 Seconds for initialization of State Machine..."
 sleep 5
 
 cnt=0
-echo "Polling messages..."
-echo "::set-output name=greeting::Polling messages"
+echo "Polling..."
 
 while [ -z $end ]
 do
-  if [ -z "$simulate" ]
-  then
-    sqs_messages=$(aws sqs receive-message --queue-url $SQS_QUEUE_URL --max-number-of-messages $MAX_SQS_MESSAGES )
-    messages=$(echo $sqs_messages | jq -r '.Messages[] | @base64')
-  else
-    messages=$(cat messages.json | jq -r '.Messages[] | @base64')
-  fi
-  
+
+  sqs_messages=$(aws --profile $PIPELINE_AWS_PROFILE sqs receive-message --queue-url $SQS_QUEUE_URL --max-number-of-messages $MAX_SQS_MESSAGES )
+  messages=$(echo $sqs_messages | jq -r '.Messages[] | @base64')
+
   for row in $messages
   do
     cnt=$((cnt + 1))
@@ -111,7 +108,7 @@ do
     batch_id=$(echo $message | jq -r .jobId)
     
     set +e
-    aws sqs delete-message --queue-url $SQS_QUEUE_URL --receipt-handle $receipt_handle
+    aws --profile $PIPELINE_AWS_PROFILE sqs delete-message --queue-url $SQS_QUEUE_URL --receipt-handle $receipt_handle
     set -e
     # Write status
     bar_end=$(($progress*3/10))
@@ -121,8 +118,8 @@ do
     for ((i=$bar_end; i<=30; i++)); do echo -n " "; done
     echo -n "] "
     echo "  Progress : $progress%    Status : $status"
-    [ ! -z $batch_id ] && [[ $batch_id != "null" ]] && echo $batch_id
-    #echo -ne "    Progress : $progress%        Status : $status\033[0K\r"
+    [ ! -z $batch_id ] && [[ $batch_id != "null" ]] && echo "batch_id received : $batch_id"
+    #echo -ne "    Progress : $progress%        Status : $status\033[0K\r"  # Write to single line
     
     end=$(echo $message | jq .end)
     
@@ -136,41 +133,29 @@ do
       POLL_INTERVAL=0
       break
     fi
-
   done
 
-  if [ -z $AWS_BATCH_JOB_ID ]
+  AWS_BATCH_JOB_NAME=$EXECUTION_NAME
+  job_summary_list=$(aws --profile $PIPELINE_AWS_PROFILE batch list-jobs --filters name=JOB_NAME,values=$AWS_BATCH_JOB_NAME --job-queue tf-deployment-job-queue)
+  batch_attempt=$(echo $job_summary_list | jq '.jobSummaryList | length' )
+  batch_index=$(( $batch_attempt - 1 ))
+
+
+  old_aws_batch_job_id=$AWS_BATCH_JOB_ID
+  export AWS_BATCH_JOB_ID=$(echo $job_summary_list | jq -r '.jobSummaryList[0].jobId')
+
+  describe_batch=$(aws --profile $PIPELINE_AWS_PROFILE batch describe-jobs --jobs $AWS_BATCH_JOB_ID)
+
+  export LOG_STREAM_NAME=$(echo $describe_batch | jq -r '.jobs[0].container.logStreamName')
+
+  if [[ $LOG_STREAM_NAME != $old_log_stream_name ]] 
   then
-    export AWS_BATCH_JOB_NAME=$EXECUTION_NAME
-    export AWS_BATCH_JOB_ID=$(aws batch list-jobs --filters name=JOB_NAME,values=$AWS_BATCH_JOB_NAME --job-queue tf-deployment-job-queue | jq -r '.jobSummaryList[0].jobId')
-    [[ $AWS_BATCH_JOB_ID == null ]] && unset AWS_BATCH_JOB_ID
+    old_log_stream_name=$LOG_STREAM_NAME
+    echo "Log LOG_STREAM_NAME : $LOG_STREAM_NAME"
+    check_log_stream_exists
   fi
 
-  describe_batch=$(aws batch describe-jobs --jobs $AWS_BATCH_JOB_ID)
-
-  if [ -z $LOG_STREAM_NAME ]
-  then
-    export LOG_STREAM_NAME=$(echo $describe_batch | jq -r '.jobs[0].container.logStreamName')
-    [[ $LOG_STREAM_NAME == null ]] && unset LOG_STREAM_NAME
-    if [ ! -z $LOG_STREAM_NAME ]
-    then
-      echo "Log LOG_STREAM_NAME : $LOG_STREAM_NAME"
-      check_log_stream_exists
-    fi
-  fi
-
-  export BATCH_STATUS=$(echo $describe_batch | jq -r '.jobs[0].status')
-  [[ $BATCH_STATUS == null ]] && unset BATCH_STATUS
-  if [[ $old_batch_status != $BATCH_STATUS ]]
-  then
-    old_batch_status=$BATCH_STATUS
-    if [[ BATCH_STATUS == RUNNING ]]
-    then
-      echo Batch Job Started Running
-      echo $describe_batch | jq '.jobs[0]'
-    fi
-    echo "BATCH_STATUS : $BATCH_STATUS"
-  fi
+  BATCH_STATUS=$(echo $describe_batch | jq -r '.jobs[0].status')
 
   # Fetch Batch Log
   if [ ! -z $LOG_STREAM_NAME ] && [[ $LOG_STREAM_NAME != null ]] && [ ! -z $AWS_BATCH_JOB_ID ] 
@@ -179,23 +164,37 @@ do
   fi
 
   # Check SF Status
-  export SF_STATUS=$(aws stepfunctions describe-execution --execution-arn $EXECUTION_ARN | jq -r '.status')
+  export SF_STATUS=$(aws --profile $PIPELINE_AWS_PROFILE stepfunctions describe-execution --execution-arn $EXECUTION_ARN | jq -r '.status')
 
   if [[ $SF_STATUS == "FAILED" ]]
   then
+    echo -e "${RED}$EXECUTION_NAME SF_STATUS : $SF_STATUS ${NC}"
     exit_code=1
     break
   elif [[ $SF_STATUS == "SUCCEEDED" ]]
   then
+    echo -e "${GREEN}$EXECUTION_NAME SF_STATUS : $SF_STATUS ${NC}"
     break
   else 
-    echo "SF_STATUS : $SF_STATUS"
+    echo
+    echo Batch Attempt $batch_attempt
+    echo -e "${MAGENTA}$EXECUTION_NAME SF_STATUS : $SF_STATUS ${NC}"
+
+    if [[ $BATCH_STATUS == FAILED ]]
+    then
+      batch_stat_color=${RED}
+    else
+      batch_stat_color=${CYAN}
+    fi
+    
+    echo -e "$batch_stat_color$AWS_BATCH_JOB_ID BATCH_STATUS : $BATCH_STATUS ${NC}"
+    echo
   fi
+
 
   sleep $POLL_INTERVAL
 done
 
-echo "SF_STATUS : $SF_STATUS"
 sleep 5
 fetch_logs
 
@@ -203,9 +202,9 @@ fetch_logs
 
 export S3_JOB_FOLDER="s3://sf-pipeline-jobs/$WORKSPACE_ID/$EXECUTION_NAME/$AWS_BATCH_JOB_ID"
 
-echo "S3_JOB_FOLDER = $S3_JOB_FOLDER"
-echo "LOG_STREAM_NAME = aws/batch/job:$LOG_STREAM_NAME"
-
+# echo "S3_JOB_FOLDER = $S3_JOB_FOLDER"
+# echo "LOG_STREAM_NAME = aws/batch/job:$LOG_STREAM_NAME"
+# 
 # Send to ENV
 # echo "AWS_BATCH_JOB_ID=$AWS_BATCH_JOB_ID" >> $GITHUB_ENV
 # echo "LOG_STREAM_NAME=$LOG_STREAM_NAME" >> $GITHUB_ENV
