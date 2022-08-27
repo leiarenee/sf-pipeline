@@ -12,7 +12,7 @@ CYAN=`tput -T $TERM setaf 6`
 WHITE=`tput -T $TERM setaf 7`
 
 # If false set it empty
-[[ $USE_REMOTE_DOCKER_CACHE == false ]] && USE_REMOTE_DOCKER_CACHE="" 
+[[ "$USE_REMOTE_DOCKER_CACHE" == "false" ]] && USE_REMOTE_DOCKER_CACHE=""
 [[ "$UPLOAD_IMAGE" == "false" ]] && UPLOAD_IMAGE=""
 [[ "$SKIP_DOWNLOAD_CACHE" == "false" ]] && SKIP_DOWNLOAD_CACHE=""
 [[ "$INVALIDATE_REMOTE_CACHE" == "false" ]] && INVALIDATE_REMOTE_CACHE=""
@@ -22,6 +22,7 @@ WHITE=`tput -T $TERM setaf 7`
 [[ "$CHANGE_BRANCH" == "false" ]] && CHANGE_BRANCH=""
 [[ "$ECR_LOGIN" == "false" ]] && ECR_LOGIN=""
 [[ "$ECR_STATIC_LOGIN" == "false" ]] && ECR_STATIC_LOGIN=""
+
 
 # Checkout to branch
 function change_branch {
@@ -87,6 +88,12 @@ export IMAGE_TIMESTAMP=ts-$(date +"%Y%m%d-%H%M%S")
 export ECR_URL=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 export IMAGE_REPO_URL=$ECR_URL/$IMAGE_REPO_NAME
 
+# Login to ECR
+if [ ! -z $ECR_LOGIN ]
+then
+  ecr_login
+fi
+
 # Checkout to source branch
 if [ ! -z $CHANGE_BRANCH ]
 then
@@ -101,20 +108,14 @@ else
   export DOCKER_IMAGE_VERSION=latest
 fi
 
-# Login to ECR
-if [ ! -z $ECR_LOGIN ]
-then
-  ecr_login
-fi
-
 # Enforce no cache
 if [ ! -z $ENFORCE_NO_CACHE ]
 then
-  echo "Enforcing 'NO CACHE' for build operation"
-  no_cache_argument="--no-cache"
+  echo "Enforcing 'NO CACHE' for build operations"
+  NO_CACHE_ARGUMENT="--no-cache"
 fi
 
-if [ ! -z $USE_REMOTE_DOCKER_CACHE ]
+if [ ! -z "${USE_REMOTE_DOCKER_CACHE}" ]
 then
   # Use the remote cache
   echo -e "${GREEN}Remote Cache Enabled ${NC}"
@@ -153,24 +154,18 @@ docker build $BUILD_CONTEXT \
   --tag $IMAGE_REPO_URL:$DOCKER_IMAGE_VERSION \
   --tag $IMAGE_REPO_URL:latest \
   --tag $IMAGE_REPO_NAME:latest \
-  --tag $APP_NAME:latest \
-  --tag $APP_NAME:$DOCKER_IMAGE_VERSION \
   --build-arg TERRAFORM_VERSION=$TERRAFORM_VERSION --build-arg TERRAGRUNT_VERSION=$TERRAGRUNT_VERSION \
-  $cache_string \
-  $no_cache_argument
+  $cache_string 
+  
+# Login to ECR
+if [ ! -z $ECR_LOGIN ]
+then
+  ecr_login
+fi
 
-echo Docker Image Repository URL : $IMAGE_REPO_URL:$DOCKER_IMAGE_VERSION
-echo Local image : $APP_NAME:latest  
 # Upload image
 if [[ ! -z $UPLOAD_IMAGE ]]
 then
-
-  # Login to ECR
-  if [ ! -z $ECR_LOGIN ]
-  then
-    ecr_login
-  fi
-
   # Push runtime image to remote repository.
   echo
   echo -e "${GREEN}- Uploading Application Image ${NC}"
