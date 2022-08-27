@@ -78,7 +78,7 @@ jobs:
           STACK_FOLDER: ${{ github.event.inputs.stackFolder }}
           BUCKET_SUFFIX: github
           INTERACTIVE: false
-          FORCE_INIT: true
+          FORCE_INIT: false
           COMPACT_WARNINGS: true
           COMPACT_STDOUT: true
           LOG_LEVEL: info
