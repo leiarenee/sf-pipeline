@@ -13,13 +13,13 @@ on:
         default: eu-west-1
       repoReference:
         description: Repository Reference - [branch|tag|hash]   
-        default: main
+        default: deploy
       runAll:
         description: Terragrunt run-all
         default: true 
       tgCommand: 
         description: Terragrunt command
-        default: plan
+        default: apply
       tgArguments:
         description: TG Cli arguments
       stackFolder:
