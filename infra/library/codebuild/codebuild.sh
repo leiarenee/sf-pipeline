@@ -159,8 +159,6 @@ docker build $BUILD_CONTEXT \
   $cache_string \
   $no_cache_argument
 
-echo Docker Image Repository URL : $IMAGE_REPO_URL:$DOCKER_IMAGE_VERSION
-echo Local image : $APP_NAME:latest  
 # Upload image
 if [[ ! -z $UPLOAD_IMAGE ]]
 then
