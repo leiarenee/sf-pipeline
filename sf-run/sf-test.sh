@@ -11,7 +11,11 @@ repo_root=$(git rev-parse --show-toplevel)
 source $repo_root/infra/library/scripts/colors.sh
 
 # Initialize github env file
-[ -z $GITHUB_ENV ] && export GITHUB_ENV=github.env && echo "# Simulated GITHUB Environment Variables" > $GITHUB_ENV
+if [ -z $GITHUB_ENV ]
+then
+  export GITHUB_ENV="$script_dir/github.env"
+  echo "# Simulated GITHUB Environment Variables" > $GITHUB_ENV
+fi
 
 # Run Pipeline
 echo -e "\n${GREEN}Step1: Executing Step Functions.${NC}"
@@ -19,8 +23,8 @@ $script_dir/sf-execute.sh
 
 # Transfer github environment variables
 echo -e "\n${GREEN}Transfering varibles to next step.${NC}"
-cat $script_dir/$GITHUB_ENV
-source $script_dir/../.getenv $script_dir/$GITHUB_ENV
+cat $GITHUB_ENV
+source $script_dir/../.getenv $GITHUB_ENV
 
 # Trace
 echo -e "\n${GREEN}Step2: Tracing Step Functions ${NC}"

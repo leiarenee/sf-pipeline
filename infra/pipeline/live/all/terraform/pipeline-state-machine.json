@@ -4,7 +4,7 @@
   "States": {
     "Session Variables": {
       "Type": "Pass",
-      "Next": "Command Needs Lock",
+      "Next": "CreateQueue",
       "Parameters": {
         "sqsQueueName.$": "States.Format('{}.fifo',$$.Execution.Name)",
         "messageGroupId.$": "$$.Execution.Name",
@@ -12,6 +12,22 @@
         "cronName.$": "States.Format('{}-{}',$.pipeline.eventBridgeRule,$$.Execution.Name)"
       },
       "ResultPath": "$.session"
+    },
+    "CreateQueue": {
+      "Type": "Task",
+      "Next": "Command Needs Lock",
+      "Parameters": {
+        "QueueName.$": "$.session.sqsQueueName",
+        "Attributes": {
+          "FifoQueue": "true",
+          "ContentBasedDeduplication": "true",
+          "MessageRetentionPeriod": "600",
+          "VisibilityTimeout": "10",
+          "ReceiveMessageWaitTimeSeconds": "0"
+        }
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:createQueue",
+      "ResultPath": "$.createQueue"
     },
     "Command Needs Lock": {
       "Type": "Choice",
@@ -31,23 +47,7 @@
           "Comment": "Commands that need state file locking"
         }
       ],
-      "Default": "CreateQueue"
-    },
-    "CreateQueue": {
-      "Type": "Task",
-      "Next": "Container Parameters",
-      "Parameters": {
-        "QueueName.$": "$.session.sqsQueueName",
-        "Attributes": {
-          "FifoQueue": "true",
-          "ContentBasedDeduplication": "true",
-          "MessageRetentionPeriod": "600",
-          "VisibilityTimeout": "10",
-          "ReceiveMessageWaitTimeSeconds": "0"
-        }
-      },
-      "Resource": "arn:aws:states:::aws-sdk:sqs:createQueue",
-      "ResultPath": "$.createQueue"
+      "Default": "Container Parameters"
     },
     "Check Concurrency": {
       "Type": "Task",
@@ -90,7 +90,7 @@
         {
           "Variable": "$.checkConcurrency.Payload",
           "BooleanEquals": false,
-          "Next": "CreateQueue"
+          "Next": "Container Parameters"
         }
       ]
     },
@@ -228,7 +228,7 @@
           {
             "Name": "FORCE_INIT",
             "Value.$": "$.terragrunt.forceInit"
-          },          
+          },
           {
             "Name": "COMPACT_WARNINGS",
             "Value.$": "$.terragrunt.compactWarnings"

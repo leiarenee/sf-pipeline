@@ -16,6 +16,13 @@ echo $test_inputs | jq .
 echo $test_inputs | jq . > $script_dir/aggragated-sf-inputs.json
 echo
 
+if [[ $INTERACTIVE == true ]]
+then
+  echo Press y to continiue
+  read answer
+  [[ $answer != "y" ]] && exit 1
+fi
+
 # Step Functions
 echo "State Machine Starting..."
 result=$(aws --region $PIPELINE_AWS_REGION stepfunctions start-execution --state-machine-arn $STATE_MACHINE_ARN --input "$test_inputs")
