@@ -5,21 +5,31 @@ on:
       workspaceId:
         description: Workspace Id (Changes tfstate bucket)    
         default: testing
-        type: choice
-        options:
-        - testing
-        - staging
-        - production-1
-        - production-2
-        - custom
-      customWorkspaceId:
-        description: Custom Workspace Id
       targetAwsAccountId:
         description: Target AWS Account Id   
         default: 553688522943
+        type: choice
+        options:
+        - 553688522943 # testing
+        - 518854297938 # Staging
+        - 009403416359 # Prod1
+        - 230794785515 # Prod2
+        - 684353670650 # Dev
       targetAwsRegion:
         description: Target AWS Region     
         default: eu-west-1
+        type: choice
+        options:
+        - eu-central-1
+        - eu-west-1
+        - eu-west-2
+        - eu-west-3
+        - eu-south-1
+        - eu-north-1
+        - us-east-1
+        - us-east-2
+        - us-west-1
+        - us-west-2
       runAll:
         description: Terragrunt run-all
         default: true 
