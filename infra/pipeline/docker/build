@@ -3,7 +3,7 @@ set -e
 
 build_script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 context_dir=$(git rev-parse --show-toplevel)
-source $context_dir/.getenv
+source $context_dir/infra/library/scripts/.getenv $context_dir/.env
 [[ $CLEAR_SCREEN == "true" ]] && clear
 
 image_name=tf-docker-executor
