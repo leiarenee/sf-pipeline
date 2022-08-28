@@ -5,6 +5,13 @@ on:
       workspaceId:
         description: Workspace Id (Changes tfstate bucket)    
         default: testing
+        type: choice
+        options:
+        - Testing
+        - Staging
+        - Production-1
+        - Production-2
+        - LeiaRenee
       targetAwsAccountId:
         description: Target AWS Account Id   
         default: 553688522943
@@ -14,7 +21,7 @@ on:
         - 518854297938 # Staging
         - 009403416359 # Prod1
         - 230794785515 # Prod2
-        - 684353670650 # Dev
+        - 684353670650 # Dev Leia
       targetAwsRegion:
         description: Target AWS Region     
         default: eu-west-1
