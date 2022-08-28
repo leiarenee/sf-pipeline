@@ -3,23 +3,38 @@ on:
   workflow_dispatch:
     inputs:
       workspaceId:
-        description: Workspace Id     
+        description: Workspace Id (Changes tfstate bucket)    
         default: testing
+        type: choice
+        options:
+        - testing
+        - staging
+        - production-1
+        - production-2
+        - custom
+      customWorkspaceId:
+        description: Custom Workspace Id
       targetAwsAccountId:
-        description: Target AWS Account Id     
+        description: Target AWS Account Id   
         default: 553688522943
       targetAwsRegion:
         description: Target AWS Region     
         default: eu-west-1
-      repoReference:
-        description: Repository Reference - [branch|tag|hash]   
-        default: deploy
       runAll:
         description: Terragrunt run-all
         default: true 
+        type: boolean
       tgCommand: 
         description: Terragrunt command
         default: apply
+        type: choice
+        options:
+        - validate
+        - plan
+        - apply
+        - destroy
+        - show
+        - output
       tgArguments:
         description: TG Cli arguments
       stackFolder:
@@ -61,7 +76,7 @@ jobs:
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
           REPO_NAME: sf-infra
-          REPO_REFERENCE: ${{ github.event.inputs.repoReference }}
+          REPO_REFERENCE: ${{ github.ref }}
           REPO_TYPE: public
           USER_NAME: ${{ github.triggering_actor }}
           USER_EMAIL: ${{ github.event.pusher.email }}
