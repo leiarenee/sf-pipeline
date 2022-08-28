@@ -1,5 +1,8 @@
 name: Symantic Versioning
-on: push
+on: 
+  push:
+    branches:
+    - main
 jobs:
   version:  # https://github.com/marketplace/actions/automated-version-bump
     runs-on: ubuntu-latest
@@ -16,4 +19,3 @@ jobs:
         rc-wording:     'release,alpha'
         default: patch # defaulting to a patch bump.
         tag-prefix: 'v'
-        skip-commit:  'true'
