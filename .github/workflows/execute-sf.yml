@@ -42,6 +42,9 @@ on:
         description: Time to Live in minutes 
         default: 30
         type: string
+      repoReference:
+        description: Branch, tag or commit hash
+        type: string
 
 
 jobs:
@@ -67,27 +70,27 @@ jobs:
           PYTHONTRACEMALLOC: 25
 
           # WORKSPACE
-          WORKSPACE_ID: ${{ github.event.inputs.workspaceId }}
+          WORKSPACE_ID: ${{ inputs.workspaceId }}
 
           # APP REPOSITORY
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
           REPO_NAME: sf-infra
-          REPO_REFERENCE: ${{ github.event.inputs.repoReference }}
+          REPO_REFERENCE: ${{ inputs.repoReference }}
           REPO_TYPE: public
           USER_NAME: ${{ github.triggering_actor }}
-          USER_EMAIL: ${{ github.event.pusher.email }}
+          USER_EMAIL: ${{ pusher.email }}
 
           # VERSIONS
           TERRAFORM_VERSION: 1.2.7
           TERRAGRUNT_VERSION: 0.38.7
 
           # TERRAGRUNT
-          RUN_ALL: ${{ github.event.inputs.runAll }}
-          TG_COMMAND: ${{ github.event.inputs.tgCommand }}
-          TG_ARGUMENTS: ${{ github.event.inputs.tgArguments }}
-          RUN_MODULE: ${{ github.event.inputs.runModule }}
-          STACK_FOLDER: ${{ github.event.inputs.stackFolder }}
+          RUN_ALL: ${{ inputs.runAll }}
+          TG_COMMAND: ${{ inputs.tgCommand }}
+          TG_ARGUMENTS: ${{ inputs.tgArguments }}
+          RUN_MODULE: ${{ inputs.runModule }}
+          STACK_FOLDER: ${{ inputs.stackFolder }}
           BUCKET_SUFFIX: github
           INTERACTIVE: false
           FORCE_INIT: false
@@ -96,10 +99,10 @@ jobs:
           LOG_LEVEL: info
 
           # AWS
-          TARGET_AWS_REGION: ${{ github.event.inputs.targetAwsRegion }}
+          TARGET_AWS_REGION: ${{ inputs.targetAwsRegion }}
           TARGET_AWS_ACCOUNT_NAME: Testing Environment
-          TARGET_AWS_ACCOUNT_ID: ${{ github.event.inputs.targetAwsAccountId }}
-          TARGET_AWS_PROFILE: testing
+          TARGET_AWS_ACCOUNT_ID: ${{ inputs.targetAwsAccountId }}
+          TARGET_AWS_PROFILE: target
           TARGET_AWS_SECRET: TARGET_AWS_ACCESS
           PIPELINE_AWS_REGION: eu-west-1
           PIPELINE_AWS_PROFILE: pipeline
@@ -135,7 +138,7 @@ jobs:
           ROLE_EVENTBRIDGE: arn:aws:iam::377449198785:role/service-role/Amazon_EventBridge_Invoke_Batch_Job_Queue
 
           # TTL
-          TTL_DURATION_MINUTES: ${{ github.event.inputs.ttlDuration }}
+          TTL_DURATION_MINUTES: ${{ inputs.ttlDuration }}
 
           # STEP FUNCTIONS
           PIPELINE_STATE_MACHINE_NAME: Pipeline-State-Machine-enabling-drake
