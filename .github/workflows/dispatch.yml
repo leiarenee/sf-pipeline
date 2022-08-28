@@ -11,7 +11,7 @@ on:
         - Staging
         - Production-1
         - Production-2
-        - LeiaRenee
+        - Leia-Renee
       targetAwsAccountId:
         description: Target AWS Account Id   
         default: 553688522943
@@ -57,8 +57,12 @@ on:
       stackFolder:
         description: Main Stack Folder
         default: live
+        type: choice
+        options:
+        - live
+        - test
       runModule:
-        description: Terragrunt Module Folder
+        description: Terragrunt Module Folder [See here](https://github.com/leiarenee/sf-infra/tree/main/infra/live)
         default:
       ttlDuration:
         description: Time to Live in minutes 
