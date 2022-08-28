@@ -6,32 +6,42 @@ on:
       workspaceId:
         description: Workspace Id     
         default: testing
+        type: string
       targetAwsAccountId:
         description: Target AWS Account Id     
         default: 553688522943
+        type: string
       targetAwsRegion:
         description: Target AWS Region     
         default: eu-west-1
+        type: string
       repoReference:
         description: Repository Reference - [branch|tag|hash]   
         default: main
+        type: string
       runAll:
         description: Terragrunt run-all
         default: true 
+        type: boolean
       tgCommand: 
         description: Terragrunt command
         default: plan
+        type: string
       tgArguments:
         description: TG Cli arguments
+        type: string
       stackFolder:
         description: Main Stack Folder
         default: live
+        type: string
       runModule:
         description: Terragrunt Module Folder
         default:
+        type: string
       ttlDuration:
         description: Time to Live in minutes 
         default: 30
+        type: string
 
 
 jobs:
