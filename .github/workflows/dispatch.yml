@@ -62,7 +62,7 @@ on:
         - live
         - test
       runModule:
-        description: Terragrunt Module Folder [See here](https://github.com/leiarenee/sf-infra/tree/main/infra/live)
+        description: Terragrunt Module Folder - Choose from https://github.com/leiarenee/sf-infra/tree/main/infra/live
         default:
       ttlDuration:
         description: Time to Live in minutes 
@@ -107,11 +107,11 @@ jobs:
           TERRAGRUNT_VERSION: 0.38.7
 
           # TERRAGRUNT
-          RUN_ALL: ${{ github.event.inputs.runAll }}
-          TG_COMMAND: ${{ github.event.inputs.tgCommand }}
-          TG_ARGUMENTS: ${{ github.event.inputs.tgArguments }}
-          RUN_MODULE: ${{ github.event.inputs.runModule }}
-          STACK_FOLDER: ${{ github.event.inputs.stackFolder }}
+          RUN_ALL: ${{ inputs.runAll }}
+          TG_COMMAND: ${{ inputs.tgCommand }}
+          TG_ARGUMENTS: ${{ inputs.tgArguments }}
+          RUN_MODULE: ${{ inputs.runModule }}
+          STACK_FOLDER: ${{ inputs.stackFolder }}
           BUCKET_SUFFIX: github
           INTERACTIVE: false
           FORCE_INIT: false
@@ -120,9 +120,9 @@ jobs:
           LOG_LEVEL: info
 
           # AWS
-          TARGET_AWS_REGION: ${{ github.event.inputs.targetAwsRegion }}
+          TARGET_AWS_REGION: ${{ inputs.targetAwsRegion }}
           TARGET_AWS_ACCOUNT_NAME: Testing Environment
-          TARGET_AWS_ACCOUNT_ID: ${{ github.event.inputs.targetAwsAccountId }}
+          TARGET_AWS_ACCOUNT_ID: ${{ inputs.targetAwsAccountId }}
           TARGET_AWS_PROFILE: testing
           TARGET_AWS_SECRET: TARGET_AWS_ACCESS
           PIPELINE_AWS_REGION: eu-west-1
@@ -159,7 +159,7 @@ jobs:
           ROLE_EVENTBRIDGE: arn:aws:iam::377449198785:role/service-role/Amazon_EventBridge_Invoke_Batch_Job_Queue
 
           # TTL
-          TTL_DURATION_MINUTES: ${{ github.event.inputs.ttlDuration }}
+          TTL_DURATION_MINUTES: ${{ inputs.ttlDuration }}
 
           # STEP FUNCTIONS
           PIPELINE_STATE_MACHINE_NAME: Pipeline-State-Machine-enabling-drake

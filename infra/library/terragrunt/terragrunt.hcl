@@ -74,7 +74,7 @@ provider "aws" {
   default_tags {
     tags = {
       created_by    = "terragrunt"
-      environment   = "${local.environment}"
+      workspace   = "${local.environment}"
     }
   }
 }

@@ -9,15 +9,49 @@
 # Extracts this script's current working directory
 old_script_dir=$script_dir;script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
 
-if [ -z $1 ]
-then
-  # Extract value of INHERIT_ENV if it exists. It will be used to set values from another repo as well
-  [ -f .env ] && inherit_env=$(cat .env | grep INHERIT_ENV | sed s/INHERIT_ENV=//g)
-  # .env is commited while .dev.env is ignored and used for custem overrides
-  env_files=("$script_dir/.env" "$script_dir/.dev.env")
-else
-  env_files=($@)
-fi
+# Get Repository root
+repo_root=$(git rev-parse --show-toplevel)
+
+# colors
+TERM=xterm-256color
+NC=`tput -T $TERM sgr0`
+RED=`tput -T $TERM setaf 1`
+GREEN=`tput -T $TERM setaf 2`
+YELLOW=`tput -T $TERM setaf 3`
+BLUE=`tput -T $TERM setaf 4`
+MAGENTA=`tput -T $TERM setaf 5`
+CYAN=`tput -T $TERM setaf 6`
+WHITE=`tput -T $TERM setaf 7`
+
+#Clear Screen
+clear
+
+
+  if [ -z $1 ] || [[ $(echo $1 | grep envrc) ]]
+  then
+    # Extract value of INHERIT_ENV if it exists. It will be used to set values from another repo as well
+    [ -f .env ] && inherit_env=$(cat .env | grep INHERIT_ENV | sed s/INHERIT_ENV=//g)
+    # .env is commited while .dev.env is ignored and used for custem overrides
+    
+    local_files="$repo_root/.env $repo_root/.dev.env"
+    
+    if [ ! -z $inherit_env ]
+    then
+      inherit_path=$(realpath "$repo_root/$inherit_env")
+      inherit_files="$inherit_path/.env $inherit_path/.dev.env"
+      env_file_list=$inherit_files
+    fi
+
+    env_file_list="$env_file_list $local_files"
+    env_files=($env_file_list)
+  else
+    env_files=($@)
+  fi
+
+# Print evaluated env file list
+env_file_str=${env_files[@]}
+parent_path="$(realpath "$repo_root/..")/"
+echo -e "${CYAN}Loading env files${NC} : ${MAGENTA}${env_file_str//"$parent_path"/.}${NC}\n"
 
 # Declare environment varibles from env files
 for env_file in ${env_files[@]}
@@ -40,7 +74,7 @@ do
         key=${arr[0]}             # First is variable name.
         value=${arr[1]}           # Second is variable value.
         export $key=$value
-        # echo "$key=$value"
+        echo -e "${BLUE}$key${NC} = ${GREEN}$value${NC}"
         unset IFS                 # Restore IFS
       fi
     done
