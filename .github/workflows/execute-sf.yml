@@ -70,7 +70,7 @@ jobs:
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
           REPO_NAME: sf-infra
-          REPO_REFERENCE: ${{ github.head_ref }}
+          REPO_REFERENCE: ${{ inputs.repoReference }}
           REPO_TYPE: public
           USER_NAME: ${{ github.triggering_actor }}
 

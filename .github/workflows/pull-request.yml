@@ -19,9 +19,8 @@ jobs:
       runModule: init
       tgCommand: ${{ matrix.tg_command }}
       stackFolder: live
-      repoReference: ${{ github.ref_name }}
+      repoReference: ${{ github.head_ref }}
 
     secrets: inherit
 
-      
       
