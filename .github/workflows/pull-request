@@ -1,0 +1,22 @@
+name: Pull Request
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  terragrunt-validate-build-test:
+    strategy:
+      matrix:
+        tg_command: ["validate", "plan"]
+    uses: .github/workflows/execute-sf.yml@${{ github.ref_name }}
+    with:
+      workspaceId: testing
+      targetAwsAccountId: 553688522943
+      targetAwsRegion: eu-west-1
+      runAll: true
+      tgCommand: ${{ matrix.tg_command }}
+      stackFolder: live
+      repoReference: ${{ github.ref_name }}
+
+    secrets: inherit
+      
