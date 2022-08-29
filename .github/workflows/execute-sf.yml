@@ -64,7 +64,7 @@ jobs:
           PYTHONTRACEMALLOC: 25
 
           # WORKSPACE
-          WORKSPACE_ID: ${{ github.event.inputs.workspaceId }}
+          WORKSPACE_ID: ${{ inputs.workspaceId }}
 
           # APP REPOSITORY
           VCS_PROVIDER: github
