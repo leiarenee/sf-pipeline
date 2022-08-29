@@ -9,7 +9,7 @@ jobs:
   execute-step-functions:
     strategy:
       matrix:
-        tg_command: ["validate"]
+        tg_command: ["validate","plan"]
     uses: ./.github/workflows/execute-sf.yml
     with:
       workspaceId: testing
