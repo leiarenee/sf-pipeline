@@ -73,7 +73,6 @@ jobs:
           REPO_REFERENCE: ${{ github.ref_name }}
           REPO_TYPE: public
           USER_NAME: ${{ github.triggering_actor }}
-          USER_EMAIL: ${{ pusher.email }}
 
           # VERSIONS
           TERRAFORM_VERSION: 1.2.7
