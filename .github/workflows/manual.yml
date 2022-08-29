@@ -70,7 +70,7 @@ on:
 
 jobs:
   terragrunt-validate-build-test:
-    uses: .github/workflows/execute-sf.yml@$chatops
+    uses: .github/workflows/execute-sf.yml@chatops
     with:
       workspaceId: ${{ inputs.workspaceId }}
       targetAwsAccountId: ${{ inputs.targetAwsAccountId }}
