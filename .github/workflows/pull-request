@@ -7,7 +7,7 @@ jobs:
   terragrunt-validate-build-test:
     strategy:
       matrix:
-        tg_command: ["validate", "plan"]
+        tg_command: ["validate"]
     uses: .github/workflows/execute-sf.yml@${{ github.ref_name }}
     with:
       workspaceId: testing

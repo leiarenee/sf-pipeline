@@ -3,52 +3,49 @@ name: Runs AWS Step Functions for Terragrunt Jobs
 on:
   workflow_call:
     inputs:
+    # Required Arguments
       workspaceId:
         description: Workspace Id     
-        default: testing
         type: string
+        required: true
       targetAwsAccountId:
         description: Target AWS Account Id     
-        default: 553688522943
         type: string
+        required: true
       targetAwsRegion:
         description: Target AWS Region     
-        default: eu-west-1
         type: string
+        required: true
       repoReference:
         description: Repository Reference - [branch|tag|hash]   
-        default: main
         type: string
+        required: true
       runAll:
-        description: Terragrunt run-all
-        default: true 
+        description: Terragrunt run-all 
         type: boolean
+        required: true
       tgCommand: 
         description: Terragrunt command
-        default: plan
         type: string
-      tgArguments:
-        description: TG Cli arguments
-        type: string
+        required: true
       stackFolder:
         description: Main Stack Folder
         type: string
-        default: live
+        required: true
+      # Optional Arguments
+      tgArguments:
+        description: TG Cli arguments
+        type: string
       runModule:
         description: Terragrunt Module Folder
-        default:
         type: string
       ttlDuration:
         description: Time to Live in minutes 
-        default: 30
         type: string
 
-
 jobs:
-  terragrunt-validate-build-test:
+  execute-step-functions:
     runs-on: ubuntu-latest
-    outputs:
-      env-name: ${{ steps.env-name.outputs.environment }}
     steps:
       - uses: actions/checkout@v2
       - name: Configure AWS credentials
@@ -59,7 +56,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-1
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
-      - name: Execute Pipeline
+      - name: Execute
         shell: bash
         env: 
           # PYTHON
@@ -152,7 +149,7 @@ jobs:
           # GITHUB_CONTEXT: ${{ toJson(github) }} 
 
         run: ./sf-run/sf-execute.sh
-      - name: Trace Target Deploy Logs 
+      - name: Trace
         shell: bash
         run: ./sf-run/sqs-poll.sh
 
