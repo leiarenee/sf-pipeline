@@ -1,0 +1,21 @@
+name: Symantic Versioning
+on: 
+  push:
+    branches:
+    - main
+jobs:
+  version:  # https://github.com/marketplace/actions/automated-version-bump
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name:  'Automated Version Bump'
+      uses:  'phips28/gh-action-bump-version@master'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        minor-wording:  'minor'
+        major-wording:  'MAJOR'
+        patch-wording:  'patch,fix'     # Providing patch-wording will override commits
+        rc-wording:     'release,alpha'
+        default: patch # defaulting to a patch bump.
+        tag-prefix: 'v'

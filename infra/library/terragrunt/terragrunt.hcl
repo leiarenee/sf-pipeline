@@ -74,7 +74,7 @@ provider "aws" {
   default_tags {
     tags = {
       created_by    = "terragrunt"
-      environment   = "${local.environment}"
+      workspace   = "${local.environment}"
     }
   }
 }
@@ -102,6 +102,11 @@ variable "replace_variables" {
 variable "region" {
   description = "AWS Region"
   default = "${local.aws_region}"
+}
+
+variable "lineage" {
+  type = string
+  default = ""
 }
 
 EOF

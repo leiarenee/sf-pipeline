@@ -25,14 +25,14 @@ function job_definitions(){
 
   if [[ "$RUNNER_MACHINE" = "local-dev" ]]
   then # For local dev environment
-    script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-    export REPO_ROOT=$script_dir
+    script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
+    export REPO_ROOT=$(git rev-parse --show-toplevel)
     export LOCAL_DEV=true
     uuid=$(uuidgen)
     export SF_EXECUTION_NAME=Dev-$(whoami)-$uuid
     export AWS_BATCH_JOB_ID="Process-$$"
     
-    source $REPO_ROOT/infra/library/scripts/import-env-vars.sh
+    source $REPO_ROOT/.getenv
     
     echo
     [[ $CLEAR_SCREEN == "true" ]] && clear

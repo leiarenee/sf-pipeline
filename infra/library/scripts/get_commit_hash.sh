@@ -4,7 +4,7 @@ commit_hash=$(git ls-remote $1 $2 | cut -f 1)
 if [[ -z "$commit_hash" ]] 
 then
   echo
-  echo "Error : could not fetch commit hash "
+  echo "Error : could not fetch commit hash for repository '$1' branch '$2'"
   echo "Repository : $1"
   echo "Branch : $2"
   echo

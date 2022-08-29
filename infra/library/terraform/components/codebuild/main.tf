@@ -1,9 +1,10 @@
 
 locals {
-  repository_name = var.feature_name != "" ? "${var.feature_name}-${var.application_name}" : var.application_name
+  repository_name = var.application_name
   build_name      = local.repository_name
   tagPrefixList   = concat(var.tagPrefixList, [])
-  image_tag       = "latest"
+  image_tag       = var.image_tag
+
   log_tracker_defaults = {
     initial_timeout   = 300
     update_timeout    = 300
@@ -12,10 +13,8 @@ locals {
     max_retry_count   = 15
     print_dots        = false
   }
-  log_tracker = merge(local.log_tracker_defaults, var.log_tracker)
-  
-  
 
+  log_tracker = merge(local.log_tracker_defaults, var.log_tracker)
   
 }
  
@@ -48,19 +47,5 @@ resource "null_resource" "codebuild_provisioner" {
 }
 
 
-data "external" "get_image_url" {
-  program = ["${path.module}/scripts/get_image_url_from_log.sh"]
-  
-  # arbitrary map from strings to strings, passed to the external program as the data query.
-  query = {
-  }
-
-  depends_on = [null_resource.codebuild_provisioner]
-}
-
-locals {
-  get_image_url_out = data.external.get_image_url.result
-  image_url = local.get_image_url_out != null ? local.get_image_url_out.image_url : null
-}
 
 
