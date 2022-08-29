@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         tg_command: ["validate"]
-    uses: .github/workflows/execute-sf.yml@${{ github.ref_name }}
+    uses: .github/workflows/execute-sf.yml
     with:
       workspaceId: testing
       targetAwsAccountId: 553688522943
