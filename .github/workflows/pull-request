@@ -13,10 +13,12 @@ jobs:
       workspaceId: testing
       targetAwsAccountId: 553688522943
       targetAwsRegion: eu-west-1
-      runAll: true
+      runAll: false
+      runModule: init
       tgCommand: ${{ matrix.tg_command }}
       stackFolder: live
       repoReference: ${{ github.ref_name }}
 
     secrets: inherit
+
       
