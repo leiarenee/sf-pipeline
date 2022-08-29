@@ -15,7 +15,7 @@ jobs:
       workspaceId: testing
       targetAwsAccountId: 553688522943
       targetAwsRegion: eu-west-1
-      runAll: false
+      runAll: true
       runModule: 
       tgCommand: ${{ matrix.tg_command }}
       stackFolder: live
