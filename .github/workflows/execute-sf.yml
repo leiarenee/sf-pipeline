@@ -192,5 +192,5 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
         #  body: ${{ steps.get-comment-body.outputs.body }}
-          body : ${body}
+          body : ${{ env.body }}
 
