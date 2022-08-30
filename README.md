@@ -6,7 +6,7 @@ Continious deployment via GitOps approach using AWS Step-functions along with AW
 
 ### Project Links
 
-* [Architecture, System Design and Flow Diagrams](./architecture/README.md)
+* [Architecture, System Design and Flow Diagrams](./docs/architecture/README.md)
 * [Project Board](https://github.com/users/leiarenee/projects/1)
 * [Road Map](https://github.com/leiarenee/sf-pipeline/milestones?direction=asc&sort=due_date)
 
