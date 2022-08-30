@@ -6,10 +6,10 @@ on:
       - main
 
 jobs:
-  execute-step-functions:
+  validate-plan:
     strategy:
       matrix:
-        tg_command: ["validate","plan"]
+        tg_command: ["plan"]
     uses: ./.github/workflows/execute-sf.yml
     with:
       workspaceId: testing

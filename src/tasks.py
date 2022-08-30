@@ -45,14 +45,18 @@ def stack_folder_name(module_folder=True):
   job_folder_name = 'temp-job'
   run_module = os.getenv('RUN_MODULE')
   run_all = 'run-all' if os.getenv('RUN_ALL') == "true" else None
-  abs_working_dir = f'{repo_root}/{working_dir}/{job_folder_name}/{workspace_id}/{stack_folder}/{run_module if module_folder and not run_all else ""}'
+  abs_working_dir = f'{repo_root}/{working_dir}/{job_folder_name}/{workspace_id}/{stack_folder}/{run_module if module_folder else ""}'
   #print (abs_working_dir)
   return abs_working_dir
 
 def find_groups(*args, **kwargs):
   os.putenv('TG_DISABLE_CONFIRM','true')
   tg_working_dir=stack_folder_name()
-  result = subprocess.run(['terragrunt', 'run-all', 'apply', '--terragrunt-working-dir', tg_working_dir], capture_output=True,text=True,input='n')
+  tg_command= os.getenv('TG_COMMAND')
+  if tg_command != 'destroy':
+    tg_command = 'apply'
+
+  result = subprocess.run(['terragrunt', 'run-all', tg_command , '--terragrunt-working-dir', tg_working_dir], capture_output=True,text=True,input='n')
 
   a = re.sub(r'\n\n','\n#\n',result.stderr)
   b = re.findall('Group .\n([^#]+)', a)

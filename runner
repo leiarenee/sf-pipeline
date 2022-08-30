@@ -21,10 +21,22 @@ function catch() {
 }
 
 function job_definitions(){
+
+
   echo "Pipeline Runner started with arguments \"$@\""
 
   if [[ "$RUNNER_MACHINE" = "local-dev" ]]
   then # For local dev environment
+   
+    # Check for python virtual env
+    if [ ! -d venv ]
+    then
+      echo virtual env not found
+      exit 1
+    else
+      source venv/bin/activate
+    fi
+
     script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
     export REPO_ROOT=$(git rev-parse --show-toplevel)
     export LOCAL_DEV=true
@@ -38,13 +50,14 @@ function job_definitions(){
     [[ $CLEAR_SCREEN == "true" ]] && clear
   else  # Run For local docker or remote environment
     export REPO_ROOT=${HOME}
+    echo "\"$RUNNER_MACHINE\"" Environment Variables
+    echo
+    env | sort | grep -vE 'DIRENV|aws_access_key_id|aws_secret_access_key|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|OLDPWD'
+    echo 
   fi
 
   [[ $ECHO_COMMANDS == "true" ]] && set -x
-  echo "\"$RUNNER_MACHINE\"" Environment Variables
-  echo
-  env | sort | grep -vE 'DIRENV|__|_|aws_access_key_id|aws_secret_access_key|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|OLDPWD'
-  echo 
+  
   export WORK_FOLDER=$REPO_ROOT/$WORK_FOLDER_NAME
   echo Repository folder : \"$REPO_ROOT\"
   echo Work folder : \"$WORK_FOLDER\"

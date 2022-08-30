@@ -156,24 +156,7 @@ jobs:
       - name: Trace
         shell: bash
         run: ./sf-run/sqs-poll.sh
-
-        # ------- SUBMIT PLAN to PR --------
-      - name: Fetch Plans from S3
-        id: fetch-plans
-        if: ${{ env.TG_COMMAND == 'plan' }}
-        run: |
-          echo TG_COMMAND $TG_COMMAND
-          echo S3_JOB_FOLDER $S3_JOB_FOLDER
-          aws s3 cp $S3_JOB_FOLDER/plan-files plan-files --recursive 
-          merged=merged-plan-files.txt;echo Terraform Plans > $merged;for file in $(ls plan-files);do echo ${file/.txt/} Module >> $merged;cat plan-files/$file/plan-file.txt >> $merged;echo >> $merged;done;cat $merged
-          body="$(cat $merged | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")";body="${body//'%'/'%25'}";body="${body//$'\n'/'%0A'}";body="${body//$'\r'/'%0D'}" 
-          echo "::set-output name=body::$body"
-      - name: Submit Plan to PR 
-        if: ${{ env.TG_COMMAND == 'plan' }}
-        uses: peter-evans/create-or-update-comment@v2
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ steps.fetch-plans.outputs.body }}
+        # ---- SUBMIT SUCCESS TO PR ---------
       - name: Create Success comment
         uses: peter-evans/create-or-update-comment@v2
         with:
@@ -185,5 +168,27 @@ jobs:
             
             [1]: ${{ env.S3_JOB_FOLDER }}
           reactions: '+1'
-
+        # ------- SUBMIT PLAN to PR --------
+        # https://github.com/marketplace/actions/create-or-update-comment
+      - name: Fetch Plans from S3
+        id: fetch-plans
+        if: ${{ env.TG_COMMAND == 'plan' }}
+        run: |
+          echo TG_COMMAND $TG_COMMAND
+          echo S3_JOB_FOLDER $S3_JOB_FOLDER
+          scripts/merge-plan-files.sh | tee comment-body.txt
+      - id: get-comment-body
+        if: ${{ env.TG_COMMAND == 'plan' }}
+        run: |
+          body="$(cat comment-body.txt)"
+          body="${body//'%'/'%25'}"
+          body="${body//$'\n'/'%0A'}"
+          body="${body//$'\r'/'%0D'}" 
+          echo "::set-output name=body::$body"
+      - name: Submit Plan to PR  
+        if: ${{ env.TG_COMMAND == 'plan' }}
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.get-comment-body.outputs.body }}
 
