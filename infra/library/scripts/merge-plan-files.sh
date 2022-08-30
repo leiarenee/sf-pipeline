@@ -24,7 +24,7 @@ fi
 
 echo "Preparing merged plan file output from s3_job_folder : $s3_job_folder"
 
-aws s3 cp "$s3_job_folder/plan-files" $temp_script_folder/ --recursive 
+aws --quiet s3 cp "$s3_job_folder/plan-files" $temp_script_folder/ --recursive 
 
 echo Terraform Plans > $merged
 
