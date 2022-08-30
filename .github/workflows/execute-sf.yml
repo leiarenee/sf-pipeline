@@ -167,7 +167,6 @@ jobs:
             - [S3_JOB_FOLDER][1]
             
             [1]: ${{ env.S3_JOB_FOLDER }}
-          reactions: '+1'
         # ------- SUBMIT PLAN to PR --------
         # https://github.com/marketplace/actions/create-or-update-comment
       - name: Fetch Plans from S3
@@ -178,6 +177,7 @@ jobs:
           echo S3_JOB_FOLDER $S3_JOB_FOLDER
           scripts/merge-plan-files.sh | tee comment-body.txt
       - id: get-comment-body
+        name: Get Comment Body
         if: ${{ env.TG_COMMAND == 'plan' }}
         run: |
           body="$(cat comment-body.txt)"
