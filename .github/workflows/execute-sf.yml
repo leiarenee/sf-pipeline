@@ -176,15 +176,12 @@ jobs:
           echo TG_COMMAND $TG_COMMAND
           echo S3_JOB_FOLDER $S3_JOB_FOLDER
           scripts/merge-plan-files.sh | tee comment-body.txt
-      - id: get-comment-body
-        name: Get Comment Body
-        if: ${{ env.TG_COMMAND == 'plan' }}
-        run: |
           body="$(cat comment-body.txt)"
           body="${body//'%'/'%25'}"
           body="${body//$'\n'/'%0A'}"
           body="${body//$'\r'/'%0D'}" 
           echo "body=$body" >> $GITHUB_ENV
+
       # echo "::set-output name=body::$body"
       - name: Submit Plan to PR  
         if: ${{ env.TG_COMMAND == 'plan' }}
