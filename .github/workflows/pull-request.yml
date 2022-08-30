@@ -16,7 +16,7 @@ jobs:
       targetAwsAccountId: 553688522943
       targetAwsRegion: eu-west-1
       runAll: true
-      runModule: 
+      runModule: init
       tgCommand: ${{ matrix.tg_command }}
       stackFolder: live
       repoReference: ${{ github.head_ref }}
