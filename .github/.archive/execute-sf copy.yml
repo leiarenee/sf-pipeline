@@ -48,8 +48,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      # -------- AWS CREDENTIALS -----------
       - name: Configure AWS credentials
         id: creds
         uses: aws-actions/configure-aws-credentials@v1
@@ -58,37 +56,35 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-1
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
-        
-        # ------------ EXECUTE -------------
       - name: Execute
         shell: bash
-        run: ./sf-run/sf-execute.sh
         env: 
           # PYTHON
           PYTHONPATH: src
           PYTHONTRACEMALLOC: 25
 
           # WORKSPACE
-          WORKSPACE_ID: ${{ inputs.workspaceId }}
+          WORKSPACE_ID: ${{ github.event.inputs.workspaceId }}
 
           # APP REPOSITORY
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
           REPO_NAME: sf-infra
-          REPO_REFERENCE: ${{ inputs.repoReference }}
+          REPO_REFERENCE: ${{ github.ref_name }}
           REPO_TYPE: public
           USER_NAME: ${{ github.triggering_actor }}
+          USER_EMAIL: ${{ github.event.pusher.email }}
 
           # VERSIONS
           TERRAFORM_VERSION: 1.2.7
           TERRAGRUNT_VERSION: 0.38.7
 
           # TERRAGRUNT
-          RUN_ALL: ${{ inputs.runAll }}
-          TG_COMMAND: ${{ inputs.tgCommand }}
-          TG_ARGUMENTS: ${{ inputs.tgArguments }}
-          RUN_MODULE: ${{ inputs.runModule }}
-          STACK_FOLDER: ${{ inputs.stackFolder }}
+          RUN_ALL: ${{ github.event.inputs.runAll }}
+          TG_COMMAND: ${{ github.event.inputs.tgCommand }}
+          TG_ARGUMENTS: ${{ github.event.inputs.tgArguments }}
+          RUN_MODULE: ${{ github.event.inputs.runModule }}
+          STACK_FOLDER: ${{ github.event.inputs.stackFolder }}
           BUCKET_SUFFIX: github
           INTERACTIVE: false
           FORCE_INIT: false
@@ -97,9 +93,9 @@ jobs:
           LOG_LEVEL: info
 
           # AWS
-          TARGET_AWS_REGION: ${{ inputs.targetAwsRegion }}
+          TARGET_AWS_REGION: ${{ github.event.inputs.targetAwsRegion }}
           TARGET_AWS_ACCOUNT_NAME: Testing Environment
-          TARGET_AWS_ACCOUNT_ID: ${{ inputs.targetAwsAccountId }}
+          TARGET_AWS_ACCOUNT_ID: ${{ github.event.inputs.targetAwsAccountId }}
           TARGET_AWS_PROFILE: testing
           TARGET_AWS_SECRET: TARGET_AWS_ACCESS
           PIPELINE_AWS_REGION: eu-west-1
@@ -136,7 +132,7 @@ jobs:
           ROLE_EVENTBRIDGE: arn:aws:iam::377449198785:role/service-role/Amazon_EventBridge_Invoke_Batch_Job_Queue
 
           # TTL
-          TTL_DURATION_MINUTES: ${{ inputs.ttlDuration }}
+          TTL_DURATION_MINUTES: ${{ github.event.inputs.ttlDuration }}
 
           # STEP FUNCTIONS
           PIPELINE_STATE_MACHINE_NAME: Pipeline-State-Machine-enabling-drake
@@ -151,41 +147,10 @@ jobs:
 
           # GITHUB
           # GITHUB_CONTEXT: ${{ toJson(github) }} 
-        
-        # ------------ TRACE ---------------
+
+        run: ./sf-run/sf-execute.sh
       - name: Trace
         shell: bash
         run: ./sf-run/sqs-poll.sh
-        # ---- SUBMIT SUCCESS TO PR ---------
-      - name: Create Success comment
-        uses: peter-evans/create-or-update-comment@v2
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ## ${{ env.TG_COMMAND }} Command Succesfull
-            ### Artifacts
-            - [S3_JOB_FOLDER][1]
-            
-            [1]: ${{ env.S3_JOB_FOLDER }}
-        # ------- SUBMIT PLAN to PR --------
-        # https://github.com/marketplace/actions/create-or-update-comment
-      - name: Fetch Plans from S3
-        id: fetch-plans
-        if: ${{ env.TG_COMMAND == 'plan' }}
-        run: |
-          echo TG_COMMAND $TG_COMMAND
-          echo S3_JOB_FOLDER $S3_JOB_FOLDER
-          scripts/merge-plan-files.sh | tee comment-body.txt
-          body="$(cat comment-body.txt | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")"
-          body="${body//'%'/'%25'}"
-          body="${body//$'\n'/'%0A'}"
-          body="${body//$'\r'/'%0D'}" 
-          echo "::set-output name=body::$body"
-      - name: Submit Plan to PR  
-        if: ${{ env.TG_COMMAND == 'plan' }}
-        uses: peter-evans/create-or-update-comment@v2
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ steps.fetch-plans.outputs.body }}
 
 

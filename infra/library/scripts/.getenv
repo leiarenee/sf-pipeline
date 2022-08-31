@@ -39,6 +39,7 @@ clear
     then
       inherit_path=$(realpath "$repo_root/$inherit_env")
       inherit_files="$inherit_path/.env $inherit_path/.dev.env"
+      
       env_file_list=$inherit_files
     fi
 
@@ -51,7 +52,7 @@ clear
 # Print evaluated env file list
 env_file_str=${env_files[@]}
 parent_path="$(realpath "$repo_root/..")/"
-echo -e "${CYAN}Loading env files${NC} : ${MAGENTA}${env_file_str//"$parent_path"/.}${NC}\n"
+echo -e "${CYAN}Loading env files${NC} : ${MAGENTA}${env_file_str//"$parent_path"/.}${NC}"
 
 # Declare environment varibles from env files
 for env_file in ${env_files[@]}
@@ -59,10 +60,11 @@ do
   # If file exists
   if [ -f $env_file ]
   then
+    echo -e "\n- Loading ${CYAN}$env_file${NC}"
     # Extract lines into array, using line break as seperater symbol.
-    IFS=$'\n' env_vars=($(< $env_file))
 
-    # For each line
+    IFS=$'\n' env_vars="$(cat $env_file | sed s/\?/ƒ/g | sed s/\*/∂/g)" # ?,* makes problem hence we replace it
+    
     for env_var in ${env_vars[@]}
     do
       first_char=${env_var:0:1}   # Find firs character
@@ -72,15 +74,15 @@ do
         IFS='≈'                   # Set Internal Field Seperator (IFS)
         arr=($subst)              # Make it array having 2 elements.
         key=${arr[0]}             # First is variable name.
-        value=${arr[1]}           # Second is variable value.
-        export $key=$value
+        value=$(echo ${arr[1]} | sed s/ƒ/\?/g | sed s/∂/\*/g)    # Second is variable value, restore problematic characters
+        export $key="$value"
         echo -e "${BLUE}$key${NC} = ${GREEN}$value${NC}"
-        unset IFS                 # Restore IFS
+        IFS=$'\n'
       fi
     done
   fi
 done
-
+unset IFS
 # Restore script_dir to original value if this script is sourced
 [[ "$BASH_SOURCE" != "0" && ! -z $old_script_dir ]] && script_dir=$old_script_dir || true
 

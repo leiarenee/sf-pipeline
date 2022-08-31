@@ -1,4 +1,5 @@
 name: Manual Trigger
+
 on:
   workflow_dispatch:
     inputs:
@@ -69,8 +70,8 @@ on:
         default: 30
 
 jobs:
-  terragrunt-validate-build-test:
-    uses: .github/workflows/execute-sf.yml@${{ github.ref_name }}
+  execute-step-functions:
+    uses: ./.github/workflows/execute-sf.yml
     with:
       workspaceId: ${{ inputs.workspaceId }}
       targetAwsAccountId: ${{ inputs.targetAwsAccountId }}
