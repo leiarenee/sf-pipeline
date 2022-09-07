@@ -35,14 +35,17 @@ RUN mkdir .aws && touch .aws/credentials
 # Environment variables
 ENV PYTHONPATH=src
 
-# Copy Files
+# Copy Folders
 COPY src src
 COPY infra/library infra/library
 
-
-# Copy Folder
+# Copy Files
 COPY infra/pipeline/docker/entrypoint .
 COPY runner .
+
+# Copy links
+COPY library .
+COPY scripts .
 
 # SSH
 RUN mkdir .ssh && touch .ssh/known_hosts
