@@ -45,8 +45,8 @@ def stack_folder_name(module_folder=True):
   job_folder_name = 'temp-job'
   run_module = os.getenv('RUN_MODULE')
   run_all = 'run-all' if os.getenv('RUN_ALL') == "true" else None
-  abs_working_dir = f'{repo_root}/{working_dir}/{job_folder_name}/{workspace_id}/{stack_folder}/{run_module if module_folder else ""}'
-  #print (abs_working_dir)
+  abs_working_dir = f'{repo_root}/{working_dir}/{job_folder_name}/{workspace_id}/{stack_folder}/{run_module if module_folder and run_module else ""}'
+  # print (abs_working_dir)
   return abs_working_dir
 
 def find_groups(*args, **kwargs):

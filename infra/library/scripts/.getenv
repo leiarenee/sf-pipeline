@@ -64,8 +64,15 @@ do
         arr=($subst)              # Make it array having 2 elements.
         key=${arr[0]}             # First is variable name.
         value=$(echo ${arr[1]} | sed s/ƒ/\?/g | sed s/∂/\*/g)    # Second is variable value, restore problematic characters
-        export $key="$value"
-        echo -e "${BLUE}$key${NC} = ${GREEN}$value${NC}"
+        
+        if [ ! -z $value ]
+        then
+          export $key="$value"
+          echo -e "${BLUE}$key${NC} = ${GREEN}$value${NC}"
+        else
+          unset $key
+        fi
+
         IFS=$'\n'
       fi
     done
