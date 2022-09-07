@@ -41,12 +41,14 @@ then
   cat $tg_module_folder/plan-file.txt
 fi
 
+[ -z $progress ] && progress = null
+
 # SQS Message Handling
 if [[ ! -z $SQS_QUEUE_URL ]]
 then
   # Print SQS variables
   echo
-  message_body="{\"message\":{\"status\":\"Module completed '$completed_module'\",\"progress\":$progress,\"module\":\"$completed_module\"}}"
+  message_body="{\"message\":{\"status\":\"Module completed $completed_module\",\"progress\":$progress,\"module\":\"$completed_module\"}}"
   echo SQS Message Body $(echo "$message_body" | jq .)
   echo SQS Queue URL $SQS_QUEUE_URL
   echo SQS Message Group ID $SQS_MESSAGE_GROUP_ID

@@ -104,11 +104,13 @@ do
     message_id=$(echo $decoded_message | jq -r .MessageId)
     message=$(echo $message_body | jq -r .message)
     #echo $message
+
     status=$(echo $message | jq -r .status)
     progress=$(echo $message | jq .progress)
     module=$(echo $message | jq .module)
-    batch_id=$(echo $message | jq -r .jobId)
+    batch_id=$(echo $message | jq -r .jobId) 
     
+
     # Delete message
 
     $scripts/awsf sqs delete-message --queue-url $SQS_QUEUE_URL --receipt-handle $receipt_handle

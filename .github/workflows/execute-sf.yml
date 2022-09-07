@@ -93,7 +93,7 @@ jobs:
           INTERACTIVE: false
           FORCE_INIT: false
           COMPACT_WARNINGS: true
-          COMPACT_STDOUT: true
+          COMPACT_STDOUT: false
           LOG_LEVEL: info
 
           # AWS
