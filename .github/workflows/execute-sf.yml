@@ -151,6 +151,17 @@ jobs:
 
           # GITHUB
           # GITHUB_CONTEXT: ${{ toJson(github) }} 
+
+          # AWS
+          AWS_PAGER:
+          AWS_RETRY_MODE: standard
+          AWS_MAX_ATTEMPTS: 5
+
+          # AWSF
+          AWSF_MAX_ATTEMPTS: 5
+          AWSF_BACKOFF_RATE: 3
+          AWSF_EXPONENTIAL_BACKOFF: true
+          AWSF_SILENT: true
         
         # ------------ TRACE ---------------
       - name: Trace

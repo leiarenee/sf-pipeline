@@ -21,10 +21,11 @@ do
   attempt=$(($attempt + 1))
 
   # Run the aws command
-  aws "$@"
+  result=$(aws "$@")
 
   if [ $? -eq 0 ]
   then
+    echo "$result"
     exit 0
   fi
 
@@ -39,8 +40,8 @@ do
   # Print status
   if [[ $silent != true ]]
   then
-    echo -e "${MAGENTA}Current attempt : ${GREEN}$attempt ${MAGENTA}, max_attempts : ${GREEN}$max_attempt${NC} "
-    echo -e "${MAGENTA}Waiting for ${GREEN}$wait_time ${MAGENTA} seconds and trying again ${CYAN}'aws $@' ${NC}"
+    echo -e "${MAGENTA}Current attempt : ${GREEN}$attempt ${MAGENTA}, max_attempts : ${GREEN}$max_attempt${NC} " >&2
+    echo -e "${MAGENTA}Waiting for ${GREEN}$wait_time ${MAGENTA} seconds and trying again ${CYAN}'aws $@' ${NC}" >&2
   fi
 
   # Sleep for calculated time in seconds
