@@ -65,7 +65,7 @@ on:
         - test
       runModule:
         description: Terragrunt Module Folder - Choose from https://github.com/leiarenee/sf-infra/tree/main/infra/live
-        default: 
+        default: ""
       ttlDuration:
         description: Time to Live in minutes 
         default: 30
