@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set +e
 log_file=log.txt
 
 # Extract repository root
@@ -109,9 +109,9 @@ do
     batch_id=$(echo $message | jq -r .jobId)
     
     # Delete message
-    set +e
+
     $scripts/awsf sqs delete-message --queue-url $SQS_QUEUE_URL --receipt-handle $receipt_handle
-    set -e
+
 
     # Write status
     bar_end=$(($progress*3/10))

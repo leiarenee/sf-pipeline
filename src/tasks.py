@@ -168,7 +168,35 @@ def delete_event(*args, **kwargs):
   print(f'Successfully removed "{rule_name}"')
   return response
 
+# Make a search
+def recursive_scan(root_object, search_for='', callback_function='', object_path=''):
+  if isinstance(root_object, Dict):
+    for key, value in root_object.items():
+      if key == 'initialize-tf-session':
+        value['inputs.tfvars.json'] = {
+            'user_id': user_id,
+            'user_email': user_email,
+            'course': course_name,
+            'aws_batch_id' : aws_batch_id,
+            'active_lab_id' : active_lab_id
+        }
+      if key != search_for:
+        recursive_scan(value, search_for, f'{object_path}/{key}' if object_path else key)
+      else:
+        # Found, do the job
+        #print(object_path)
+        callback_function(object_path, root_object)
 
+def skip_outputs(stack):
+
+  # Search root object and its sub objects for terragrunt.hcl
+  recursive_scan(stack, 'terragrunt.hcl', 'embed_code')
+
+
+
+
+
+# -------------------------------------------
 if __name__ == '__main__':
   json_modules()
   
