@@ -1,9 +1,6 @@
 #!/bin/bash
 set -e
-if [[ $ECHO_COMMANDS == true ]]
-then
-  set +x
-fi
+[[ $ECHO_COMMANDS == "true" ]] && set -x
 
 script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
 repo_root=$(git rev-parse --show-toplevel)
