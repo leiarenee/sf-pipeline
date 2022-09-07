@@ -1,10 +1,18 @@
+
 # colors
-TERM=xterm-256color
-NC=`tput -T $TERM sgr0`
-RED=`tput -T $TERM setaf 1`
-GREEN=`tput -T $TERM setaf 2`
-YELLOW=`tput -T $TERM setaf 3`
-BLUE=`tput -T $TERM setaf 4`
-MAGENTA=`tput -T $TERM setaf 5`
-CYAN=`tput -T $TERM setaf 6`
-WHITE=`tput -T $TERM setaf 7`
+NC='\033[0m' 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+LGRAY='\033[0;37m'
+GRAY='\033[0;90m'
+LRED='\033[0;91m'
+LGREEN='\033[0;92m'
+LYELLOW='\033[0;93m'
+LBLUE='\033[0;94m'
+LMAGENTA='\033[0;95m'
+LCYAN='\033[0;96m'
+WHITE='\033[0;97m'

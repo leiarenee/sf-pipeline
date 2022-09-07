@@ -44,8 +44,8 @@ COPY infra/pipeline/docker/entrypoint .
 COPY runner .
 
 # Copy links
-COPY library .
-COPY scripts .
+COPY library library
+COPY scripts scripts
 
 # SSH
 RUN mkdir .ssh && touch .ssh/known_hosts

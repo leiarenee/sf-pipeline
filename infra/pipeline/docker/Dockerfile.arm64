@@ -33,14 +33,17 @@ RUN mkdir .terraform.d && mkdir .terraform.d/plugin-cache
 # Environment variables
 ENV PYTHONPATH=src
 
-# Copy Files
+# Copy Folders
 COPY src src
 COPY infra/library infra/library
 
-
-# Copy Folder
-COPY infra/docker/entrypoint .
+# Copy Files
+COPY infra/pipeline/docker/entrypoint .
 COPY runner .
+
+# Copy links
+COPY library library
+COPY scripts scripts
 
 ENTRYPOINT [ "./entrypoint" ]
 CMD ["validate"]

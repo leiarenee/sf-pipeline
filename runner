@@ -5,7 +5,7 @@ trap 'catch $? $LINENO' ERR
 
 # Extract repository root
 runner_script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
-scripts="$runner_script_dir/library/scripts"
+scripts="$runner_script_dir/scripts"
 
 # Source Colors
 source "$scripts/colors.sh"
@@ -542,16 +542,16 @@ function log_job_resource_links(){
   job_resources="$s3_job_folder/job-resources"
   echo
   echo -e "\n${YELLOW}---------------- Artifacts ------------------${NC}\n"
-  echo "${MAGENTA} - S3 Job Folder"
+  echo -e "${MAGENTA} - S3 Job Folder ${NC}"
   echo -e "${CYAN}$s3_job_folder/${NC}"
   echo
-  echo "${MAGENTA}- TAR File for $WORK_FOLDER${NC}"
+  echo -e "${MAGENTA}- TAR File for $WORK_FOLDER ${NC}"
   echo -e "${CYAN}$tar_file${NC}"
   echo
-  echo "${MAGENTA}- Plan files${NC}"
+  echo -e "${MAGENTA}- Plan files ${NC}"
   echo -e "${CYAN}$plan_files/${NC}"
   echo 
-  echo "${MAGENTA}- Job Resources${NC}"
+  echo -e "${MAGENTA}- Job Resources${NC}"
   echo -e "${CYAN}$job_resources/${NC}"
   echo
 
