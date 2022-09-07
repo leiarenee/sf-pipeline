@@ -127,6 +127,7 @@ jobs:
           UPLOAD_JOB_RESOURCES: true
           UPLOAD_PLAN_FILES: true
           SEND_SQS_MESSAGES: true
+          SHOW_FILTERED_ERRORS: true
 
           # JOB
           JOB_DEFINITION: arn:aws:batch:eu-west-1:377449198785:job-definition/tf_pipeline_job_definition
