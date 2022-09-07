@@ -1,5 +1,10 @@
 #!/bin/bash
 set -e
+if [[ $ECHO_COMMANDS == true ]]
+then
+  set +x
+fi
+
 script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
 repo_root=$(git rev-parse --show-toplevel)
 scripts="$repo_root/library/scripts"
@@ -50,3 +55,4 @@ echo "EXECUTION_ARN=$EXECUTION_ARN" >> $GITHUB_ENV
 echo "S3_JOB_FOLDER=$S3_JOB_FOLDER" >> $GITHUB_ENV
 echo "TG_COMMAND=$TG_COMMAND" >> $GITHUB_ENV
 echo "REPO_REFERENCE=$REPO_REFERENCE" >> $GITHUB_ENV
+echo "ECHO_COMMANDS=$ECHO_COMMANDS" >> $GITHUB_ENV

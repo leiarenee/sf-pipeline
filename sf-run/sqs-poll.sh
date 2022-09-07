@@ -1,5 +1,9 @@
 #!/bin/bash
 set +e
+if [[ $ECHO_COMMANDS == true ]]
+then
+  set +x
+fi
 log_file=log.txt
 
 # Extract repository root
