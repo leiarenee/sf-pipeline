@@ -4,8 +4,8 @@ set -e
 trap 'catch $? $LINENO' ERR
 
 # Extract repository root
-repo_root=$(git rev-parse --show-toplevel) 
-scripts="$repo_root/library/scripts"
+runner_script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
+scripts="$runner_script_dir/library/scripts"
 
 # Source Colors
 source "$scripts/colors.sh"
