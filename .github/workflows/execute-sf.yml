@@ -147,7 +147,7 @@ jobs:
           MAX_SQS_MESSAGES: 10
 
           # RUNTIME
-          ECHO_COMMANDS: true
+          ECHO_COMMANDS: false
 
           # GITHUB
           # GITHUB_CONTEXT: ${{ toJson(github) }} 

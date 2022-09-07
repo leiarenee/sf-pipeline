@@ -137,7 +137,6 @@ do
       echo
       echo
       echo - End of $PIPELINE_STATE_MACHINE_NAME -
-      POLL_INTERVAL=0
       break
     fi
   done
