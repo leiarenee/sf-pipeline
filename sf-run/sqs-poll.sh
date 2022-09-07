@@ -112,18 +112,19 @@ do
 
     $scripts/awsf sqs delete-message --queue-url $SQS_QUEUE_URL --receipt-handle $receipt_handle
 
-
-    # Write status
-    bar_end=$(($progress*3/10))
-    #echo $bar_end
-    echo -n "  [ "
-    for ((i=1; i<=$bar_end; i++)); do echo -n "="; done
-    for ((i=$bar_end; i<=30; i++)); do echo -n " "; done
-    echo -n "] "
-    echo "  Progress : $progress%    Status : $status"
-    [ ! -z $batch_id ] && [[ $batch_id != "null" ]] && echo "batch_id received : $batch_id"
-    #echo -ne "    Progress : $progress%        Status : $status\033[0K\r"  # Write to single line
-    
+    if [ -z $progress ]
+    then
+      # Write status
+      bar_end=$(($progress*3/10))
+      #echo $bar_end
+      echo -n "  [ "
+      for ((i=1; i<=$bar_end; i++)); do echo -n "="; done
+      for ((i=$bar_end; i<=30; i++)); do echo -n " "; done
+      echo -n "] "
+      echo "  Progress : $progress%    Status : $status"
+      [ ! -z $batch_id ] && [[ $batch_id != "null" ]] && echo "batch_id received : $batch_id"
+      #echo -ne "    Progress : $progress%        Status : $status\033[0K\r"  # Write to single line
+    fi
     end=$(echo $message | jq .end)
     
     if [[ $end == "null" ]]
