@@ -44,7 +44,7 @@ on:
         type: boolean
       tgCommand: 
         description: Terragrunt command
-        default: apply
+        default: plan
         type: choice
         options:
         - validate
@@ -57,10 +57,11 @@ on:
         description: TG Cli arguments
       stackFolder:
         description: Main Stack Folder
-        default: live
+        default: light
         type: choice
         options:
         - live
+        - light
         - test
       runModule:
         description: Terragrunt Module Folder - Choose from https://github.com/leiarenee/sf-infra/tree/main/infra/live
