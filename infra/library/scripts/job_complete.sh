@@ -17,7 +17,7 @@ echo ------------------------------------------------------
 echo 
 
 # Calculate percentage
-if [ ! -z $TG_MODULES_COUNT ]
+if [ ! -z $TG_MODULES_COUNT ] && [ $TG_MODULES_COUNT -ne 0 ]
 then
   progress=$(($INITIAL_PROGRESS + ($module_count * ($MODULES_FINAL_PROGRESS - $INITIAL_PROGRESS) / $TG_MODULES_COUNT)))
 else
