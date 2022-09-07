@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
+repo_root=$(git rev-parse --show-toplevel)
+scripts="$repo_root/library/scripts"
 
 # Shell Script for State Machine Execution
 export STATE_MACHINE_ARN=arn:aws:states:$PIPELINE_AWS_REGION:$PIPELINE_AWS_ACCOUNT_ID:stateMachine:$PIPELINE_STATE_MACHINE_NAME
@@ -25,7 +27,7 @@ fi
 
 # Step Functions
 echo "State Machine Starting..."
-result=$(aws --region $PIPELINE_AWS_REGION stepfunctions start-execution --state-machine-arn $STATE_MACHINE_ARN --input "$test_inputs")
+result=$($scripts/awsf --region $PIPELINE_AWS_REGION stepfunctions start-execution --state-machine-arn $STATE_MACHINE_ARN --input "$test_inputs")
 echo $result | jq .
 export EXECUTION_ARN=$(echo $result | jq -r .executionArn)
 IFS=":"; arr=($EXECUTION_ARN); unset IFS

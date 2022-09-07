@@ -10,6 +10,9 @@ repo_root=$(git rev-parse --show-toplevel)
 # Source Colors
 source $repo_root/infra/library/scripts/colors.sh
 
+# Source env vars
+source $repo_root/.getenv
+
 # Initialize github env file
 if [ -z $GITHUB_ENV ]
 then
