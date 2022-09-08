@@ -154,7 +154,7 @@ do
 
   export LOG_STREAM_NAME=$(echo $describe_batch | jq -r '.jobs[0].container.logStreamName')
 
-  if [[ $LOG_STREAM_NAME != $old_log_stream_name ]] 
+  if [[ $LOG_STREAM_NAME != $old_log_stream_name ]] && [[ $LOG_STREAM_NAME != null ]]
   then
     old_log_stream_name=$LOG_STREAM_NAME
     echo "Log LOG_STREAM_NAME : $LOG_STREAM_NAME"
