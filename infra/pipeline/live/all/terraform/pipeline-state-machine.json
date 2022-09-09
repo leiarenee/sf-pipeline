@@ -290,6 +290,10 @@
             "Value.$": "$.pipeline.finalProgress"
           },
           {
+            "Name": "SHOW_FILTERED_ERRORS",
+            "Value.$": "$.pipeline.showFilteredErrors"
+          },
+          {
             "Name": "SQS_QUEUE_URL",
             "Value.$": "$.createQueue.QueueUrl"
           },

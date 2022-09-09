@@ -1,0 +1,52 @@
+#!/bin/bash
+# Script to call aws client for a number of times until it succeeds or max attempt is reached
+
+set +e
+
+repo_root=$(git rev-parse --show-toplevel)
+scripts="$repo_root/library/scripts"
+
+# Source Colors
+source $repo_root/infra/library/scripts/colors.sh
+
+# Definitions
+attempt=0
+max_attempt=${AWSF_MAX_ATTEMPTS:-5}
+backoff_rate=${AWSF_BACKOFF_RATE:-3}
+exponential_backoff=${AWSF_EXPONENTIAL_BACKOFF:-true}
+silent=${AWSF_SILENT:-false}
+
+while [ $attempt -lt $max_attempt ]
+do
+  attempt=$(($attempt + 1))
+
+  # Run the aws command
+  result=$(aws "$@")
+
+  if [ $? -eq 0 ]
+  then
+    echo "$result"
+    exit 0
+  fi
+
+  # Calculate wait time
+  if [[ $exponential_backoff == true ]]
+  then
+    wait_time=$(($backoff_rate ** $attempt))
+  else
+     wait_time=$(($backoff_rate * $attempt))
+  fi
+
+  # Print status
+  if [[ $silent != true ]]
+  then
+    echo -e "${MAGENTA}Current attempt : ${GREEN}$attempt ${MAGENTA}, max_attempts : ${GREEN}$max_attempt${NC} " >&2
+    echo -e "${MAGENTA}Waiting for ${GREEN}$wait_time ${MAGENTA} seconds and trying again ${CYAN}'aws $@' ${NC}" >&2
+  fi
+
+  # Sleep for calculated time in seconds
+  sleep $wait_time
+  
+done
+
+set -e

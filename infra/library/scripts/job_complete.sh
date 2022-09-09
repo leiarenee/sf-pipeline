@@ -17,7 +17,7 @@ echo ------------------------------------------------------
 echo 
 
 # Calculate percentage
-if [ ! -z $TG_MODULES_COUNT ]
+if [ ! -z $TG_MODULES_COUNT ] && [ $TG_MODULES_COUNT -ne 0 ]
 then
   progress=$(($INITIAL_PROGRESS + ($module_count * ($MODULES_FINAL_PROGRESS - $INITIAL_PROGRESS) / $TG_MODULES_COUNT)))
 else
@@ -41,12 +41,14 @@ then
   cat $tg_module_folder/plan-file.txt
 fi
 
+[ -z $progress ] && progress = "null"
+
 # SQS Message Handling
 if [[ ! -z $SQS_QUEUE_URL ]]
 then
   # Print SQS variables
   echo
-  message_body="{\"message\":{\"status\":\"Module completed '$completed_module'\",\"progress\":$progress,\"module\":\"$completed_module\"}}"
+  message_body="{\"message\":{\"status\":\"Module completed\",\"progress\":$progress,\"module\":\"$completed_module\"}}"
   echo SQS Message Body $(echo "$message_body" | jq .)
   echo SQS Queue URL $SQS_QUEUE_URL
   echo SQS Message Group ID $SQS_MESSAGE_GROUP_ID

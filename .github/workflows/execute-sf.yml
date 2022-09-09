@@ -93,7 +93,7 @@ jobs:
           INTERACTIVE: false
           FORCE_INIT: false
           COMPACT_WARNINGS: true
-          COMPACT_STDOUT: true
+          COMPACT_STDOUT: false
           LOG_LEVEL: info
 
           # AWS
@@ -127,6 +127,7 @@ jobs:
           UPLOAD_JOB_RESOURCES: true
           UPLOAD_PLAN_FILES: true
           SEND_SQS_MESSAGES: true
+          SHOW_FILTERED_ERRORS: true
 
           # JOB
           JOB_DEFINITION: arn:aws:batch:eu-west-1:377449198785:job-definition/tf_pipeline_job_definition
@@ -151,6 +152,17 @@ jobs:
 
           # GITHUB
           # GITHUB_CONTEXT: ${{ toJson(github) }} 
+
+          # AWS
+          AWS_PAGER:
+          AWS_RETRY_MODE: standard
+          AWS_MAX_ATTEMPTS: 5
+
+          # AWSF
+          AWSF_MAX_ATTEMPTS: 5
+          AWSF_BACKOFF_RATE: 3
+          AWSF_EXPONENTIAL_BACKOFF: true
+          AWSF_SILENT: true
         
         # ------------ TRACE ---------------
       - name: Trace

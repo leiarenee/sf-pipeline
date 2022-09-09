@@ -3,11 +3,13 @@ set -e
 
 trap 'catch $? $LINENO' ERR
 
-# colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Extract repository root
+runner_script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
+scripts="$runner_script_dir/scripts"
+
+# Source Colors
+source "$scripts/colors.sh"
+
 
 function catch() {
   echo "Bash Script Error $1 occurred on Line $2"
@@ -469,7 +471,8 @@ function run_terragrunt(){
     export TG_DISABLE_CONFIRM=true
   fi
   
-  [[ $INTERACTIVE != "true" ]] && set +e
+  set +e
+
   [[ -z $LOG_LEVEL ]] && export LOG_LEVEL=info
 
   # Run terragrunt init
@@ -500,22 +503,33 @@ function run_terragrunt(){
   [ $tg_err -ne 0 ] && echo Terragrunt Exitcode: $tg_err
 
   # Prepare a consise error log
-  
   cat $WORK_FOLDER/temp-job/stderr.log | grep -vE 'level=debug|locals|msg=run_cmd|msg=Detected|msg=Included|msg=\[Partial\]|msg=Executing|msg=WARN|msg=Setting|^$|msg=Generated|msg=Downloading|msg=The|msg=Are|msg=Reading|msg=Copying|msg=Debug|must wait|msg=Variables|msg=Dependency|msg=[0-9] error occurred|Cannot process|=>|msg=Stack|msg=Unable|errors occurred|sensitive|BEGIN RSA|\[0m|You may now|any changes|should now|If you ever|If you forget|- Reusing previous| \* exit status|Include this file|Terraform can guarantee|^\t\* |^ prefix' \
     | sed s/$escaped_stack_path//g > $WORK_FOLDER/temp-job/stderr_filtered.log
   
-
   # If error occurs write filtered error into terminal (stdout)
   if [ $tg_err -ne 0 ] && [[ $COMPACT_STDOUT == true ]]
   then
-    echo -e "${RED}------- STDERR  ----------${NC}"
+    echo -e "${RED}------- ALL STDERR  ----------${NC}"
     cat $WORK_FOLDER/temp-job/stderr.log
-    echo ----------------------------------------
-    echo Filtered TF Errors
-    cat $WORK_FOLDER/temp-job/stderr.log | grep '│'
-    echo ----------------------------------------
   fi
 
+  if [ $tg_err -ne 0 ] && [[ $SHOW_FILTERED_ERRORS == true ]]
+  then
+    echo -e "${RED}--------Filtered TERRAGRUNT STDERR--------------${NC}"
+    cat $WORK_FOLDER/temp-job/stderr_filtered.log
+    echo -e "\n${RED}--------Filtered TERRAGRUNT Error--------------${NC}"
+    echo -e "${WHITE}"
+    cat $WORK_FOLDER/temp-job/stderr_filtered.log | grep 'level=error'
+    echo -e "${NC}"
+    if [ ! -z $(cat $WORK_FOLDER/temp-job/stderr.log | grep '│') ]
+    then
+      echo -e "\n${RED}--------Filtered TERRAFORM Errors--------------${NC}"
+      cat $WORK_FOLDER/temp-job/stderr.log | grep '│'
+    fi
+  fi
+
+  [ $tg_err -ne 0 ] && echo -e "\n${RED}-----------------------------------------------${NC}"
+  
   set -e
 
 }
@@ -527,18 +541,18 @@ function log_job_resource_links(){
   plan_files="$s3_job_folder/plan-files"
   job_resources="$s3_job_folder/job-resources"
   echo
-  echo "-------- Artifacts ----------"
-  echo "- S3 Job Folder"
-  echo -e "${BLUE}$s3_job_folder/${NC}"
+  echo -e "\n${YELLOW}---------------- Artifacts ------------------${NC}\n"
+  echo -e "${MAGENTA} - S3 Job Folder ${NC}"
+  echo -e "${CYAN}$s3_job_folder/${NC}"
   echo
-  echo "- TAR File for $WORK_FOLDER"
-  echo -e "${BLUE}$tar_file${NC}"
+  echo -e "${MAGENTA}- TAR File for $WORK_FOLDER ${NC}"
+  echo -e "${CYAN}$tar_file${NC}"
   echo
-  echo "- Plan files"
-  echo -e "${BLUE}$plan_files/${NC}"
+  echo -e "${MAGENTA}- Plan files ${NC}"
+  echo -e "${CYAN}$plan_files/${NC}"
   echo 
-  echo "- Job Resources"
-  echo -e "${BLUE}$job_resources/${NC}"
+  echo -e "${MAGENTA}- Job Resources${NC}"
+  echo -e "${CYAN}$job_resources/${NC}"
   echo
 
 }
@@ -559,5 +573,5 @@ put_outputs_to_s3
 send_progress "Batch_Job_Finished" $FINAL_PROGRESS
 upload_temp_folder
 log_job_resource_links
-echo "End of job routine for $job_name";echo
+echo -e "${WHITE}End of job routine for $job_name ${NC}"
 exit $tg_err
