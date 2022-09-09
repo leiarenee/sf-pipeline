@@ -500,6 +500,9 @@ function run_terragrunt(){
 
   # Get Exit Code
   export tg_err=$?
+  
+  [ $tg_err -eq 137 ] && [ ! -z "$(cat $WORK_FOLDER/temp-job/stderr.log | grep "cancelled" )" ] && echo Runner Process cancelled && exit 999
+
   [ $tg_err -ne 0 ] && echo Terragrunt Exitcode: $tg_err
 
   # Prepare a consise error log
@@ -521,16 +524,10 @@ function run_terragrunt(){
     echo -e "${WHITE}"
     cat $WORK_FOLDER/temp-job/stderr_filtered.log | grep 'level=error'
     echo -e "${NC}"
-    if [ ! -z $(cat $WORK_FOLDER/temp-job/stderr.log | grep '│') ]
+    if [ ! -z "$(cat $WORK_FOLDER/temp-job/stderr.log | grep '│')" ]
     then
       echo -e "\n${RED}--------Filtered TERRAFORM Errors--------------${NC}"
       cat $WORK_FOLDER/temp-job/stderr.log | grep '│'
-    fi
-
-    if [ ! -z $(cat $WORK_FOLDER/temp-job/stdout.log | grep '│') ]
-    then
-      echo -e "\n${RED}--------Filtered TERRAFORM Errors--------------${NC}"
-      cat $WORK_FOLDER/temp-job/stdout.log | grep '│'
     fi
 
   fi

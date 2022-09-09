@@ -94,6 +94,11 @@ then
   exit 0
 else
   echo "Process $new_ppid Cancelled."
+  set -e
+  pstg=$(ps -ef | grep "terragrunt" | grep -v "grep" | xargs)
+  pid=$(echo $pstg | cut -d" " -f 2)
+  ppid=$(echo $pstg | cut -d" " -f 3)
+  echo "Terragrunt Job with pid $pid and triggered by parent pid $ppid cancelled" >&2
   killall -9 terragrunt
-  exit 1
+  exit 9
 fi
