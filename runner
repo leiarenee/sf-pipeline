@@ -526,6 +526,13 @@ function run_terragrunt(){
       echo -e "\n${RED}--------Filtered TERRAFORM Errors--------------${NC}"
       cat $WORK_FOLDER/temp-job/stderr.log | grep '│'
     fi
+
+    if [ ! -z $(cat $WORK_FOLDER/temp-job/stdout.log | grep '│') ]
+    then
+      echo -e "\n${RED}--------Filtered TERRAFORM Errors--------------${NC}"
+      cat $WORK_FOLDER/temp-job/stdout.log | grep '│'
+    fi
+
   fi
 
   [ $tg_err -ne 0 ] && echo -e "\n${RED}-----------------------------------------------${NC}"
