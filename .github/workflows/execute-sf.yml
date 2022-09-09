@@ -171,7 +171,7 @@ jobs:
         # ---- SUBMIT SUCCESS TO PR ---------
       - name: Create Success comment
         uses: peter-evans/create-or-update-comment@v2
-        if: ${{ github.event.pull_request.number != "" }} 
+        if: ${{ github.event.pull_request.number != '' }} 
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
@@ -184,7 +184,7 @@ jobs:
         # https://github.com/marketplace/actions/create-or-update-comment
       - name: Fetch Plans from S3
         id: fetch-plans
-        if: ${{ env.TG_COMMAND == 'plan' && github.event.pull_request.number != "" }}
+        if: ${{ env.TG_COMMAND == 'plan' && github.event.pull_request.number != '' }}
         run: |
           echo TG_COMMAND $TG_COMMAND
           echo S3_JOB_FOLDER $S3_JOB_FOLDER
@@ -195,7 +195,7 @@ jobs:
           body="${body//$'\r'/'%0D'}" 
           echo "::set-output name=body::$body"
       - name: Submit Plan to PR  
-        if: ${{ env.TG_COMMAND == 'plan' && github.event.pull_request.number != "" }}
+        if: ${{ env.TG_COMMAND == 'plan' && github.event.pull_request.number != '' }}
         uses: peter-evans/create-or-update-comment@v2
         with:
           issue-number: ${{ github.event.pull_request.number }}
