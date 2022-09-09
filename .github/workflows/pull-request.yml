@@ -9,7 +9,7 @@ jobs:
   validate-plan:
     strategy:
       matrix:
-        tg_command: ["plan"]
+        tg_command: ["validate"]
     uses: ./.github/workflows/execute-sf.yml
     with:
       workspaceId: testing
