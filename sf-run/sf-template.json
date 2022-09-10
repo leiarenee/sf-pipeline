@@ -8,6 +8,7 @@
 		"vcsProvider": "${VCS_PROVIDER}",
     "repoAccount": "${REPO_ACCOUNT}",
 		"repoName": "${REPO_NAME}",
+		"repoPipeline": "${REPO_PIPELINE}",
 		"repoReference": "${REPO_REFERENCE}",
 		"repoType": "${REPO_TYPE}",
 		"userName": "${USER_NAME}",

@@ -15,7 +15,7 @@ export GITHUB_TOKEN=$(echo $secret_value | jq -r '.SecretString' | jq -r .token 
 
 function send_pr_comment(){
   echo "Updating PR Comment $COMMENT_ID with body $1"
-  body=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/sf-pipeline/issues/comments/$COMMENT_ID | jq -r .body)
+  body=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/$REPO_PIPELINE/issues/comments/$COMMENT_ID | jq -r .body)
   echo "$body" > comment_body.txt
   #echo "current body $body"
   body="$(cat comment_body.txt | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")"
@@ -23,7 +23,7 @@ function send_pr_comment(){
   body="${body//$'\n'/'<br>'}"
   body="${body//$'\r'/}"
   
-  result=$(curl -s -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/sf-pipeline/issues/comments/$COMMENT_ID -d "{\"body\" : \"$body<br>$1\"}" | jq -r '.message')
+  result=$(curl -s -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/$REPO_PIPELINE/issues/comments/$COMMENT_ID -d "{\"body\" : \"$body<br>$1\"}" | jq -r '.message')
   if [[ "$result" != null ]]
   then
     echo -e "${RED}github api error: $result ${NC}" 
@@ -86,3 +86,5 @@ echo "ECHO_COMMANDS=$ECHO_COMMANDS" >> $GITHUB_ENV
 echo "GITHUB_TOKEN=$GITHUB_TOKEN" >> $GITHUB_ENV
 echo "COMMENT_ID=$COMMENT_ID" >> $GITHUB_ENV
 echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> $GITHUB_ENV
+echo "REPO_ACCOUNT=$REPO_ACCOUNT" >> $GITHUB_ENV
+echo "REPO_PIPELINE=$REPO_PIPELINE" >> $GITHUB_ENV

@@ -154,6 +154,10 @@
             "Value.$": "$.repository.repoName"
           },
           {
+            "Name": "REPO_PIPELINE",
+            "Value.$": "$.repository.repoPipeline"
+          },
+          {
             "Name": "REPO_REFERENCE",
             "Value.$": "$.repository.repoReference"
           },

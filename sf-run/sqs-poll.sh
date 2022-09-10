@@ -13,7 +13,7 @@ source "$scripts/colors.sh"
 # ------------ Poll Sqs Status Messages and Log Updates ---------------------------------------------
 function send_pr_comment(){
   #echo "Updating PR Comment $COMMENT_ID with body $1"
-  body=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/sf-pipeline/issues/comments/$COMMENT_ID | jq -r .body)
+  body=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/$REPO_PIPELINE/issues/comments/$COMMENT_ID | jq -r .body)
   echo "$body" > comment_body.txt
   #echo "current body $body"
   body="$(cat comment_body.txt | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")"
@@ -23,7 +23,7 @@ function send_pr_comment(){
   body="$body<br>$1"
   body="${body//$'<\/pre><br><pre>'/<br>}"
 
-  result=$(curl -s -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/sf-pipeline/issues/comments/$COMMENT_ID -d "{\"body\" : \"$body\"}" | jq -r '.message')
+  result=$(curl -s -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/$REPO_PIPELINE/issues/comments/$COMMENT_ID -d "{\"body\" : \"$body\"}" | jq -r '.message')
   if [[ "$result" != null ]]
   then
     echo -e "${RED}github api error: $result ${NC}" 
