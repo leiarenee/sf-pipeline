@@ -21,7 +21,7 @@ function send_pr_comment(){
   body="${body//$'\n'/<br>}"
   body="${body//$'\r'/}"
   body="$body<br>$1"
-  body="${body//$'<\/pre><br><pre>'/<br>}"
+  body="${body//<\/pre><br><pre>/<br>}"
 
   result=$(curl -s -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/$REPO_PIPELINE/issues/comments/$COMMENT_ID -d "{\"body\" : \"$body\"}" | jq -r '.message')
   if [[ "$result" != null ]]
