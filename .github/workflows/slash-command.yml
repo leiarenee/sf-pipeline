@@ -7,6 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Slash Command Dispatch
+        if: ${{ github.event.issue.pull_request }}
         uses: peter-evans/slash-command-dispatch@v3
         with:
           token: ${{ secrets.PAT_WORKFLOW }}
@@ -16,7 +17,7 @@ jobs:
           static-args: |
             repository=${{ github.repository }}
             comment-id=${{ github.event.comment.id }}
-            repoReference=${{ github.event.ref_name }}
-            ref=${{ github.event.head_ref }} 
+            repoReference=${{github.event.issue.pull_request.head_ref }}
+            ref=${{ github.event.issue.pull_request.head_ref }} 
           # 
             
