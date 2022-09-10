@@ -19,7 +19,6 @@ jobs:
       tgCommand: ${{ matrix.tg_command }}
       stackFolder: light
       repoReference: ${{ github.head_ref }}
-      comment-id: ${{ github.event.pull_request.number }}
     secrets: inherit
   
 
