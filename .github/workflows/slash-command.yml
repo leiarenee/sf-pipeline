@@ -17,3 +17,4 @@ jobs:
             repository=${{ github.repository }}
             comment-id=${{ github.event.comment.id }}
             repoReference=${{ github.head_ref }}
+            ref=${{ github.head_ref }}
