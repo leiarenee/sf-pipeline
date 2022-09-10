@@ -49,8 +49,6 @@ on:
         - destroy
         - show
         - output
-      tgArguments:
-        description: TG Cli arguments
       stackFolder:
         description: Main Stack Folder
         default: light
@@ -69,6 +67,8 @@ on:
         description: 'The comment-id of the slash command'
       repository:
         description: 'The repository from which the slash command was dispatched'
+      repoReference:
+        description: 'Branch Name'
 
 jobs:
   execute-step-functions:

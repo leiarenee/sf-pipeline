@@ -29,9 +29,6 @@ on:
         type: string
         required: true
       # Optional Arguments
-      tgArguments:
-        description: TG Cli arguments
-        type: string
       runModule:
         description: Terragrunt Module Folder
         type: string
@@ -87,7 +84,6 @@ jobs:
           # TERRAGRUNT
           RUN_ALL: true
           TG_COMMAND: ${{ inputs.tgCommand }}
-          TG_ARGUMENTS: ${{ inputs.tgArguments }}
           RUN_MODULE: ${{ inputs.runModule }}
           STACK_FOLDER: ${{ inputs.stackFolder }}
           BUCKET_SUFFIX: github
