@@ -6,7 +6,7 @@ jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
     steps:
-      - Extract PR Branch
+      - name: Extract PR Branch
         #https://github.com/marketplace/actions/pull-request-comment-branch
         uses: xt0rted/pull-request-comment-branch@v1 
         id: comment-branch
