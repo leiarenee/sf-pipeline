@@ -6,6 +6,10 @@ jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
     steps:
+      - Extract PR Branch
+        #https://github.com/marketplace/actions/pull-request-comment-branch
+        uses: xt0rted/pull-request-comment-branch@v1 
+        id: comment-branch
       - name: Slash Command Dispatch
         if: ${{ github.event.issue.pull_request }}
         uses: peter-evans/slash-command-dispatch@v3
@@ -17,7 +21,7 @@ jobs:
           static-args: |
             repository=${{ github.repository }}
             comment-id=${{ github.event.comment.id }}
-            repoReference=${{github.event.issue.pull_request.head_ref }}
-            ref=${{ github.event.issue.pull_request.head_ref }} 
+            repoReference=${{ steps.comment-branch.outputs.head_ref }}
+            ref=${{ steps.comment-branch.outputs.head_ref }}
           # 
             
