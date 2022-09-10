@@ -30,7 +30,7 @@ jobs:
       - name: Comment Run Id
         uses: peter-evans/create-or-update-comment@v2
         with:
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.PAT_WORKFLOW }}
           repository: ${{ github.repository }}
           comment-id: ${{ github.event.comment.id }}
           body: |
