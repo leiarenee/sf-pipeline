@@ -40,8 +40,10 @@ on:
         type: string
       comment-id:
         description: 'The comment-id of the slash command'
+        type: string
       repository:
         description: 'The repository from which the slash command was dispatched'
+        type: string
 jobs:
   execute-step-functions:
     runs-on: ubuntu-latest
