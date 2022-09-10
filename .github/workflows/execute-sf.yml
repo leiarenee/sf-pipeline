@@ -8,10 +8,6 @@ on:
         description: Workspace Id     
         type: string
         required: true
-      targetAwsAccountId:
-        description: Target AWS Account Id     
-        type: string
-        required: true
       targetAwsRegion:
         description: Target AWS Region     
         type: string
@@ -29,9 +25,6 @@ on:
         type: string
         required: true
       # Optional Arguments
-      runModule:
-        description: Terragrunt Module Folder
-        type: string
       ttlDuration:
         description: Time to Live in minutes 
         type: string
@@ -41,10 +34,20 @@ on:
       repository:
         description: 'The repository from which the slash command was dispatched'
         type: string
+      issue-number:
+        type: string
+      actor:
+        type: string
 jobs:
   execute-step-functions:
     runs-on: ubuntu-latest
     steps:
+      - uses: jungwinter/split@v2
+        id: split
+        with:
+          msg: ${{ inputs.stackFolder }}
+          separator: '/'
+          maxsplit: 2
       - uses: actions/checkout@v2
 
       # -------- AWS CREDENTIALS -----------
@@ -84,8 +87,8 @@ jobs:
           # TERRAGRUNT
           RUN_ALL: true
           TG_COMMAND: ${{ inputs.tgCommand }}
-          RUN_MODULE: ${{ inputs.runModule }}
-          STACK_FOLDER: ${{ inputs.stackFolder }}
+          RUN_MODULE: ${{ steps.split.outputs._1 }}
+          STACK_FOLDER: ${{ steps.split.outputs._0 }}
           BUCKET_SUFFIX: github
           INTERACTIVE: false
           FORCE_INIT: false
@@ -96,7 +99,7 @@ jobs:
           # AWS
           TARGET_AWS_REGION: ${{ inputs.targetAwsRegion }}
           TARGET_AWS_ACCOUNT_NAME: Testing Environment
-          TARGET_AWS_ACCOUNT_ID: ${{ inputs.targetAwsAccountId }}
+          TARGET_AWS_ACCOUNT_ID: 553688522943
           TARGET_AWS_PROFILE: testing
           TARGET_AWS_SECRET: TARGET_AWS_ACCESS
           PIPELINE_AWS_REGION: eu-west-1

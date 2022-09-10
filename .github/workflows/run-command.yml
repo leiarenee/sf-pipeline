@@ -13,16 +13,6 @@ on:
         - production-1
         - production-2
         - leia-renee
-      targetAwsAccountId:
-        description: Target AWS Account Id   
-        default: 553688522943
-        type: choice
-        options:
-        - 553688522943 # testing
-        - 518854297938 # Staging
-        - 009403416359 # Prod1
-        - 230794785515 # Prod2
-        - 684353670650 # Dev Leia
       targetAwsRegion:
         description: Target AWS Region     
         default: eu-west-1
@@ -51,15 +41,8 @@ on:
         - output
       stackFolder:
         description: Main Stack Folder
-        default: light
-        type: choice
-        options:
-        - live
-        - light
-        - test
-      runModule:
-        description: Terragrunt Module Folder - Choose from https://github.com/leiarenee/sf-infra/tree/main/infra/live
-        default: ""
+        default: light/
+        type: string
       ttlDuration:
         description: Time to Live in minutes 
         default: 30
@@ -69,21 +52,26 @@ on:
         description: 'The repository from which the slash command was dispatched'
       repoReference:
         description: 'Branch Name'
+      issue-number:
+        description: 'PR Number'
+      actor:
+        description: 'Actor'
+
 
 jobs:
   execute-step-functions:
     uses: ./.github/workflows/execute-sf.yml
     with:
       workspaceId: ${{ inputs.workspaceId }}
-      targetAwsAccountId: ${{ inputs.targetAwsAccountId }}
       targetAwsRegion: ${{ inputs.targetAwsRegion }}
       tgCommand: ${{ inputs.tgCommand }}
       stackFolder: ${{ inputs.stackFolder }}
-      runModule: ${{ inputs.runModule }}
       ttlDuration: ${{ inputs.ttlDuration }}
       repoReference: ${{ inputs.repoReference }}  #${{ github.ref_name }}
       repository: ${{ inputs.repository }}
       comment-id: ${{ inputs.comment-id }}
+      issue-number: ${{ inputs.issue-number }}
+      actor: ${{ inputs.actor }}
 
     secrets: inherit
   

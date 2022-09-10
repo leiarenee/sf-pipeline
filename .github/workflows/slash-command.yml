@@ -12,6 +12,7 @@ jobs:
         uses: xt0rted/pull-request-comment-branch@v1 
         id: comment-branch
       - name: Slash Command Dispatch
+        id: dispatch
         if: ${{ github.event.issue.pull_request }}
         uses: peter-evans/slash-command-dispatch@v3
         with:
@@ -19,11 +20,14 @@ jobs:
           commands: |
             run
           dispatch-type: workflow
+          issue-type: pull-request
           static-args: |
             repository=${{ github.repository }}
             comment-id=${{ github.event.comment.id }}
             repoReference=${{ steps.comment-branch.outputs.head_ref }}
             ref=${{ steps.comment-branch.outputs.head_ref }}
+            issue-number=${{ github.event.issue.number }}
+            actor=${{ github.actor }}
       - name: Create URL to the run output
         id: vars
         run: echo ::set-output name=run-url::https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
@@ -37,5 +41,11 @@ jobs:
             [Command run output][1]
 
             [1]: ${{ steps.vars.outputs.run-url }}
-          
+      - name: Edit comment with error message
+        if: steps.dispatch.outputs.error-message
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          body: |
+            > ${{ steps.dispatch.outputs.error-message }}
           
