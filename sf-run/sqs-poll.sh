@@ -11,7 +11,25 @@ scripts="$repo_root/library/scripts"
 source "$scripts/colors.sh"
 
 # ------------ Poll Sqs Status Messages and Log Updates ---------------------------------------------
+function send_pr_comment(){
+  #echo "Updating PR Comment $COMMENT_ID with body $1"
+  body=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/sf-pipeline/issues/comments/$COMMENT_ID | jq -r .body)
+  echo "$body" > comment_body.txt
+  #echo "current body $body"
+  body="$(cat comment_body.txt | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")"
+  #body="${body//'%'/'%25'}"
+  body="${body//$'\n'/<br>}"
+  body="${body//$'\r'/}"
+  body="$body<br>$1"
+  body="${body//$'<\/pre><br><pre>'/<br>}"
 
+  result=$(curl -s -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/sf-pipeline/issues/comments/$COMMENT_ID -d "{\"body\" : \"$body\"}" | jq -r '.message')
+  if [[ "$result" != null ]]
+  then
+    echo -e "${RED}github api error: $result ${NC}" 
+    echo "${RED}When updating PR Comment $COMMENT_ID with body $1${NC}"
+  fi
+}
 function fetch_logs(){
   echo Fetching Batch Logs
   $scripts/awsf logs tail /aws/batch/job --log-stream-names $LOG_STREAM_NAME --since 1d --format short > $log_file
@@ -106,9 +124,11 @@ do
     #echo $message
 
     status=$(echo $message | jq -r .status)
-    progress=$(echo $message | jq .progress)
-    module=$(echo $message | jq .module)
+    progress=$(echo $message | jq -r .progress)
+    module=$(echo $message | jq -r .module)
+    [[ "$module" == null ]] && unset module
     batch_id=$(echo $message | jq -r .jobId) 
+    [[ "$batch_id" == null ]] && unset batch_id
     
 
     # Delete message
@@ -118,27 +138,31 @@ do
     if [ ! -z $progress ]
     then
       # Write status
-      bar_end=$(($progress*3/10))
+      declare -i bar_end=$(($progress*3/10))
       #echo $bar_end
-      echo -n "  [ "
-      for ((i=1; i<=$bar_end; i++)); do echo -n "="; done
-      for ((i=$bar_end; i<=30; i++)); do echo -n " "; done
-      echo -n "] "
-      echo "  Progress : $progress%    Status : $status"
+      echo -n "  [ " 
+      for ((i=1; i<=$bar_end; i++)); do echo -n "="; done 
+      for ((i=$bar_end; i<=30; i++)); do echo -n " "; done 
+      echo -n "] " 
+      [ $progress -lt 10 ] && progress="  $progress"
+      [ $progress -gt 9 ] && [ $progress -lt 100 ] && progress=" $progress"
+      echo " Progress : $progress%    Status : $status $module"
       [ ! -z $batch_id ] && [[ $batch_id != "null" ]] && echo "batch_id received : $batch_id"
       #echo -ne "    Progress : $progress%        Status : $status\033[0K\r"  # Write to single line
+      bar=$(echo -n "| ";for ((i=1; i<=$bar_end; i++)); do printf '\u2592'; done ;for ((i=$bar_end; i<=30; i++)); do printf ' '; done ;echo -n "|" )
+      [ ! -z $COMMENT_ID ] && send_pr_comment "<pre>$bar $progress% &#x1F539; $status $module $batch_id</pre>"
     fi
-    end=$(echo $message | jq .end)
+    # end=$(echo $message | jq .end)
     
-    if [[ $end == "null" ]]
-    then
-     unset end
-    else
-      echo
-      echo
-      echo - End of $PIPELINE_STATE_MACHINE_NAME -
-      break
-    fi
+    # if [[ $end == "null" ]]
+    # then
+    #  unset end
+    # else
+    #   echo
+    #   echo
+    #   echo - End of $PIPELINE_STATE_MACHINE_NAME -
+    #   break
+    # fi
   done
 
   AWS_BATCH_JOB_NAME=$EXECUTION_NAME
@@ -176,11 +200,13 @@ do
   then
     echo -e "${RED}$EXECUTION_NAME SF_STATUS : $SF_STATUS ${NC}"
     exit_code=1
-    break
+    exiting=$(($exiting + 1))
+    [ $exiting -gt 2 ] && break
   elif [[ $SF_STATUS == "SUCCEEDED" ]]
   then
     echo -e "${GREEN}$EXECUTION_NAME SF_STATUS : $SF_STATUS ${NC}"
-    break
+    exiting=$(($exiting + 1))
+    [ $exiting -gt 2 ] && break
   else 
     echo
     echo Batch Attempt $batch_attempt

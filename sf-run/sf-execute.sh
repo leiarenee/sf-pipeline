@@ -6,12 +6,37 @@ script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
 repo_root=$(git rev-parse --show-toplevel)
 scripts="$repo_root/library/scripts"
 
+# Source Colors
+source "$scripts/colors.sh"
+
+# Fetch github token
+secret_value=$($scripts/awsf --region $PIPELINE_AWS_REGION secretsmanager get-secret-value --secret-id github/workflow)
+export GITHUB_TOKEN=$(echo $secret_value | jq -r '.SecretString' | jq -r .token )
+
+function send_pr_comment(){
+  echo "Updating PR Comment $COMMENT_ID with body $1"
+  body=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/sf-pipeline/issues/comments/$COMMENT_ID | jq -r .body)
+  echo "$body" > comment_body.txt
+  #echo "current body $body"
+  body="$(cat comment_body.txt | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")"
+  #body="${body//'%'/'%25'}"
+  body="${body//$'\n'/'<br>'}"
+  body="${body//$'\r'/}"
+  
+  result=$(curl -s -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/sf-pipeline/issues/comments/$COMMENT_ID -d "{\"body\" : \"$body<br>$1\"}" | jq -r '.message')
+  if [[ "$result" != null ]]
+  then
+    echo -e "${RED}github api error: $result ${NC}" 
+  fi
+}
+
 # Shell Script for State Machine Execution
 export STATE_MACHINE_ARN=arn:aws:states:$PIPELINE_AWS_REGION:$PIPELINE_AWS_ACCOUNT_ID:stateMachine:$PIPELINE_STATE_MACHINE_NAME
 echo 
 echo State Machine ARN      : $STATE_MACHINE_ARN
 echo Input Template File    : $PIPELINE_SF_TEMPLATE_FILE
 echo "STATE_MACHINE_ARN=$STATE_MACHINE_ARN" >> $GITHUB_ENV
+
 
 # Variable Substitution
 echo "Variable Substitution"
@@ -41,6 +66,11 @@ echo EXECUTION_NAME=$EXECUTION_NAME
 echo EXECUTION_ARN=$EXECUTION_ARN
 echo SQS_QUEUE_URL : $SQS_QUEUE_URL
 
+if [ ! -z $COMMENT_ID ]
+then
+  send_pr_comment "[State Machine Executed - $EXECUTION_NAME \u2705](https://$PIPELINE_AWS_REGION.console.aws.amazon.com/states/home?region=$PIPELINE_AWS_REGION#/v2/executions/details/$EXECUTION_ARN)"
+fi
+
 # Send to next steps
 echo "PIPELINE_STATE_MACHINE_NAME=$PIPELINE_STATE_MACHINE_NAME" >> $GITHUB_ENV
 echo "EXECUTION_NAME=$EXECUTION_NAME" >> $GITHUB_ENV
@@ -53,3 +83,6 @@ echo "S3_JOB_FOLDER=$S3_JOB_FOLDER" >> $GITHUB_ENV
 echo "TG_COMMAND=$TG_COMMAND" >> $GITHUB_ENV
 echo "REPO_REFERENCE=$REPO_REFERENCE" >> $GITHUB_ENV
 echo "ECHO_COMMANDS=$ECHO_COMMANDS" >> $GITHUB_ENV
+echo "GITHUB_TOKEN=$GITHUB_TOKEN" >> $GITHUB_ENV
+echo "COMMENT_ID=$COMMENT_ID" >> $GITHUB_ENV
+echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> $GITHUB_ENV
