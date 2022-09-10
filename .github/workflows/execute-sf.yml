@@ -209,7 +209,7 @@ jobs:
           body="${body//'%'/'%25'}"
           body="${body//$'\n'/'%0A'}"
           body="${body//$'\r'/'%0D'}"
-          body="<pre>$body<\/pre>" 
+          body="<pre>$body</pre>" 
           echo "::set-output name=body::$body"
       - name: Submit Plan to PR  
         if: ${{ env.TG_COMMAND == 'plan' && inputs.issue-number != '' }} 
