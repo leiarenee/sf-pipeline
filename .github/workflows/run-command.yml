@@ -67,7 +67,7 @@ jobs:
       tgCommand: ${{ inputs.tgCommand }}
       stackFolder: ${{ inputs.stackFolder }}
       ttlDuration: ${{ inputs.ttlDuration }}
-      repoReference: ${{ inputs.repoReference }}  #${{ github.ref_name }}
+      repoReference: ${{ inputs.repoReference || github.ref_name }} 
       repository: ${{ inputs.repository }}
       comment-id: ${{ inputs.comment-id }}
       issue-number: ${{ inputs.issue-number }}
