@@ -9,7 +9,7 @@ jobs:
       - name: Slash Command Dispatch
         uses: peter-evans/slash-command-dispatch@v3
         with:
-          token: {{ secrets.PAT_WORKFLOW }}
+          token: ${{ secrets.PAT_WORKFLOW }}
           commands: |
             run
           dispatch-type: workflow
