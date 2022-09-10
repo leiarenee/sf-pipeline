@@ -212,10 +212,10 @@ jobs:
           body="<pre>$body<\/pre>" 
           echo "::set-output name=body::$body"
       - name: Submit Plan to PR  
-        if: ${{ env.TG_COMMAND == 'plan' && inputs.comment-id != '' }} # github.event.pull_request.number != '' }}
+        if: ${{ env.TG_COMMAND == 'plan' && inputs.issue-number != '' }} 
         uses: peter-evans/create-or-update-comment@v2
         with:
-          comment-id: ${{ inputs.comment-id }}
+          issue-number: ${{ inputs.issue-number }}
           body: ${{ steps.fetch-plans.outputs.body }}
 
 
