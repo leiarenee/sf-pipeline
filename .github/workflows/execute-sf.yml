@@ -208,7 +208,8 @@ jobs:
           body="$(cat comment-body.txt | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")"
           body="${body//'%'/'%25'}"
           body="${body//$'\n'/'%0A'}"
-          body="${body//$'\r'/'%0D'}" 
+          body="${body//$'\r'/'%0D'}"
+          body="<pre>$body<\/pre>" 
           echo "::set-output name=body::$body"
       - name: Submit Plan to PR  
         if: ${{ env.TG_COMMAND == 'plan' && inputs.comment-id != '' }} # github.event.pull_request.number != '' }}
