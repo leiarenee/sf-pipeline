@@ -17,7 +17,7 @@ jobs:
           static-args: |
             repository=${{ github.repository }}
             comment-id=${{ github.event.comment.id }}
-            repoReference=${{github.event.head_ref }}
-            ref=${{ github.event.head_ref }} 
+            repoReference=${{github.event.issue.pull_request.ref }}
+            ref=${{ github.event.issue.pull_request.ref }} 
           # 
             
