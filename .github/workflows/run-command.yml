@@ -78,7 +78,6 @@ jobs:
       targetAwsAccountId: ${{ inputs.targetAwsAccountId }}
       targetAwsRegion: ${{ inputs.targetAwsRegion }}
       tgCommand: ${{ inputs.tgCommand }}
-      tgArguments: ${{ inputs.tgArguments }}
       stackFolder: ${{ inputs.stackFolder }}
       runModule: ${{ inputs.runModule }}
       ttlDuration: ${{ inputs.ttlDuration }}
