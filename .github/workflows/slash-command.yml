@@ -7,6 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Extract PR Branch
+        if: ${{ github.event.issue.pull_request }}
         #https://github.com/marketplace/actions/pull-request-comment-branch
         uses: xt0rted/pull-request-comment-branch@v1 
         id: comment-branch
@@ -23,5 +24,5 @@ jobs:
             comment-id=${{ github.event.comment.id }}
             repoReference=${{ steps.comment-branch.outputs.head_ref }}
             ref=${{ steps.comment-branch.outputs.head_ref }}
-          # 
+          
             
