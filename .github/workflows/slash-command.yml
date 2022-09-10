@@ -24,5 +24,18 @@ jobs:
             comment-id=${{ github.event.comment.id }}
             repoReference=${{ steps.comment-branch.outputs.head_ref }}
             ref=${{ steps.comment-branch.outputs.head_ref }}
+      - name: Create URL to the run output
+        id: vars
+        run: echo ::set-output name=run-url::https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+      - name: Comment Run Id
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          token: ${{ secrets.PAT }}
+          repository: ${{ github.repository }}
+          comment-id: ${{ github.event.comment.id }}
+          body: |
+            [Command run output][1]
+
+            [1]: ${{ steps.vars.outputs.run-url }}
           
           
