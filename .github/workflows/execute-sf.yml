@@ -20,10 +20,6 @@ on:
         description: Repository Reference - [branch|tag|hash]   
         type: string
         required: true
-      runAll:
-        description: Terragrunt run-all 
-        type: boolean
-        required: true
       tgCommand: 
         description: Terragrunt command
         type: string
@@ -42,7 +38,10 @@ on:
       ttlDuration:
         description: Time to Live in minutes 
         type: string
-
+      comment-id:
+        description: 'The comment-id of the slash command'
+      repository:
+        description: 'The repository from which the slash command was dispatched'
 jobs:
   execute-step-functions:
     runs-on: ubuntu-latest
@@ -84,7 +83,7 @@ jobs:
           TERRAGRUNT_VERSION: 0.38.7
 
           # TERRAGRUNT
-          RUN_ALL: ${{ inputs.runAll }}
+          RUN_ALL: true
           TG_COMMAND: ${{ inputs.tgCommand }}
           TG_ARGUMENTS: ${{ inputs.tgArguments }}
           RUN_MODULE: ${{ inputs.runModule }}
@@ -184,7 +183,7 @@ jobs:
         # https://github.com/marketplace/actions/create-or-update-comment
       - name: Fetch Plans from S3
         id: fetch-plans
-        if: ${{ env.TG_COMMAND == 'plan' && github.event.pull_request.number != '' }}
+        if: ${{ env.TG_COMMAND == 'plan' && inputs.comment-id != '' }}
         run: |
           echo TG_COMMAND $TG_COMMAND
           echo S3_JOB_FOLDER $S3_JOB_FOLDER
@@ -195,10 +194,10 @@ jobs:
           body="${body//$'\r'/'%0D'}" 
           echo "::set-output name=body::$body"
       - name: Submit Plan to PR  
-        if: ${{ env.TG_COMMAND == 'plan' && github.event.pull_request.number != '' }}
+        if: ${{ env.TG_COMMAND == 'plan' && inputs.comment-id != '' }} # github.event.pull_request.number != '' }}
         uses: peter-evans/create-or-update-comment@v2
         with:
-          issue-number: ${{ github.event.pull_request.number }}
+          issue-number: ${{ inputs.comment-id }}
           body: ${{ steps.fetch-plans.outputs.body }}
 
 

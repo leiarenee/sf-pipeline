@@ -13,3 +13,7 @@ jobs:
           commands: |
             run
           dispatch-type: workflow
+          static-args: |
+            repository=${{ github.repository }}
+            comment-id=${{ github.event.comment.id }}
+            repoReference=${{ github.head_ref }}

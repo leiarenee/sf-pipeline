@@ -38,10 +38,6 @@ on:
         - us-east-2
         - us-west-1
         - us-west-2
-      runAll:
-        description: Terragrunt run-all
-        default: true 
-        type: boolean
       tgCommand: 
         description: Terragrunt command
         default: plan
@@ -69,6 +65,10 @@ on:
       ttlDuration:
         description: Time to Live in minutes 
         default: 30
+      comment-id:
+        description: 'The comment-id of the slash command'
+      repository:
+        description: 'The repository from which the slash command was dispatched'
 
 jobs:
   execute-step-functions:
@@ -77,13 +77,14 @@ jobs:
       workspaceId: ${{ inputs.workspaceId }}
       targetAwsAccountId: ${{ inputs.targetAwsAccountId }}
       targetAwsRegion: ${{ inputs.targetAwsRegion }}
-      runAll: ${{ inputs.runAll }}
       tgCommand: ${{ inputs.tgCommand }}
       tgArguments: ${{ inputs.tgArguments }}
       stackFolder: ${{ inputs.stackFolder }}
       runModule: ${{ inputs.runModule }}
       ttlDuration: ${{ inputs.ttlDuration }}
-      repoReference: ${{ github.ref_name }}
+      repoReference: ${{ inputs.repoReference }}  #${{ github.ref_name }}
+      repository: ${{ inputs.repository }}
+      comment-id: ${{ inputs.comment-id }}
 
     secrets: inherit
   
