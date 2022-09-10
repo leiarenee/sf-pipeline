@@ -60,7 +60,9 @@
 		"uploadPlanFiles": "${UPLOAD_PLAN_FILES}",
 		"sendSqsMessages": "${SEND_SQS_MESSAGES}",
 		"echoCommands": "${ECHO_COMMANDS}",
-		"showFilteredErrors":"${SHOW_FILTERED_ERRORS}"
+		"showFilteredErrors":"${SHOW_FILTERED_ERRORS}",
+		"commentId":"${COMMENT_ID}",
+		"issueNumber":"${ISSUE_NUMBER}"
 	},
 	"job": {
 		"definition": "${JOB_DEFINITION}",

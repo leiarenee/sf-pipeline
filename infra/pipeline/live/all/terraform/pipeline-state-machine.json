@@ -330,6 +330,14 @@
             "Value.$": "$.pipeline.echoCommands"
           },
           {
+            "Name": "COMMENT_ID",
+            "Value.$": "$.pipeline.commentId"
+          },
+          {
+            "Name": "ISSUE_NUMBER",
+            "Value.$": "$.pipeline.issueNumber"
+          },
+          {
             "Name": "INTERACTIVE",
             "Value": "false"
           }
