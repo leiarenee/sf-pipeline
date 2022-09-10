@@ -54,8 +54,6 @@ on:
         description: 'Branch Name'
       issue-number:
         description: 'PR Number'
-      actor:
-        description: 'Actor'
 
 
 jobs:
@@ -71,7 +69,6 @@ jobs:
       repository: ${{ inputs.repository }}
       comment-id: ${{ inputs.comment-id }}
       issue-number: ${{ inputs.issue-number }}
-      actor: ${{ inputs.actor }}
 
     secrets: inherit
   

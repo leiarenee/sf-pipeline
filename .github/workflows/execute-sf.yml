@@ -36,8 +36,6 @@ on:
         type: string
       issue-number:
         type: string
-      actor:
-        type: string
 jobs:
   execute-step-functions:
     runs-on: ubuntu-latest
@@ -48,8 +46,22 @@ jobs:
           msg: ${{ inputs.stackFolder }}
           separator: '/'
           maxsplit: 2
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Create URL to the run output
+        id: vars
+        run: echo ::set-output name=run-url::https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+      - name: Comment Run Id
+        if: ${{ inputs.comment-id != '' }}
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          token: ${{ secrets.PAT_WORKFLOW }}
+          repository: ${{ github.repository }}
+          comment-id: ${{ inputs.comment-id }}
+          body: |
+            [Trace Running Script...][1]
 
+            [1]: ${{ steps.vars.outputs.run-url }}
       # -------- AWS CREDENTIALS -----------
       - name: Configure AWS credentials
         id: creds
