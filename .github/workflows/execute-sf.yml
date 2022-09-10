@@ -195,7 +195,7 @@ jobs:
         if: ${{ env.TG_COMMAND == 'plan' && inputs.comment-id != '' }} # github.event.pull_request.number != '' }}
         uses: peter-evans/create-or-update-comment@v2
         with:
-          issue-number: ${{ inputs.comment-id }}
+          comment-id: ${{ inputs.comment-id }}
           body: ${{ steps.fetch-plans.outputs.body }}
 
 
