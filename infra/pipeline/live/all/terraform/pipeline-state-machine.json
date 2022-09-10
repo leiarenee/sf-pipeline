@@ -154,6 +154,10 @@
             "Value.$": "$.repository.repoName"
           },
           {
+            "Name": "REPO_PIPELINE",
+            "Value.$": "$.repository.repoPipeline"
+          },
+          {
             "Name": "REPO_REFERENCE",
             "Value.$": "$.repository.repoReference"
           },
@@ -328,6 +332,14 @@
           {
             "Name": "ECHO_COMMANDS",
             "Value.$": "$.pipeline.echoCommands"
+          },
+          {
+            "Name": "COMMENT_ID",
+            "Value.$": "$.pipeline.commentId"
+          },
+          {
+            "Name": "ISSUE_NUMBER",
+            "Value.$": "$.pipeline.issueNumber"
           },
           {
             "Name": "INTERACTIVE",

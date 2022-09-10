@@ -88,6 +88,7 @@ jobs:
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
           REPO_NAME: sf-infra
+          REPO_PIPELINE: ${{ github.event.repository.name }}
           REPO_REFERENCE: ${{ inputs.repoReference }}
           REPO_TYPE: public
           USER_NAME: ${{ github.triggering_actor }}
@@ -140,6 +141,9 @@ jobs:
           UPLOAD_PLAN_FILES: true
           SEND_SQS_MESSAGES: true
           SHOW_FILTERED_ERRORS: true
+          COMMENT_ID: ${{ inputs.comment-id }}
+          ISSUE_NUMBER: ${{ inputs.issue-number }}
+
 
           # JOB
           JOB_DEFINITION: arn:aws:batch:eu-west-1:377449198785:job-definition/tf_pipeline_job_definition
@@ -204,13 +208,14 @@ jobs:
           body="$(cat comment-body.txt | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")"
           body="${body//'%'/'%25'}"
           body="${body//$'\n'/'%0A'}"
-          body="${body//$'\r'/'%0D'}" 
+          body="${body//$'\r'/'%0D'}"
+          body="<pre>$body</pre>" 
           echo "::set-output name=body::$body"
       - name: Submit Plan to PR  
-        if: ${{ env.TG_COMMAND == 'plan' && inputs.comment-id != '' }} # github.event.pull_request.number != '' }}
+        if: ${{ env.TG_COMMAND == 'plan' && inputs.issue-number != '' }} 
         uses: peter-evans/create-or-update-comment@v2
         with:
-          comment-id: ${{ inputs.comment-id }}
+          issue-number: ${{ inputs.issue-number }}
           body: ${{ steps.fetch-plans.outputs.body }}
 
 

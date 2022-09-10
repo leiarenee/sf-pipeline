@@ -8,6 +8,7 @@
 		"vcsProvider": "${VCS_PROVIDER}",
     "repoAccount": "${REPO_ACCOUNT}",
 		"repoName": "${REPO_NAME}",
+		"repoPipeline": "${REPO_PIPELINE}",
 		"repoReference": "${REPO_REFERENCE}",
 		"repoType": "${REPO_TYPE}",
 		"userName": "${USER_NAME}",
@@ -60,7 +61,9 @@
 		"uploadPlanFiles": "${UPLOAD_PLAN_FILES}",
 		"sendSqsMessages": "${SEND_SQS_MESSAGES}",
 		"echoCommands": "${ECHO_COMMANDS}",
-		"showFilteredErrors":"${SHOW_FILTERED_ERRORS}"
+		"showFilteredErrors":"${SHOW_FILTERED_ERRORS}",
+		"commentId":"${COMMENT_ID}",
+		"issueNumber":"${ISSUE_NUMBER}"
 	},
 	"job": {
 		"definition": "${JOB_DEFINITION}",
