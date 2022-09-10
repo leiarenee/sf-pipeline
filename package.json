@@ -1,6 +1,6 @@
 {
   "name": "pipeline",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "main": "infra/live/terragrunt run-all apply",
   "license": "MIT",
   "author": "Leia Renée"
