@@ -135,7 +135,7 @@ do
 
     $scripts/awsf sqs delete-message --queue-url $SQS_QUEUE_URL --receipt-handle $receipt_handle
 
-    if [ ! -z $progress ]
+    if [ ! -z $progress ] && [[ $progress != null ]]
     then
       # Write status
       declare -i bar_end=$(($progress*3/10))
