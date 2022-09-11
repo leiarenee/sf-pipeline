@@ -58,7 +58,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          repository: ${{ inputs.repository }}  
+          repository: leiarenee/sf-pipeline  
           ref:  ${{ inputs.repoReference }} 
 
       # -------- Comment PR for Pipeline Tracing -----------
