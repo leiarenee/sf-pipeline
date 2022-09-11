@@ -2,7 +2,7 @@
 # Calculate progress
 path_relative_to_include=$1
 terrafrom_command=$2
-completed_module=$(echo $path_relative_to_include| sed s/$STACK_FOLDER\\\///g)
+completed_module=$(echo $path_relative_to_include| sed s/${STACK_FOLDER//\//\\\/}\\\///g)
 echo
 echo TERRAFORM COMMAND \"$terrafrom_command\"
 echo SUB PROCESS $$ 

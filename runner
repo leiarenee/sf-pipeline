@@ -304,8 +304,11 @@ function test_progress(){
 
 # Put outputs to S3
 function put_outputs_to_s3(){
-
+  
   job_resources_folder="$WORK_FOLDER/temp-job/$WORKSPACE_ID/$STACK_FOLDER/job-resources"
+  tg_working_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID
+  job_log_file=$tg_working_dir/completed_tasks.log
+
   # For Apply
   if [[ $TG_COMMAND == "apply" ]] && [[ $RUN_ALL == "true" ]] && [ $tg_err -eq 0 ] && [ -d $job_resources_folder ]
   then
@@ -333,18 +336,11 @@ function put_outputs_to_s3(){
   fi
 
   # For Plan Files
-  if [[ $TG_COMMAND == "plan" ]] && [[ $UPLOAD_PLAN_FILES == "true" ]]
+  if [[ $TG_COMMAND == "plan" ]] && [[ $UPLOAD_PLAN_FILES == "true" ]] && [ -f $job_log_file ]
   then
-    tg_working_dir=$WORK_FOLDER/temp-job/$WORKSPACE_ID
-    job_log_file=$tg_working_dir/completed_tasks.log
-
-    if [ -f $job_log_file ]
-    then
-      completed_tasks=$(cat $job_log_file )
-    else
-      completed_tasks=$(python3 -m runtask json_modules | sed s/\\\[//g | sed s/\\\]//g | sed s/\"//g | sed s/,//g)
-    fi
-
+    
+    completed_tasks=$(cat $job_log_file )
+   
     mkdir $tg_working_dir/plan-files
 
     for module_folder in $completed_tasks
@@ -369,7 +365,7 @@ function put_outputs_to_s3(){
     fi
 
   fi
-
+  
 }
 
 function delete_temp_files(){
@@ -581,6 +577,7 @@ remove_event_rule
 delete_temp_files
 find_modules
 run_terragrunt
+set +e
 put_outputs_to_s3
 send_progress "Batch_Job_Finished" $FINAL_PROGRESS
 log_job_resource_links

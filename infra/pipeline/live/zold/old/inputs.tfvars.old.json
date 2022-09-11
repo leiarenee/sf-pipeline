@@ -1,10 +1,6 @@
 {
-  "aws_profile": "${TARGET_AWS_PROFILE}",
-  "aws_region": "${TARGET_AWS_REGION}",
-  "aws_account_id": "${TARGET_AWS_ACCOUNT_ID}",
-  "workspace_id":" WORKSPACE_ID",
   "build_image": "aws/codebuild/standard:4.0",
-  "build_compute_type": "BUILD_GENERAL1_MEDIUM",
+  "build_compute_type": "BUILD_GENERAL1_SMALL",
   "build_timeout": 30,
   "privileged_mode": true,
   "cache_type": "LOCAL",
@@ -13,12 +9,24 @@
     "LOCAL_SOURCE_CACHE",
     "LOCAL_CUSTOM_CACHE"
   ],
+  "private_repository": true,
   "source_type": "GITHUB",
-  "source_location": "https://github.com/${REPO_ACCOUNT}/${APP_REPO_NAME}",
-  "source_version": "${APP_REPO_REF}",
+  "source_credential_auth_type": "PERSONAL_ACCESS_TOKEN",
+  "source_credential_server_type": "GITHUB",
+  "source_credential_token": "",
+  "use_secret_manager_for_credentials": true,
+  "use_arn_for_secret_manager_name": true,
+  "secret_manager_name_for_repo": "${REPO_SECRETS_MANAGER_ARN}",
   "artifact_type": "NO_ARTIFACTS",
+  "keep_tagged_last_n_images": 10,
+  "expire_untagged_older_than_n_days": 10,
+  "feature_name": "",
+  "application_name": "${APP_NAME}",
+  "source_repository_url": "${REPO}",
+  "source_repository_ssh": "${REPO_SSH}",
+  "source_repository_branch": "${REPO_REFERENCE}",
   "badge_enabled": true,
-  "run_build_token": "${IMAGE_TAG}",
+  "run_build_token": "${COMMIT_HASH}",
   "run_auto_build": "${RUN_AUTO_BUILD}",
   "extra_permissions": [
     "ecr:*"
@@ -30,13 +38,13 @@
       "type": "PLAINTEXT"
     },
     {
-      "name": "BUILD_FILE",
-      "value": "${BUILD_FILE}",
+      "name": "BUILD_CONTEXT",
+      "value": "${BUILD_CONTEXT}",
       "type": "PLAINTEXT"
     },
     {
-      "name": "BUILD_CONTEXT",
-      "value": "${BUILD_CONTEXT}",
+      "name": "BUILD_FILE",
+      "value": "${BUILD_FILE}",
       "type": "PLAINTEXT"
     },
     {
@@ -92,6 +100,16 @@
     {
       "name": "ENFORCE_NO_CACHE",
       "value": "false",
+      "type": "PLAINTEXT"
+    },
+    {
+      "name": "TERRAFORM_VERSION",
+      "value": "${TERRAFORM_VERSION}",
+      "type": "PLAINTEXT"
+    },
+    {
+      "name": "TERRAGRUNT_VERSION",
+      "value": "${TERRAGRUNT_VERSION}",
       "type": "PLAINTEXT"
     }
   ],
