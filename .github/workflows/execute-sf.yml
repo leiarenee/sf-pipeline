@@ -58,7 +58,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          name: ${{ inputs.repository }}  
+          repository: ${{ inputs.repository }}  
           ref:  ${{ inputs.repoReference }} 
 
       # -------- Comment PR for Pipeline Tracing -----------
