@@ -39,9 +39,9 @@ on:
         - destroy
         - show
         - output
-      stackFolder:
-        description: Main Stack Folder
-        default: light/
+      stack:
+        description: Stack Folder
+        default: light//
         type: string
       ttlDuration:
         description: Time to Live in minutes 
@@ -63,7 +63,7 @@ jobs:
       workspaceId: ${{ inputs.workspaceId }}
       targetAwsRegion: ${{ inputs.targetAwsRegion }}
       tgCommand: ${{ inputs.tgCommand }}
-      stackFolder: ${{ inputs.stackFolder }}
+      stack: ${{ inputs.stack }}
       ttlDuration: ${{ inputs.ttlDuration }}
       repoReference: ${{ inputs.repoReference || github.ref_name }} 
       repository: ${{ inputs.repository }}

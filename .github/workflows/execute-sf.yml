@@ -20,7 +20,7 @@ on:
         description: Terragrunt command
         type: string
         required: true
-      stackFolder:
+      stack:
         description: Main Stack Folder
         type: string
         required: true
@@ -44,7 +44,7 @@ jobs:
       - uses: jungwinter/split@v2
         id: split_stackFolder
         with:
-          msg: ${{ inputs.stackFolder }}
+          msg: ${{ inputs.stack }}
           separator: '//'
           maxsplit: 2
       - uses: jungwinter/split@v2
@@ -67,7 +67,7 @@ jobs:
           repository: ${{ github.repository }}
           comment-id: ${{ inputs.comment-id }}
           body: |
-            [Trace Github Pipeline $GITHUB_RUN_ID...](https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)
+            [Trace Github Pipeline ${GITHUB_RUN_ID}...](https://github.com/$GITHUB_REPOSITORY/actions/runs/${GITHUB_RUN_ID})
 
       # -------- AWS CREDENTIALS -----------
       - name: Configure AWS credentials
