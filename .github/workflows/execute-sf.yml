@@ -87,7 +87,7 @@ jobs:
           # APP REPOSITORY
           VCS_PROVIDER: github
           REPO_ACCOUNT: leiarenee
-          REPO_NAME: sf-infra
+          REPO_NAME: ${{ inputs.repository }}
           REPO_PIPELINE: ${{ github.event.repository.name }}
           REPO_REFERENCE: ${{ inputs.repoReference }}
           REPO_TYPE: public
