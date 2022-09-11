@@ -53,10 +53,15 @@ def find_groups(*args, **kwargs):
   os.putenv('TG_DISABLE_CONFIRM','true')
   tg_working_dir=stack_folder_name()
   tg_command= os.getenv('TG_COMMAND')
+  run_all = 'run-all' if os.getenv('RUN_ALL') == "true" else ''
   if tg_command != 'destroy':
     tg_command = 'apply'
 
-  result = subprocess.run(['terragrunt', 'run-all', tg_command , '--terragrunt-working-dir', tg_working_dir], capture_output=True,text=True,input='n')
+  result = subprocess.run(['terragrunt', 'run-all', tg_command , '--terragrunt-working-dir', tg_working_dir, '--terragrunt-ignore-external-dependencies'], capture_output=True,text=True,input='n')
+  
+  if result.returncode != 0 and not 'level=error msg=EOF' in result.stderr : 
+    print(result.stderr)
+    exit (result.returncode)
 
   a = re.sub(r'\n\n','\n#\n',result.stderr)
   b = re.findall('Group .\n([^#]+)', a)

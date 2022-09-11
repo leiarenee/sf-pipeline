@@ -1,0 +1,3 @@
+Module /Users/leia/Dev/chainlink/sf-pipeline/temp-volume/temp-job/pipeline/pipeline/live/build-runner depends on module /Users/leia/Dev/chainlink/sf-pipeline/temp-volume/temp-job/pipeline/pipeline/live/init, which is an external dependency outside of the current working directory. Should Terragrunt run this external dependency? Warning, if you say 'yes', Terragrunt will make changes in /Users/leia/Dev/chainlink/sf-pipeline/temp-volume/temp-job/pipeline/pipeline/live/init as well! (y/n) time=2022-09-11T21:26:53+03:00 level=error msg=EOF
+time=2022-09-11T21:26:53+03:00 level=error msg=Unable to determine underlying exit code, so Terragrunt will exit with error code 1
+

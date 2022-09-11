@@ -280,7 +280,10 @@ EOF
 function find_modules(){
   echo Getting Modules List...
   #tg_modules=$(python3 -m runtask json-modules)
+  set +e
   tg_groups=$(python3 -m runtask json-groups)
+  [ $? -ne 0 ] && echo "$tg_groups" && exit 
+  set -e
   export TG_MODULES_LIST=$(echo $tg_groups | jq 'values[][]' | jq . --slurp -c)
   echo "Terragrunt will run the modules in the following order."
   echo $tg_groups | jq .
