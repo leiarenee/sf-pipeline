@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-trap 'catch $? $LINENO' ERR
+trap 'catch $? $LINENO' EXIT
 
 # Extract repository root
 runner_script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
@@ -12,8 +12,16 @@ source "$scripts/colors.sh"
 
 
 function catch() {
-  echo "Bash Script Error $1 occurred on Line $2"
-  bash_error=true
+
+  if [ $1 -ne 0 ]
+  then
+    bash_error=true
+    echo "Error occured in $BASH_SOURCE"
+    echo "Exitcode $1 from Line $2"
+  else
+    echo "$BASH_SOURCE exited with 0 Exitcode"
+  fi
+
   if [[ $UPLOAD_WORKFOLDER == "always" ]] || [[ $UPLOAD_WORKFOLDER == "onerror" ]]
   then
     set +e
@@ -575,7 +583,7 @@ find_modules
 run_terragrunt
 put_outputs_to_s3
 send_progress "Batch_Job_Finished" $FINAL_PROGRESS
-upload_temp_folder
 log_job_resource_links
 echo -e "${WHITE}End of job routine for $job_name ${NC}"
+
 exit $tg_err
