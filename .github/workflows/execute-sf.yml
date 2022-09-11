@@ -59,10 +59,9 @@ jobs:
         uses: actions/checkout@v2
 
       # -------- Comment PR for Pipeline Tracing -----------
-      - name: Setup env
-        uses: jwulf/add-env-vars-action@master
-        with:
-          map: '{"GITHUB_RUN_ID": "${{ github.run_id }}-${{ github.run_number }}"}'   
+      - name: Create URL to the run output
+        id: vars
+        run: echo ::set-output name=run-url::https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID 
       - name: Comment Run Id
         if: ${{ inputs.comment-id != '' }}
         uses: peter-evans/create-or-update-comment@v2
@@ -71,7 +70,7 @@ jobs:
           repository: ${{ github.repository }}
           comment-id: ${{ inputs.comment-id }}
           body: |
-            [Trace Github Pipeline ${{env.GITHUB_RUN_ID}}...](https://github.com/$GITHUB_REPOSITORY/actions/runs/${{env.GITHUB_RUN_ID}})
+            [Trace Github Pipeline ...](${{ steps.vars.outputs.run-url }})
 
       # -------- AWS CREDENTIALS -----------
       - name: Configure AWS credentials
