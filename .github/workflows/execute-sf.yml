@@ -93,8 +93,8 @@ jobs:
 
           # INFRASTRUCTURE REPOSITORY
           VCS_PROVIDER: github
-          REPO_ACCOUNT: ${{ split_repository._0 }}
-          REPO_NAME: ${{ split_repository._1 }}
+          REPO_ACCOUNT: ${{ steps.split_repository.outputs._0 }}
+          REPO_NAME: ${{ steps.split_repository.outputs._1 }}
           REPO_REFERENCE: ${{ inputs.repoReference }}
           REPO_TYPE: public
           USER_NAME: ${{ github.triggering_actor }}
