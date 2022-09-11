@@ -15,6 +15,8 @@ jobs:
         id: dispatch
         if: ${{ github.event.issue.pull_request }}
         uses: peter-evans/slash-command-dispatch@v3
+        env:
+          REPO_PIPELINE: sf-pipeline
         with:
           token: ${{ secrets.PAT_WORKFLOW }}
           commands: |
@@ -22,7 +24,7 @@ jobs:
           dispatch-type: workflow
           issue-type: pull-request
           static-args: |
-            repository=${{ github.repository }}
+            repository=${{ github.repository_owner }}/${{ env.REPO_PIPELINE}}
             comment-id=${{ github.event.comment.id }}
             repoReference=${{ steps.comment-branch.outputs.head_ref }}
             ref=${{ steps.comment-branch.outputs.head_ref }}
