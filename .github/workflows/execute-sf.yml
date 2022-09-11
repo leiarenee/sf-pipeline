@@ -67,7 +67,7 @@ jobs:
           repository: ${{ github.repository }}
           comment-id: ${{ inputs.comment-id }}
           body: |
-            [Trace Github Pipeline ${{GITHUB_RUN_ID}}...](https://github.com/$GITHUB_REPOSITORY/actions/runs/${{GITHUB_RUN_ID}})
+            [Trace Github Pipeline ${{env.GITHUB_RUN_ID}}...](https://github.com/$GITHUB_REPOSITORY/actions/runs/${{env.GITHUB_RUN_ID}})
 
       # -------- AWS CREDENTIALS -----------
       - name: Configure AWS credentials
