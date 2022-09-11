@@ -45,7 +45,7 @@ jobs:
         id: split_stackFolder
         with:
           msg: ${{ inputs.stackFolder }}
-          separator: '/'
+          separator: '//'
           maxsplit: 2
       - uses: jungwinter/split@v2
         id: split_repository
