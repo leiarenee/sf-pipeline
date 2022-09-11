@@ -155,7 +155,7 @@ jobs:
           SHOW_FILTERED_ERRORS: true
           COMMENT_ID: ${{ inputs.comment-id }}
           ISSUE_NUMBER: ${{ inputs.issue-number }}
-          REPO_PIPELINE: ${{ github.event.repository.name }}
+          REPO_PIPELINE: sf-pipeline
 
 
           # JOB
