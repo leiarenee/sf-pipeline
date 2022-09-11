@@ -63,7 +63,6 @@ jobs:
         uses: jwulf/add-env-vars-action@master
         with:
           map: '{"GITHUB_RUN_ID": "${{ github.run_id }}-${{ github.run_number }}"}'   
-      - name: test1
       - name: Comment Run Id
         if: ${{ inputs.comment-id != '' }}
         uses: peter-evans/create-or-update-comment@v2
