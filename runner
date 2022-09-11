@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-trap 'catch $? $LINENO' EXIT
+trap 'catch $? $LINENO' EXIT ERR
 
 # Extract repository root
 runner_script_dir=$(realpath "$(dirname "$BASH_SOURCE")")
