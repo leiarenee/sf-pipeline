@@ -40,17 +40,25 @@ jobs:
   execute-step-functions:
     runs-on: ubuntu-latest
     steps:
+      # -------- Prepare Variables -----------
       - uses: jungwinter/split@v2
-        id: split
+        id: split_stackFolder
         with:
           msg: ${{ inputs.stackFolder }}
           separator: '/'
           maxsplit: 2
+      - uses: jungwinter/split@v2
+        id: split_repository
+        with:
+          msg: ${{ inputs.repository }}
+          separator: '/'
+          maxsplit: 2
+
+      # -------- Checkout -----------
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Create URL to the run output
-        id: vars
-        run: echo ::set-output name=run-url::https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+
+      # -------- Comment PR for Pipeline Tracing -----------
       - name: Comment Run Id
         if: ${{ inputs.comment-id != '' }}
         uses: peter-evans/create-or-update-comment@v2
@@ -58,10 +66,8 @@ jobs:
           token: ${{ secrets.PAT_WORKFLOW }}
           repository: ${{ github.repository }}
           comment-id: ${{ inputs.comment-id }}
-          body: |
-            [Trace Running Script...][1]
+          body: [Trace Github Pipeline $GITHUB_RUN_ID...](https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)
 
-            [1]: ${{ steps.vars.outputs.run-url }}
       # -------- AWS CREDENTIALS -----------
       - name: Configure AWS credentials
         id: creds
@@ -72,7 +78,7 @@ jobs:
           aws-region: eu-west-1
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
         
-        # ------------ EXECUTE -------------
+      # ------------ EXECUTE -------------
       - name: Execute
         shell: bash
         run: ./sf-run/sf-execute.sh
@@ -84,11 +90,10 @@ jobs:
           # WORKSPACE
           WORKSPACE_ID: ${{ inputs.workspaceId }}
 
-          # APP REPOSITORY
+          # INFRASTRUCTURE REPOSITORY
           VCS_PROVIDER: github
-          REPO_ACCOUNT: leiarenee
-          REPO_NAME: ${{ inputs.repository }}
-          REPO_PIPELINE: ${{ github.event.repository.name }}
+          REPO_ACCOUNT: ${{ split_repository._0 }}
+          REPO_NAME: ${{ split_repository._1 }}
           REPO_REFERENCE: ${{ inputs.repoReference }}
           REPO_TYPE: public
           USER_NAME: ${{ github.triggering_actor }}
@@ -100,8 +105,8 @@ jobs:
           # TERRAGRUNT
           RUN_ALL: true
           TG_COMMAND: ${{ inputs.tgCommand }}
-          RUN_MODULE: ${{ steps.split.outputs._1 }}
-          STACK_FOLDER: ${{ steps.split.outputs._0 }}
+          RUN_MODULE: ${{ steps.split_stackfolder.outputs._1 }}
+          STACK_FOLDER: ${{ steps.split_stackfolder.outputs._0 }}
           BUCKET_SUFFIX: github
           INTERACTIVE: false
           FORCE_INIT: false
@@ -143,6 +148,7 @@ jobs:
           SHOW_FILTERED_ERRORS: true
           COMMENT_ID: ${{ inputs.comment-id }}
           ISSUE_NUMBER: ${{ inputs.issue-number }}
+          REPO_PIPELINE: ${{ github.event.repository.name }}
 
 
           # JOB
@@ -180,11 +186,12 @@ jobs:
           AWSF_EXPONENTIAL_BACKOFF: true
           AWSF_SILENT: true
         
-        # ------------ TRACE ---------------
+      # ------------ TRACE ---------------
       - name: Trace
         shell: bash
         run: ./sf-run/sqs-poll.sh
-        # ---- SUBMIT SUCCESS TO PR ---------
+
+      # ---- SUBMIT SUCCESS TO PR ---------
       - name: Create Success comment
         uses: peter-evans/create-or-update-comment@v2
         if: ${{ github.event.pull_request.number != '' }} 
@@ -196,8 +203,8 @@ jobs:
             - [S3_JOB_FOLDER][1]
             
             [1]: ${{ env.S3_JOB_FOLDER }}
-        # ------- SUBMIT PLAN to PR --------
-        # https://github.com/marketplace/actions/create-or-update-comment
+      
+      # ------- SUBMIT PLAN to PR --------
       - name: Fetch Plans from S3
         id: fetch-plans
         if: ${{ env.TG_COMMAND == 'plan' && inputs.comment-id != '' }}
@@ -213,7 +220,7 @@ jobs:
           echo "::set-output name=body::$body"
       - name: Submit Plan to PR  
         if: ${{ env.TG_COMMAND == 'plan' && inputs.issue-number != '' }} 
-        uses: peter-evans/create-or-update-comment@v2
+        uses: peter-evans/create-or-update-comment@v2 # https://github.com/marketplace/actions/create-or-update-comment
         with:
           issue-number: ${{ inputs.issue-number }}
           body: ${{ steps.fetch-plans.outputs.body }}
