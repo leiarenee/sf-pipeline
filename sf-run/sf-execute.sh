@@ -23,7 +23,7 @@ function send_pr_comment(){
   body="${body//$'\n'/'<br>'}"
   body="${body//$'\r'/}"
   
-  result=$(curl -s -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/$REPO_PIPELINE/issues/comments/$COMMENT_ID -d "{\"body\" : \"$body<br>$1\"}" | jq -r '.message')
+  result=$(curl -s -X PATCH -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/$REPO_NAME/issues/comments/$COMMENT_ID -d "{\"body\" : \"$body<br>$1\"}" | jq -r '.message')
   if [[ "$result" != null ]]
   then
     echo -e "${RED}github api error: $result ${NC}" 

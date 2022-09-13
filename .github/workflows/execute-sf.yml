@@ -242,7 +242,7 @@ jobs:
           echo S3_JOB_FOLDER $S3_JOB_FOLDER
           aws s3 cp ${S3_JOB_FOLDER}/job-resources/outputs.json ./outputs.json
           body="$(cat outputs.json | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")"
-          body="```json\n$body\n```" 
+          body="'```'json\n$body\n\'```'" 
           body="${body//'%'/'%25'}"
           body="${body//$'\n'/'%0A'}"
           body="${body//$'\r'/'%0D'}"
