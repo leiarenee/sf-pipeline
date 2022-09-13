@@ -233,3 +233,25 @@ jobs:
           body: ${{ steps.fetch-plans.outputs.body }}
 
 
+      # ------- SUBMIT JOB RESOURCES to PR --------
+      - name: Fetch Job Resources from S3
+        id: fetch-plans
+        if: ${{ env.TG_COMMAND == 'apply' && inputs.comment-id != '' }}
+        run: |
+          echo TG_COMMAND $TG_COMMAND
+          echo S3_JOB_FOLDER $S3_JOB_FOLDER
+          aws s3 cp ${S3_JOB_FOLDER}/job-resources/outputs.json ./outputs.json
+          body="$(cat outputs.json | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")"
+          body="${body//'%'/'%25'}"
+          body="${body//$'\n'/'%0A'}"
+          body="${body//$'\r'/'%0D'}"
+          body="<pre>$body</pre>" 
+          echo "::set-output name=body::$body"
+      - name: Submit Plan to PR  
+        if: ${{ env.TG_COMMAND == 'plan' && inputs.issue-number != '' }} 
+        uses: peter-evans/create-or-update-comment@v2 # https://github.com/marketplace/actions/create-or-update-comment
+        with:
+          issue-number: ${{ inputs.issue-number }}
+          body: ${{ steps.fetch-plans.outputs.body }}
+
+
