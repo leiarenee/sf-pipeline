@@ -241,10 +241,10 @@ jobs:
           echo TG_COMMAND $TG_COMMAND
           echo S3_JOB_FOLDER $S3_JOB_FOLDER
           aws s3 cp ${S3_JOB_FOLDER}/job-resources/outputs.json ./outputs.json
-          body="$(echo -e "### Job Resources/n")"
-          body="$(echo -e "$body/n<pre>")"
+          body="$(echo -e "### Job Resources\n")"
+          body="$(echo -e "$body\n<pre>")"
           body="$(echo -e "$body$(cat outputs.json | jq .job_outputs | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")")"
-          body="$(echo -e "$body/n<pre>")"
+          body="$(echo -e "$body\n<pre>")"
           
           body="${body//'%'/'%25'}"
           body="${body//$'\n'/'%0A'}"
