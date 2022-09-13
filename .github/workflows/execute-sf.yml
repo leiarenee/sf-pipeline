@@ -235,7 +235,7 @@ jobs:
 
       # ------- SUBMIT JOB RESOURCES to PR --------
       - name: Fetch Job Resources from S3
-        id: fetch-plans
+        id: fetch-job-resources
         if: ${{ env.TG_COMMAND == 'apply' && inputs.comment-id != '' }}
         run: |
           echo TG_COMMAND $TG_COMMAND
@@ -248,10 +248,10 @@ jobs:
           body="<pre>$body</pre>" 
           echo "::set-output name=body::$body"
       - name: Submit Plan to PR  
-        if: ${{ env.TG_COMMAND == 'plan' && inputs.issue-number != '' }} 
+        if: ${{ env.TG_COMMAND == 'apply' && inputs.issue-number != '' }} 
         uses: peter-evans/create-or-update-comment@v2 # https://github.com/marketplace/actions/create-or-update-comment
         with:
           issue-number: ${{ inputs.issue-number }}
-          body: ${{ steps.fetch-plans.outputs.body }}
+          body: ${{ steps.fetch-job-resources.outputs.body }}
 
 
