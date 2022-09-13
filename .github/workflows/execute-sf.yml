@@ -245,13 +245,13 @@ jobs:
           body="${body//'%'/'%25'}"
           body="${body//$'\n'/'%0A'}"
           body="${body//$'\r'/'%0D'}"
-          body="<pre>$body</pre>" 
+          body="```json\n$body\n```" 
           echo "::set-output name=body::$body"
-      - name: Submit Plan to PR  
+      - name: Submit Job Resources to PR  
         if: ${{ env.TG_COMMAND == 'apply' && inputs.issue-number != '' }} 
         uses: peter-evans/create-or-update-comment@v2 # https://github.com/marketplace/actions/create-or-update-comment
         with:
           issue-number: ${{ inputs.issue-number }}
-          body: ${{ fromJSON(steps.fetch-job-resources.outputs.body) }}
+          body: ${{ steps.fetch-job-resources.outputs.body }}
 
 
