@@ -88,19 +88,19 @@ jobs:
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
         
       - name: Select Account for Environment
-        id: workspace_secret
+        id: workspace_secrets
         run: |
           case ${{ inputs.workspaceId }} in
-            testing)      echo "TARGET_AWS_SECRET=TESTING_AWS_ACCESS"     >> $GITHUB_ENV;;
-            staging)      echo "TARGET_AWS_SECRET=STAGING_AWS_ACCESS"     >> $GITHUB_ENV;;
-            production-1) echo "TARGET_AWS_SECRET=PRODUCTION1_AWS_ACCESS" >> $GITHUB_ENV;;
-            production-2) echo "TARGET_AWS_SECRET=PRODUCTION2_AWS_ACCESS" >> $GITHUB_ENV;;
-            pipeline)     echo "TARGET_AWS_SECRET=PIPELINE_AWS_ACCESS"    >> $GITHUB_ENV;;
-            database)     echo "TARGET_AWS_SECRET=DATABASE_AWS_ACCESS"    >> $GITHUB_ENV;;
-            leia-renee)   echo "TARGET_AWS_SECRET=LEIA_AWS_ACCESS"        >> $GITHUB_ENV;;
-            *)            echo "TARGET_AWS_SECRET=TESTING_AWS_ACCESS"     >> $GITHUB_ENV;;
+            testing)      secret_manager_name=TESTING_AWS_ACCESS;;
+            staging)      secret_manager_name=STAGING_AWS_ACCESS;;
+            production-1) secret_manager_name=PRODUCTION1_AWS_ACCESS";;
+            production-2) secret_manager_name=PRODUCTION2_AWS_ACCESS";;
+            pipeline)     secret_manager_name=PIPELINE_AWS_ACCESS";;
+            database)     secret_manager_name=DATABASE_AWS_ACCESS";;
+            leia-renee)   secret_manager_name=LEIA_AWS_ACCESS";;
+            *)            secret_manager_name=TESTING_AWS_ACCESS";;
           esac
-          echo "::set-output name=name::$TARGET_AWS_SECRET"
+          echo "::set-output name=secret_manager_name::$secret_manager_name";;
 
       # ------------ EXECUTE -------------
       - name: Execute
@@ -138,7 +138,9 @@ jobs:
           LOG_LEVEL: info
 
           # AWS
+          PIPELINE_AWS_SECRET: PIPELINE_AWS_ACCESS
           TARGET_AWS_REGION: ${{ inputs.targetAwsRegion }} # We can override target region from inputs
+          TARGET_AWS_SECRET: ${{ steps.workspace_secrets.outputs.secret_manager_name }}
 
           # REPLACE Parameters
           DOMAIN: testing.dev.leiarenee.io
