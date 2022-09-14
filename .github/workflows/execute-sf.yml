@@ -90,7 +90,7 @@ jobs:
       - name: Select Account for Environment
         id: workspace_secret
         run: |
-          case {{ $inputs.workspaceId }} in
+          case ${{ $inputs.workspaceId }} in
             testing)      echo "TARGET_AWS_SECRET=TESTING_AWS_ACCESS"     >> $GITHUB_ENV;;
             staging)      echo "TARGET_AWS_SECRET=STAGING_AWS_ACCESS"     >> $GITHUB_ENV;;
             production-1) echo "TARGET_AWS_SECRET=PRODUCTION1_AWS_ACCESS" >> $GITHUB_ENV;;
