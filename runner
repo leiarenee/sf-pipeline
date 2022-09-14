@@ -252,9 +252,9 @@ region = $TARGET_AWS_REGION
 EOF
   fi
 
-  # use target for default service calls for non specified aws profile - e.g. infrastructure repository
-  export AWS_ACCESS_KEY_ID=$TARGET_AWS_ACCESS_KEY_ID
-  export AWS_SECRET_ACCESS_KEY=$TARGET_AWS_SECRET_ACCESS_KEY
+  # # use target for default service calls for non specified aws profile - e.g. infrastructure repository
+  # export AWS_ACCESS_KEY_ID=$TARGET_AWS_ACCESS_KEY_ID
+  # export AWS_SECRET_ACCESS_KEY=$TARGET_AWS_SECRET_ACCESS_KEY
 
 }
 
