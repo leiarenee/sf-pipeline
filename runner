@@ -217,9 +217,9 @@ function upload_temp_folder(){
     # Compress Work folder
     tar -czf temp-job.tar.gz temp-job
     # Upload to S3
-    aws configure set default.s3.max_concurrent_requests 10
-    aws configure set default.s3.multipart_threshold 1000MB # Disable concurrency since it doesn't work in docker
-    aws configure set default.s3.multipart_chunksize 100MB
+    aws --profile $PIPELINE_AWS_PROFILE configure set default.s3.max_concurrent_requests 10
+    aws --profile $PIPELINE_AWS_PROFILE configure set default.s3.multipart_threshold 1000MB # Disable concurrency since it doesn't work in docker
+    aws --profile $PIPELINE_AWS_PROFILE configure set default.s3.multipart_chunksize 100MB
     s3_file_name="$job_name/temp-job/$AWS_BATCH_JOB_ID.tar.gz"
     #aws --profile $PIPELINE_AWS_PROFILE s3 cp temp-job.tar.gz s3://$S3_JOBS_BUCKET/$s3_file_name
     aws --profile $PIPELINE_AWS_PROFILE s3api put-object --bucket $S3_JOBS_BUCKET --key $s3_file_name --body temp-job.tar.gz
