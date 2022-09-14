@@ -65,7 +65,7 @@ echo "STATE_MACHINE_ARN=$STATE_MACHINE_ARN" >> $GITHUB_ENV
 echo "Variable Substitution"
 test_inputs=$(cat $script_dir/$PIPELINE_SF_TEMPLATE_FILE | envsubst | tr -d '\n' | jq -r . )
 echo $test_inputs | jq . > $script_dir/aggragated-sf-inputs.json
-cat $script_dir/aggragated-sf-inputs.json | jq '.targetAwsAccessKeyId="---"|.targetAwsSecretAccessKey="---"|.pipelineAwsAccessKeyId="---"|.pipelineAwsSecretAccessKey="---"' 
+cat $script_dir/aggragated-sf-inputs.json | jq '.aws.targetAwsAccessKeyId="---"|.aws.targetAwsSecretAccessKey="---"|.aws.pipelineAwsAccessKeyId="---"|.aws.pipelineAwsSecretAccessKey="---"' 
 
 echo
 
