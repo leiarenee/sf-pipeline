@@ -13,6 +13,29 @@ source "$scripts/colors.sh"
 secret_value=$($scripts/awsf --region $PIPELINE_AWS_REGION secretsmanager get-secret-value --secret-id github/workflow)
 export GITHUB_TOKEN=$(echo $secret_value | jq -r '.SecretString' | jq -r .token )
 
+# Fetch secrets for target
+secret_value=$($scripts/awsf --region $PIPELINE_AWS_REGION secretsmanager get-secret-value --secret-id $TARGET_AWS_SECRET)
+[ -z $TARGET_AWS_ACCESS_KEY_ID ] && export TARGET_AWS_ACCESS_KEY_ID=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_access_key_id )
+[ -z $TARGET_AWS_SECRET_ACCESS_KEY ] && export TARGET_AWS_SECRET_ACCESS_KEY=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_secret_access_key )
+[ -z $TARGET_AWS_REGION ] && export TARGET_AWS_REGION=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_region )
+[ -z $TARGET_AWS_ACCOUNT_NAME ] && export TARGET_AWS_ACCOUNT_NAME=$(echo $secret_value | jq -r '.SecretString' | jq -r .account_name )
+[ -z $TARGET_AWS_ACCOUNT_ID ] && export TARGET_AWS_ACCOUNT_ID=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_account_id )
+[ -z $TARGET_AWS_PROFILE ] && export TARGET_AWS_PROFILE=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_profile )
+[ -z $BUCKET_SUFFIX ] && export BUCKET_SUFFIX=$(echo $secret_value | jq -r '.SecretString' | jq -r .bucket_suffix )
+
+# Fetch secrets for pipeline
+secret_value=$($scripts/awsf --region $PIPELINE_AWS_REGION secretsmanager get-secret-value --secret-id $PIPELINE_AWS_SECRET)
+[ -z $PIPELINE_AWS_ACCESS_KEY_ID ] && export PIPELINE_AWS_ACCESS_KEY_ID=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_access_key_id )
+[ -z $PIPELINE_AWS_SECRET_ACCESS_KEY ] && export PIPELINE_AWS_SECRET_ACCESS_KEY=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_secret_access_key )
+[ -z $PIPELINE_AWS_REGION ] && export PIPELINE_AWS_REGION=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_region )
+[ -z $PIPELINE_AWS_ACCOUNT_NAME ] && export PIPELINE_AWS_ACCOUNT_NAME=$(echo $secret_value | jq -r '.SecretString' | jq -r .account_name )
+[ -z $PIPELINE_AWS_ACCOUNT_ID ] && export PIPELINE_AWS_ACCOUNT_ID=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_account_id )
+[ -z $PIPELINE_AWS_PROFILE ] && export PIPELINE_AWS_PROFILE=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_profile )
+[ -z $BUCKET_SUFFIX ] && export BUCKET_SUFFIX=$(echo $secret_value | jq -r '.SecretString' | jq -r .bucket_suffix )
+
+[ -z $ECR_AWS_ACCOUNT_ID ] && export ECR_AWS_ACCOUNT_ID=$PIPELINE_AWS_ACCOUNT_ID
+[ -z $ECR_AWS_ACCOUNT_ID ] && export SQS_AWS_PROFILE=$PIPELINE_AWS_PROFILE
+
 function send_pr_comment(){
   echo "Updating PR Comment $COMMENT_ID with body $1"
   body=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$REPO_ACCOUNT/$REPO_NAME/issues/comments/$COMMENT_ID | jq -r .body)

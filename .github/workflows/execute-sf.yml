@@ -41,13 +41,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # -------- Prepare Variables -----------
-      - uses: jungwinter/split@v2
+      - name: Split stack Folder
+        uses: jungwinter/split@v2
         id: split_stackFolder
         with:
           msg: ${{ inputs.stack }}
           separator: '//'
           maxsplit: 2
-      - uses: jungwinter/split@v2
+      - name: Split Repository
+        uses: jungwinter/split@v2
         id: split_repository
         with:
           msg: ${{ inputs.repository }}
@@ -85,6 +87,21 @@ jobs:
           aws-region: eu-west-1
           role-session-name: Terragrunt-Validate-Build-Test-Workflow
         
+      - name: Select Account for Environment
+        id: workspace_secret
+        run: |
+          case {{ $inputs.workspaceId }} in
+            testing)      echo "TARGET_AWS_SECRET=TESTING_AWS_ACCESS"     >> $GITHUB_ENV;;
+            staging)      echo "TARGET_AWS_SECRET=STAGING_AWS_ACCESS"     >> $GITHUB_ENV;;
+            production-1) echo "TARGET_AWS_SECRET=PRODUCTION1_AWS_ACCESS" >> $GITHUB_ENV;;
+            production-2) echo "TARGET_AWS_SECRET=PRODUCTION2_AWS_ACCESS" >> $GITHUB_ENV;;
+            pipeline)     echo "TARGET_AWS_SECRET=PIPELINE_AWS_ACCESS"    >> $GITHUB_ENV;;
+            database)     echo "TARGET_AWS_SECRET=DATABASE_AWS_ACCESS"    >> $GITHUB_ENV;;
+            leia-renee)   echo "TARGET_AWS_SECRET=LEIA_AWS_ACCESS"        >> $GITHUB_ENV;;
+            *)            echo "TARGET_AWS_SECRET=TESTING_AWS_ACCESS"     >> $GITHUB_ENV;;
+          esac
+          echo "::set-output name=name::$TARGET_AWS_SECRET"
+
       # ------------ EXECUTE -------------
       - name: Execute
         shell: bash
@@ -114,7 +131,6 @@ jobs:
           TG_COMMAND: ${{ inputs.tgCommand }}
           RUN_MODULE: ${{ steps.split_stackfolder.outputs._1 }}
           STACK_FOLDER: ${{ steps.split_stackfolder.outputs._0 }}
-          BUCKET_SUFFIX: github
           INTERACTIVE: false
           FORCE_INIT: false
           COMPACT_WARNINGS: true
@@ -122,17 +138,7 @@ jobs:
           LOG_LEVEL: info
 
           # AWS
-          TARGET_AWS_REGION: ${{ inputs.targetAwsRegion }}
-          TARGET_AWS_ACCOUNT_NAME: Testing Environment
-          TARGET_AWS_ACCOUNT_ID: 553688522943
-          TARGET_AWS_PROFILE: testing
-          TARGET_AWS_SECRET: TARGET_AWS_ACCESS
-          PIPELINE_AWS_REGION: eu-west-1
-          PIPELINE_AWS_PROFILE: pipeline
-          PIPELINE_AWS_ACCOUNT_ID: 377449198785
-          PIPELINE_AWS_SECRET: PIPELINE_AWS_ACCESS
-          ECR_AWS_ACCOUNT_ID: 377449198785
-          SQS_AWS_PROFILE: pipeline
+          TARGET_AWS_REGION: ${{ inputs.targetAwsRegion }} # We can override target region from inputs
 
           # REPLACE Parameters
           DOMAIN: testing.dev.leiarenee.io
