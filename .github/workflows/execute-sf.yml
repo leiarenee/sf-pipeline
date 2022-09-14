@@ -100,7 +100,7 @@ jobs:
             leia-renee)   secret_manager_name=LEIA_AWS_ACCESS;;
             *)            secret_manager_name=TESTING_AWS_ACCESS;;
           esac
-          echo "::set-output name=secret_manager_name::$secret_manager_name";;
+          echo "::set-output name=secret_manager_name::$secret_manager_name"
 
       # ------------ EXECUTE -------------
       - name: Execute
