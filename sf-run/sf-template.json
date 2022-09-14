@@ -25,7 +25,11 @@
 		"ecrAwsAccountId": "${ECR_AWS_ACCOUNT_ID}",
 		"sqsAwsProfile": "${SQS_AWS_PROFILE}",
 		"targetAwsSecret": "${TARGET_AWS_SECRET}",
-		"pipelineAwsSecret": "${PIPELINE_AWS_SECRET}"
+		"pipelineAwsSecret": "${PIPELINE_AWS_SECRET}",
+		"targetAwsAccessKeyId":"${TARGET_AWS_ACCESS_KEY_ID}",
+		"targetAwsSecretAccessKey":"${TARGET_AWS_SECRET_ACCESS_KEY}",
+		"pipelineAwsAccessKeyId":"${PIPELINE_AWS_ACCESS_KEY_ID}",
+		"pipelineAwsSecretAccessKey":"${PIPELINE_AWS_SECRET_ACCESS_KEY}"
 	},
 	"terragrunt": {
 		"runAll": "${RUN_ALL}",

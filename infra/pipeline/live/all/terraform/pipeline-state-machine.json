@@ -186,6 +186,14 @@
             "Value.$": "$.aws.targetAwsSecret"
           },
           {
+            "Name": "TARGET_AWS_ACCESS_KEY_ID",
+            "Value.$": "$.aws.targetAwsAccessKeyId"
+          },
+          {
+            "Name": "TARGET_AWS_SECRET_ACCESS_KEY",
+            "Value.$": "$.aws.targetAwsSecretAccessKey"
+          },
+          {
             "Name": "PIPELINE_AWS_PROFILE",
             "Value.$": "$.aws.pipelineAwsProfile"
           },
@@ -200,6 +208,14 @@
           {
             "Name": "PIPELINE_AWS_SECRET",
             "Value.$": "$.aws.pipelineAwsSecret"
+          },
+          {
+            "Name": "PIPELINE_AWS_ACCESS_KEY_ID",
+            "Value.$": "$.aws.pipelineAwsAccessKeyId"
+          },
+          {
+            "Name": "PIPELINE_AWS_SECRET_ACCESS_KEY",
+            "Value.$": "$.aws.pipelineAwsSecretAccessKey"
           },
           {
             "Name": "ECR_AWS_ACCOUNT_ID",
