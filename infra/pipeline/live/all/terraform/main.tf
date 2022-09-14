@@ -310,21 +310,7 @@ resource "aws_batch_job_definition" "tf_deployment_job_definition" {
     {"type": "VCPU", "value": "1.0"},
     {"type": "MEMORY", "value": "2048"}
   ],
-  "executionRoleArn": "${aws_iam_role.ecs_task_execution_role.arn}",
-  "secrets": [
-    {
-      "name": "PIPELINE_AWS_ACCESS",
-      "valueFrom": "arn:aws:secretsmanager:eu-west-1:377449198785:secret:PIPELINE_AWS_ACCESS-Gs27T7"
-    },
-    {
-      "name": "TARGET_AWS_ACCESS",
-      "valueFrom": "arn:aws:secretsmanager:eu-west-1:377449198785:secret:TARGET_AWS_ACCESS-BnEnwa"
-    },
-    {
-      "name": "REPO_ACCESS_TOKEN",
-      "valueFrom": "arn:aws:secretsmanager:eu-west-1:377449198785:secret:REPO_ACCESS_TOKEN-aIMqzG"
-    }
-    ]
+  "executionRoleArn": "${aws_iam_role.ecs_task_execution_role.arn}"
     
 }
 CONTAINER_PROPERTIES

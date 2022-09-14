@@ -34,7 +34,7 @@ secret_value=$($scripts/awsf --region $PIPELINE_AWS_REGION secretsmanager get-se
 [ -z $BUCKET_SUFFIX ] && export BUCKET_SUFFIX=$(echo $secret_value | jq -r '.SecretString' | jq -r .bucket_suffix )
 
 [ -z $ECR_AWS_ACCOUNT_ID ] && export ECR_AWS_ACCOUNT_ID=$PIPELINE_AWS_ACCOUNT_ID
-[ -z $ECR_AWS_ACCOUNT_ID ] && export SQS_AWS_PROFILE=$PIPELINE_AWS_PROFILE
+[ -z $SQS_AWS_PROFILE ] && export SQS_AWS_PROFILE=$PIPELINE_AWS_PROFILE
 
 function send_pr_comment(){
   echo "Updating PR Comment $COMMENT_ID with body $1"
@@ -112,3 +112,4 @@ echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> $GITHUB_ENV
 echo "REPO_ACCOUNT=$REPO_ACCOUNT" >> $GITHUB_ENV
 echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
 echo "REPO_PIPELINE=$REPO_PIPELINE" >> $GITHUB_ENV
+echo "SQS_AWS_PROFILE=$SQS_AWS_PROFILE" >> $GITHUB_ENV
