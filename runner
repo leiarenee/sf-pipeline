@@ -229,20 +229,7 @@ function upload_temp_folder(){
 
 # Configure aws profile
 function configure_aws_profile(){
-  pipeline_aws_access_key_id=$(echo ${!PIPELINE_AWS_SECRET} | jq -r .aws_access_key_id)
-  pipeline_aws_secret_access_key=$(echo ${!PIPELINE_AWS_SECRET} | jq -r .aws_secret_access_key)
   
-  # Default - if not specfied use target as default profile
-  if [ ! $(cat $HOME/.aws/credentials | grep default) ]
-  then
-    cat <<EOF >> $HOME/.aws/credentials
-[default]
-aws_access_key_id = $TARGET_AWS_ACCESS_KEY_ID
-aws_secret_access_key = $TARGET_AWS_SECRET_ACCESS_KEY
-region = $TARGET_AWS_REGION
-EOF
-  fi
-
   # Pipeline account
   if [ ! $(cat $HOME/.aws/credentials | grep $PIPELINE_AWS_PROFILE) ]
   then
