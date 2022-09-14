@@ -236,7 +236,7 @@ function configure_aws_profile(){
     cat <<EOF >> $HOME/.aws/credentials
 [$PIPELINE_AWS_PROFILE]
 aws_access_key_id = $PIPELINE_AWS_ACCESS_KEY_ID
-aws_secret_access_key = $TARGET_AWS_SECRET_ACCESS_KEY
+aws_secret_access_key = $PIPELINE_AWS_SECRET_ACCESS_KEY
 region = $PIPELINE_AWS_REGION
 EOF
   fi
