@@ -206,8 +206,6 @@ function upload_temp_folder(){
   # onerror will run on Terragrunt errors and bash errors
   # never disables it - use for local dev env
   # always runs it on every execution
-  unset AWS_ACCESS_KEY_ID
-  unset AWS_SECRET_ACCESS_KEY
 
   if [[ $UPLOAD_WORKFOLDER == "always" ]] || [[ $UPLOAD_WORKFOLDER == "onerror" && $tg_err -ne 0 ]] || [[ ! -z $bash_error && $UPLOAD_WORKFOLDER != "never" ]]
   then
@@ -254,6 +252,7 @@ region = $TARGET_AWS_REGION
 EOF
   fi
 
+  export AWS_PROFILE=$TARGET_AWS_PROFILE
 }
 
 
@@ -462,10 +461,6 @@ function run_terragrunt(){
 
   [[ -z $LOG_LEVEL ]] && export LOG_LEVEL=info
 
-  # use target for default service calls for non specified aws profile - e.g. infrastructure repository
-  export AWS_ACCESS_KEY_ID=$TARGET_AWS_ACCESS_KEY_ID
-  export AWS_SECRET_ACCESS_KEY=$TARGET_AWS_SECRET_ACCESS_KEY
-
   # Run terragrunt init
   if  [[ $TG_COMMAND == apply ]] || [[ $TG_COMMAND == destroy ]] || [[ $TG_COMMAND == plan ]] 
   then
@@ -492,10 +487,6 @@ function run_terragrunt(){
   # Get Exit Code
   export tg_err=$?
 
-  # we don't need them anymore
-  unset AWS_ACCESS_KEY_ID
-  unset AWS_SECRET_ACCESS_KEY
-  
   [ $tg_err -eq 137 ] && [ ! -z "$(cat $WORK_FOLDER/temp-job/stderr.log | grep "cancelled" )" ] && echo Runner Process cancelled && exit 999
 
   [ $tg_err -ne 0 ] && echo Terragrunt Exitcode: $tg_err
