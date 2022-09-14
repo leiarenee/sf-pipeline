@@ -14,7 +14,7 @@ secret_value=$($scripts/awsf --region $PIPELINE_AWS_REGION secretsmanager get-se
 export GITHUB_TOKEN=$(echo $secret_value | jq -r '.SecretString' | jq -r .token )
 
 # Fetch secrets for target
-secret_value=$($scripts/awsf --region $PIPELINE_AWS_REGION secretsmanager get-secret-value --secret-id $TARGET_AWS_SECRET | tee &1 )
+secret_value=$($scripts/awsf --region $PIPELINE_AWS_REGION secretsmanager get-secret-value --secret-id $TARGET_AWS_SECRET)
 [ -z $TARGET_AWS_ACCESS_KEY_ID ] && export TARGET_AWS_ACCESS_KEY_ID=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_access_key_id )
 [ -z $TARGET_AWS_SECRET_ACCESS_KEY ] && export TARGET_AWS_SECRET_ACCESS_KEY=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_secret_access_key )
 [ -z $TARGET_AWS_REGION ] && export TARGET_AWS_REGION=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_region )
@@ -24,7 +24,7 @@ secret_value=$($scripts/awsf --region $PIPELINE_AWS_REGION secretsmanager get-se
 [ -z $BUCKET_SUFFIX ] && export BUCKET_SUFFIX=$(echo $secret_value | jq -r '.SecretString' | jq -r .bucket_suffix )
 
 # Fetch secrets for pipeline
-secret_value=$($scripts/awsf --region $PIPELINE_AWS_REGION secretsmanager get-secret-value --secret-id $PIPELINE_AWS_SECRET | tee &1 )
+secret_value=$($scripts/awsf --region $PIPELINE_AWS_REGION secretsmanager get-secret-value --secret-id $PIPELINE_AWS_SECRET)
 [ -z $PIPELINE_AWS_ACCESS_KEY_ID ] && export PIPELINE_AWS_ACCESS_KEY_ID=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_access_key_id )
 [ -z $PIPELINE_AWS_SECRET_ACCESS_KEY ] && export PIPELINE_AWS_SECRET_ACCESS_KEY=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_secret_access_key )
 [ -z $PIPELINE_AWS_REGION ] && export PIPELINE_AWS_REGION=$(echo $secret_value | jq -r '.SecretString' | jq -r .aws_region )
