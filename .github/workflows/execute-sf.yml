@@ -93,12 +93,12 @@ jobs:
           case ${{ inputs.workspaceId }} in
             testing)      secret_manager_name=TESTING_AWS_ACCESS;;
             staging)      secret_manager_name=STAGING_AWS_ACCESS;;
-            production-1) secret_manager_name=PRODUCTION1_AWS_ACCESS";;
-            production-2) secret_manager_name=PRODUCTION2_AWS_ACCESS";;
-            pipeline)     secret_manager_name=PIPELINE_AWS_ACCESS";;
-            database)     secret_manager_name=DATABASE_AWS_ACCESS";;
-            leia-renee)   secret_manager_name=LEIA_AWS_ACCESS";;
-            *)            secret_manager_name=TESTING_AWS_ACCESS";;
+            production-1) secret_manager_name=PRODUCTION1_AWS_ACCESS;;
+            production-2) secret_manager_name=PRODUCTION2_AWS_ACCESS;;
+            pipeline)     secret_manager_name=PIPELINE_AWS_ACCESS;;
+            database)     secret_manager_name=DATABASE_AWS_ACCESS;;
+            leia-renee)   secret_manager_name=LEIA_AWS_ACCESS;;
+            *)            secret_manager_name=TESTING_AWS_ACCESS;;
           esac
           echo "::set-output name=secret_manager_name::$secret_manager_name";;
 
