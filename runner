@@ -252,10 +252,6 @@ region = $TARGET_AWS_REGION
 EOF
   fi
 
-  # # use target for default service calls for non specified aws profile - e.g. infrastructure repository
-  # export AWS_ACCESS_KEY_ID=$TARGET_AWS_ACCESS_KEY_ID
-  # export AWS_SECRET_ACCESS_KEY=$TARGET_AWS_SECRET_ACCESS_KEY
-
 }
 
 
@@ -463,6 +459,10 @@ function run_terragrunt(){
   set +e
 
   [[ -z $LOG_LEVEL ]] && export LOG_LEVEL=info
+  
+  # use target for default service calls for non specified aws profile - e.g. infrastructure repository
+  export AWS_ACCESS_KEY_ID=$TARGET_AWS_ACCESS_KEY_ID
+  export AWS_SECRET_ACCESS_KEY=$TARGET_AWS_SECRET_ACCESS_KEY
 
   # Run terragrunt init
   if  [[ $TG_COMMAND == apply ]] || [[ $TG_COMMAND == destroy ]] || [[ $TG_COMMAND == plan ]] 
@@ -489,6 +489,10 @@ function run_terragrunt(){
 
   # Get Exit Code
   export tg_err=$?
+
+  # we don't need them anymore
+  unset AWS_ACCESS_KEY_ID
+  unset AWS_SECRET_ACCESS_KEY
   
   [ $tg_err -eq 137 ] && [ ! -z "$(cat $WORK_FOLDER/temp-job/stderr.log | grep "cancelled" )" ] && echo Runner Process cancelled && exit 999
 
