@@ -206,6 +206,8 @@ function upload_temp_folder(){
   # onerror will run on Terragrunt errors and bash errors
   # never disables it - use for local dev env
   # always runs it on every execution
+  unset AWS_ACCESS_KEY_ID
+  unset AWS_SECRET_ACCESS_KEY
 
   if [[ $UPLOAD_WORKFOLDER == "always" ]] || [[ $UPLOAD_WORKFOLDER == "onerror" && $tg_err -ne 0 ]] || [[ ! -z $bash_error && $UPLOAD_WORKFOLDER != "never" ]]
   then
@@ -459,7 +461,7 @@ function run_terragrunt(){
   set +e
 
   [[ -z $LOG_LEVEL ]] && export LOG_LEVEL=info
-  
+
   # use target for default service calls for non specified aws profile - e.g. infrastructure repository
   export AWS_ACCESS_KEY_ID=$TARGET_AWS_ACCESS_KEY_ID
   export AWS_SECRET_ACCESS_KEY=$TARGET_AWS_SECRET_ACCESS_KEY
