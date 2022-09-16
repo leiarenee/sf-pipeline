@@ -16,6 +16,7 @@ Continious deployment via GitOps approach using AWS Batch on Fargate along with 
   * Clone into multi regions
   * A-B Test deployment
   * Rollback
+  * Detect and Alert configuration drift
 * Testing
   * Load Tests
   * End to End tests
