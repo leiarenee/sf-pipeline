@@ -42,7 +42,17 @@ Note: All parameters should be in one line.
 
 ## Installation
 
-* Fork [sf-pipeline](https://github.com/leiarenee/sf-pipeline) repository along with [sf-infra](https://github.com/leiarenee/sf-infra) and [sf-app](https://github.com/leiarenee/sf-app) repositories and clone your forks  within the same directory in your local environment.
+### Prepare your organizational structure
+
+You don't need to have all accounts. Only two accounts, `pipeline and testing` are required to test the pipeline. You can customize organizational units, rename them or re-structure for your requirements. On the other hand you'd better put ephemeral accounts under same organizational parent since you will nuke them every night in a crone job.
+
+### Sample Organization structure
+
+![Aws Organizatinal Units](./docs/images/aws-organizational-unit.jpg)
+
+### Fork Repositories
+
+Fork [sf-pipeline](https://github.com/leiarenee/sf-pipeline) repository along with [sf-infra](https://github.com/leiarenee/sf-infra) and [sf-app](https://github.com/leiarenee/sf-app) repositories and clone your forks  within the same directory in your local environment.
 
 ```tree
 - parent-dir
@@ -51,6 +61,8 @@ Note: All parameters should be in one line.
   - sf-app
 ```
 
+### Install Pipelime infrastructure
+
 * Change directory to `sf-pipeline/infra/pipeline/live/all/terraform`
 * Dublicate  `sample-custom-inputs.auto.tfvars.json` and rename it as `custom-inputs.auto.tfvars.json` (This file if ignored in local .gitignore)
 ```json
@@ -58,10 +70,12 @@ Note: All parameters should be in one line.
   "pipeline_account": "<your-pipeline-account>"
 }
 ```
-* run
+* Run
 ```hcl
 terraform apply
 ```
+
+### Github Secrets
 
 * In your sf-pipeline fork enter following secrets under settings/secrets/actions
   * AWS_SECRET_ACCESS_KEY (for an Iam user having admin rights for your your pipeline account)
@@ -70,6 +84,8 @@ terraform apply
   * PAT_WORKFLOW (Private access token which has minimum access rights executing workflow)
 
 Note: In `sf-infra` and `sf-app` only PAT_WORKFLOW is required
+
+### AWS Secrets manager
 
 * In AWS Secrets manager create floowing secrets for every environment you would like to have. Save the secret names as following
   * PIPELINE_AWS_ACCESS (Required)
@@ -128,9 +144,7 @@ apt-get install gettext-base
 
 ## Test
 
-* Make some modification in the sf-infra light stack folder
-* Open a PR
-* Enter the following comment
+In the sf-infra create a test branch, open a PR and enter following as a new comment.
 ```
 /run tgCommand=apply stack=light
 ```
