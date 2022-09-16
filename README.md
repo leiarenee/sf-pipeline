@@ -92,6 +92,8 @@ terraform apply
 
 Note: In `sf-infra` and `sf-app` only PAT_WORKFLOW is required
 
+![Secret Config](./docs/images/github-secrets.jpeg)
+
 ### AWS Secrets manager
 
 * In AWS Secrets manager create floowing secrets for every environment you would like to have. Save the secret names as following
