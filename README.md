@@ -4,6 +4,24 @@
 
 Continious deployment via GitOps approach using AWS Step-functions along with AWS Batch on Fargate to enqueue and orchestrate on-demand terraform/terragrunt jobs. 
 
+### Workflows
+
+* Run terraform/terragrunt commands in a specific account - Done
+* TTL (time to live)
+    * Install ephemeral infrastructure with time to live (TTL) - Done
+    * Nuke ephemeral account
+* Production
+  * Blue - (Canary) - Green Deployment
+  * Clone into multi regions
+  * A-B Test deployment
+  * Rollback
+* Testing
+  * Load Tests
+  * End to End tests
+  * Test common attack vectors
+  * Test Chaos senarios
+
+
 ### Project Links
 
 * [Architecture, System Design and Flow Diagrams](./docs/architecture/README.md)
