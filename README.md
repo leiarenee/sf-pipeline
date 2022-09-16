@@ -4,18 +4,6 @@
 
 Continious deployment via GitOps approach using AWS Step-functions along with AWS Batch on Fargate to enqueue and orchestrate on-demand terraform/terragrunt jobs. 
 
-## Chatops Commands supported 
-
-```bash
-/run 
- <tgCommand=[apply|plan|destroy|validate|output|show> 
- <stack=[live|test|light|...]> 
- <targetAwsRegion=[eu-west-1|...]> 
- <workspaceId=[testing|staging|production-1|production-2|pipeline|database]>
-```
-
-Note: All parameters should be in one line.
-
 ### Project Links
 
 * [Architecture, System Design and Flow Diagrams](./docs/architecture/README.md)
@@ -28,17 +16,17 @@ Note: All parameters should be in one line.
 * [Infrastructure Repository](https://github.com/leiarenee/sf-infra)
 * [Application Repository](https://github.com/leiarenee/sf-app)
 
-## Requirements
+## Chatops Commands supported 
 
-- [terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli)
-- [terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/)
-- [aws-cli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
-- [jq](https://stedolan.github.io/jq/download/)
-- [python 3.9](https://www.python.org/downloads/)
-- [direnv](https://direnv.net/docs/installation.html)
-- [envsubst](https://www.gnu.org/software/gettext/manual/html_node/envsubst-Invocation.html)
-- [rdfind](https://rdfind.pauldreik.se/)
-- [uuidgen](https://man7.org/linux/man-pages/man1/uuidgen.1.html)
+```bash
+/run 
+ <tgCommand=[apply|plan|destroy|validate|output|show> 
+ <stack=[live|test|light|...]> 
+ <targetAwsRegion=[eu-west-1|...]> 
+ <workspaceId=[testing|staging|production-1|production-2|pipeline|database]>
+```
+
+Note: All parameters should be in one line.
 
 ## Installation
 
@@ -78,9 +66,9 @@ terraform apply
 ### Github Secrets
 
 * In your sf-pipeline fork enter following secrets under settings/secrets/actions
-  * AWS_SECRET_ACCESS_KEY (for an Iam user having admin rights for your your pipeline account)
+  * AWS_SECRET_ACCESS_KEY (for an Iam user having name `cicd` and admin rights for your pipeline account)
   * AWS_SECRET_ACCESS_KEY (Same as above)
-  * AWS_REGION (Same as above)
+  * AWS_REGION (default region for pipeline account)
   * PAT_WORKFLOW (Private access token which has minimum access rights executing workflow)
 
 Note: In `sf-infra` and `sf-app` only PAT_WORKFLOW is required
@@ -98,6 +86,18 @@ Note: In `sf-infra` and `sf-app` only PAT_WORKFLOW is required
 ![Secret Config](./docs/images/secret-config.jpg)
 
 ## Prapare local environment (Not necessary if you don't want to test locally)
+
+### Requirements
+
+- [terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli)
+- [terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/)
+- [aws-cli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+- [jq](https://stedolan.github.io/jq/download/)
+- [python 3.9](https://www.python.org/downloads/)
+- [direnv](https://direnv.net/docs/installation.html)
+- [envsubst](https://www.gnu.org/software/gettext/manual/html_node/envsubst-Invocation.html)
+- [rdfind](https://rdfind.pauldreik.se/)
+- [uuidgen](https://man7.org/linux/man-pages/man1/uuidgen.1.html)
 
 Homebrew:
 ```sh
