@@ -190,7 +190,7 @@ Other stacks available are test with no real infrastructure and live with a real
 
 ## Configre DNS
 
-* Create a hosted zone in yor master account
+* Create a hosted zone in your master account
 * Create a hosted zone in your sub organizational accounts which you use in your gitops pipeline
 * Enter NS records in your master account Route53 Configuration
 
