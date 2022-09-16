@@ -4,14 +4,17 @@
 
 Continious deployment via GitOps approach using AWS Step-functions along with AWS Batch on Fargate to enqueue and orchestrate on-demand terraform/terragrunt jobs. 
 
-### Example Run
+## Chatops Commands supported 
 
-![Example Run](./docs/images/dispatch.jpeg)
-![Example Job Resources](./docs/images/dispatch-job-resources.jpeg)
+```bash
+/run 
+ <tgCommand=[apply|plan|destroy|validate|output|show> 
+ <stack=[live|test|light|...]> 
+ <targetAwsRegion=[eu-west-1|...]> 
+ <workspaceId=[testing|staging|production-1|production-2|pipeline|database]>
+```
 
-### Example Plan
-
-
+Note: All parameters should be in one line.
 
 ### Project Links
 
@@ -38,6 +41,47 @@ Continious deployment via GitOps approach using AWS Step-functions along with AW
 - [uuidgen](https://man7.org/linux/man-pages/man1/uuidgen.1.html)
 
 ## Installation
+
+* Fork [sf-pipeline](https://github.com/leiarenee/sf-pipeline) repository along with [sf-infra](https://github.com/leiarenee/sf-infra) and [sf-app](https://github.com/leiarenee/sf-app) repositories and clone your forks  within the same directory in your local environment.
+
+```tree
+- parent-dir
+  - sf-pipeline
+  - sf-infra
+  - sf-app
+```
+
+* Change directory to `sf-pipeline/infra/pipeline/live/all/terraform`
+* Dublicate  `sample-custom-inputs.auto.tfvars.json` and rename it as `custom-inputs.auto.tfvars.json` (This file if ignored in local .gitignore)
+```json
+{
+  "pipeline_account": "<your-pipeline-account>"
+}
+```
+* run
+```hcl
+terraform apply
+```
+
+* In your sf-pipeline fork enter following secrets under settings/secrets/actions
+  * AWS_SECRET_ACCESS_KEY (for an Iam user having admin rights for your your pipeline account)
+  * AWS_SECRET_ACCESS_KEY (Same as above)
+  * AWS_REGION (Same as above)
+  * PAT_WORKFLOW (Private access token which has minimum access rights executing workflow)
+
+Note: In `sf-infra` and `sf-app` only PAT_WORKFLOW is required
+
+* In AWS Secrets manager create floowing secrets for every environment you would like to have. Save the secret names as following
+  * PIPELINE_AWS_ACCESS (Required)
+  * TESTING_AWS_ACCESS (Required)
+  * STAGING_AWS_ACCESS (Optional)
+  * PRODUCTION1_AWS_ACCESS (Optional)
+  * PRODUCTION2_AWS_ACCESS (Optional)
+  * DATABASE_AWS_ACCESS (Optional)
+
+![Secret Config](./docs/images/secret-config.jpg)
+
+## Prapare local environment (Not necessary if you don't want to test locally)
 
 Homebrew:
 ```sh
@@ -81,5 +125,33 @@ apt-get install gettext-base
 </details>
 
 <br>
+
+## Test
+
+* Make some modification in the sf-infra light stack folder
+* Open a PR
+* Enter the following comment
+```
+/run tgCommand=apply stack=light
+```
+
+Other stacks available are test with no real infrastructure and live with a real sample kubernetes cluster with postgres RDS and othe components.
+
+## Example Runs
+### Apply
+
+```
+/run tgCommand=apply stack=live
+```
+
+![Example Run](./docs/images/dispatch.jpeg)
+![Example Job Resources](./docs/images/dispatch-job-resources.jpeg)
+
+### Plan
+```
+/run tgCommand=plan stack=light
+```
+![Example Plan](./docs/images/sfpipeline-plan.jpeg)
+
 
 

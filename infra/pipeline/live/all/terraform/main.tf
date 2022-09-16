@@ -50,7 +50,7 @@ module "step_function" {
     }
 
     stepfunction_Sync = {
-      stepfunction = ["arn:aws:states:eu-west-1:377449198785:stateMachine:Pipeline-State-Machine-${random_pet.this.id}"]
+      stepfunction = ["arn:aws:states:eu-west-1:${var.pipeline_account}:stateMachine:Pipeline-State-Machine-${random_pet.this.id}"]
       events = true
 
     }
@@ -81,8 +81,8 @@ module "step_function" {
             "Effect": "Allow",
             "Action": "iam:PassRole",
             "Resource": [
-              "arn:aws:iam::377449198785:role/AWS_Events_Invoke_Targets",
-              "arn:aws:iam::377449198785:role/service-role/Amazon_EventBridge_Invoke_Batch_Job_Queue"
+              "arn:aws:iam::${var.pipeline_account}:role/AWS_Events_Invoke_Targets",
+              "arn:aws:iam::${var.pipeline_account}:role/service-role/Amazon_EventBridge_Invoke_Batch_Job_Queue"
               ]
 
         },
@@ -270,8 +270,8 @@ data "aws_iam_policy_document" "batch_execution_policy_document" {
         "kms:Decrypt"
       ]
       resources = [
-        "arn:aws:secretsmanager:*:377449198785:secret:*",
-        "arn:aws:kms:*:377449198785:key/*"
+        "arn:aws:secretsmanager:*:${var.pipeline_account}:secret:*",
+        "arn:aws:kms:*:${var.pipeline_account}:key/*"
       ]
   }
 }
@@ -310,7 +310,7 @@ resource "aws_batch_job_definition" "tf_deployment_job_definition" {
     {"type": "VCPU", "value": "1.0"},
     {"type": "MEMORY", "value": "2048"}
   ],
-  "executionRoleArn": "${aws_iam_role.ecs_task_execution_role.arn}",
+  "executionRoleArn": "${aws_iam_role.ecs_task_execution_role.arn}"
 
     
 }
@@ -322,15 +322,15 @@ CONTAINER_PROPERTIES
   # "secrets": [
   #   {
   #     "name": "PIPELINE_AWS_ACCESS",
-  #     "valueFrom": "arn:aws:secretsmanager:eu-west-1:377449198785:secret:PIPELINE_AWS_ACCESS-Gs27T7"
+  #     "valueFrom": "arn:aws:secretsmanager:eu-west-1:${var.pipeline_account}:secret:PIPELINE_AWS_ACCESS-Gs27T7"
   #   },
   #   {
   #     "name": "TARGET_AWS_ACCESS",
-  #     "valueFrom": "arn:aws:secretsmanager:eu-west-1:377449198785:secret:TARGET_AWS_ACCESS-BnEnwa"
+  #     "valueFrom": "arn:aws:secretsmanager:eu-west-1:${var.pipeline_account}:secret:TARGET_AWS_ACCESS-BnEnwa"
   #   },
   #   {
   #     "name": "REPO_ACCESS_TOKEN",
-  #     "valueFrom": "arn:aws:secretsmanager:eu-west-1:377449198785:secret:REPO_ACCESS_TOKEN-aIMqzG"
+  #     "valueFrom": "arn:aws:secretsmanager:eu-west-1:${var.pipeline_account}:secret:REPO_ACCESS_TOKEN-aIMqzG"
   #   }
   #   ]
 

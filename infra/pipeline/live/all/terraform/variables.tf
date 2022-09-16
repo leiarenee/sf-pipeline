@@ -1,0 +1,3 @@
+variable "pipeline_account" {
+  
+}
