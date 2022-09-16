@@ -4,6 +4,15 @@
 
 Continious deployment via GitOps approach using AWS Step-functions along with AWS Batch on Fargate to enqueue and orchestrate on-demand terraform/terragrunt jobs. 
 
+### Example Run
+
+![Example Run](./docs/images/dispatch.jpeg)
+![Example Job Resources](./docs/images/dispatch-job-resources.jpeg)
+
+### Example Plan
+
+
+
 ### Project Links
 
 * [Architecture, System Design and Flow Diagrams](./docs/architecture/README.md)
