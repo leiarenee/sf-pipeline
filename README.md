@@ -9,14 +9,14 @@ Continious deployment via GitOps approach using AWS Batch on Fargate along with 
 * Run terraform/terragrunt commands in a specific account - Done
 * TTL (time to live)
     * Install ephemeral infrastructure with time to live (TTL) - Done
-    * Nuke ephemeral account from chatps
+    * Nuke ephemeral account from chatops
     * Nuke ephemeral accounts in a nightly crone job
 * Production
   * Blue - (Canary) - Green Deployment
   * Clone into multi regions
   * A-B Test deployment
   * Rollback
-  * Detect and Alert configuration drift
+  * Detect and Alert on configuration drifts
 * Testing
   * Load Tests
   * End to End tests
