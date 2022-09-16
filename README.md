@@ -188,5 +188,11 @@ Other stacks available are test with no real infrastructure and live with a real
 ```
 ![Example Plan](./docs/images/sfpipeline-plan.jpeg)
 
+## Configre DNS
 
+* Create a hosted zone in yor master account
+* Create a hosted zone in your sub organizational accounts which you use in your gitops pipeline
+* Enter NS records in your master account Route53 Configuration
+
+![Route53](/docs/images/master-route53.jpeg)
 
