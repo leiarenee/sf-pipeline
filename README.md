@@ -64,7 +64,7 @@ Fork [sf-pipeline](https://github.com/leiarenee/sf-pipeline) repository along wi
 ### Install Pipelime infrastructure
 
 * Change directory to `sf-pipeline/infra/pipeline/live/all/terraform`
-* Dublicate  `sample-custom-inputs.auto.tfvars.json` and rename it as `custom-inputs.auto.tfvars.json` (This file if ignored in local .gitignore)
+* Dublicate  `sample-custom-inputs.auto.tfvars.json` and rename it as `custom-inputs.auto.tfvars.json` 
 ```json
 {
   "pipeline_account": "<your-pipeline-account>"
