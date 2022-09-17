@@ -81,13 +81,11 @@ terraform apply
 
 ### Github Secrets
 
-* In your sf-pipeline fork enter following secrets under settings/secrets/actions
+* In your forked repositories enter following secrets under settings/secrets/actions
   * AWS_SECRET_ACCESS_KEY (for an Iam user having name `cicd` and admin rights for your pipeline account)
   * AWS_SECRET_ACCESS_KEY (Same as above)
   * AWS_REGION (default region for pipeline account)
   * PAT_WORKFLOW (Private access token which has minimum access rights executing workflow)
-
-Note: In `sf-infra` and `sf-app` only PAT_WORKFLOW is required
 
 ![Secret Config](./docs/images/github-secrets.jpeg)
 
