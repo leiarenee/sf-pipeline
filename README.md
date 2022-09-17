@@ -91,7 +91,7 @@ terraform apply
 
 ### AWS Secrets manager
 
-* In AWS Secrets manager create floowing secrets for every environment you would like to have. Save the secret names as following
+* In AWS Secrets manager create following secrets for every environment you would like to have. Save the secret names as following
   * PIPELINE_AWS_ACCESS (Required)
   * TESTING_AWS_ACCESS (Required)
   * STAGING_AWS_ACCESS (Optional)
