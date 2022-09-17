@@ -101,6 +101,39 @@ terraform apply
 
 ![Secret Config](./docs/images/secret-config.jpg)
 
+## Test Chatops Commands
+
+In the sf-infra create a test branch, open a PR and enter following as a new comment.
+```
+/run tgCommand=apply stack=light
+```
+
+Other stacks available are test with no real infrastructure and live with a real sample kubernetes cluster with postgres RDS and othe components.
+
+## Example Runs
+### Apply
+
+```
+/run tgCommand=apply stack=live
+```
+
+![Example Run](./docs/images/dispatch.jpeg)
+![Example Job Resources](./docs/images/dispatch-job-resources.jpeg)
+
+### Plan
+```
+/run tgCommand=plan stack=light
+```
+![Example Plan](./docs/images/sfpipeline-plan.jpeg)
+
+## Configre DNS
+
+* Create a hosted zone in your master account
+* Create a hosted zone in your sub organizational accounts which you use in your gitops pipeline
+* Enter NS records in your master account Route53 Configuration
+
+![Route53](/docs/images/master-route53.jpeg)
+
 ## Prapare local environment (Not necessary if you don't want to test locally)
 
 ### Requirements
@@ -157,37 +190,4 @@ apt-get install gettext-base
 </details>
 
 <br>
-
-## Test
-
-In the sf-infra create a test branch, open a PR and enter following as a new comment.
-```
-/run tgCommand=apply stack=light
-```
-
-Other stacks available are test with no real infrastructure and live with a real sample kubernetes cluster with postgres RDS and othe components.
-
-## Example Runs
-### Apply
-
-```
-/run tgCommand=apply stack=live
-```
-
-![Example Run](./docs/images/dispatch.jpeg)
-![Example Job Resources](./docs/images/dispatch-job-resources.jpeg)
-
-### Plan
-```
-/run tgCommand=plan stack=light
-```
-![Example Plan](./docs/images/sfpipeline-plan.jpeg)
-
-## Configre DNS
-
-* Create a hosted zone in your master account
-* Create a hosted zone in your sub organizational accounts which you use in your gitops pipeline
-* Enter NS records in your master account Route53 Configuration
-
-![Route53](/docs/images/master-route53.jpeg)
 
