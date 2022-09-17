@@ -6,9 +6,9 @@ Continious deployment via GitOps approach using AWS Batch on Fargate along with 
 
 ### Workflows
 
-* Run terraform/terragrunt commands in a specific account - Done
+* Run terraform/terragrunt commands in a specific account
 * TTL (time to live)
-    * Install ephemeral infrastructure with time to live (TTL) - Done
+    * Install ephemeral infrastructure with time to live (TTL)
     * Nuke ephemeral account from chatops
     * Nuke ephemeral accounts in a nightly crone job
 * Production
@@ -20,9 +20,6 @@ Continious deployment via GitOps approach using AWS Batch on Fargate along with 
 * Testing
   * Load Tests
   * End to End tests
-  * Test common attack vectors
-  * Chaos Engineering
-
 ### Project Links
 
 * [Architecture, System Design and Flow Diagrams](./docs/architecture/README.md)
